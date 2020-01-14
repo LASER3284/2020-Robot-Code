@@ -1,46 +1,46 @@
 /****************************************************************************
-	Description:	Defines the CFalconMotion control class.
-	Classes:		CFalconMotion
+	Description:	Defines the CSparkMotion control class.
+	Classes:		CSparkMotion
 	Project:		2020 Infinite Recharge Robot Code.
 	Copyright 2020 FIRST Team 3284 - Camdenton LASER Robotics.
 ****************************************************************************/
-#ifndef FalconMotion_H
-#define FalconMotion_H
+#ifndef SparkMotion_H
+#define SparkMotion_H
 
-#include <ctre/phoenix/motorcontrol/can/WPI_TalonFX.h>
+#include <rev/CANSparkMax.h>
 #include <frc/Timer.h>
 
-using namespace ctre::phoenix::motorcontrol::can;
+using namespace rev;
 using namespace frc;
 
 // Default Constants set for drive motors.
-const int	 	nDefaultFalconMotionPulsesPerRev		=  	  2048;		// Encoder Pulses Per Revolution (Integrated).
-const double 	dDefaultFalconMotionRevsPerUnit		    =    (1.000 / (5.875* 3.1415));	// Revolutions per unit of measure. (1 revs(Encoder)/(5.875 in * PI))
-const double 	dDefaultFalconMotionFwdHomeSpeed		=    0.000;		// Homing forward speed (set to zero because drive motors don't home)
-const double 	dDefaultFalconMotionRevHomeSpeed		=    0.000;		// Homing reverse speed (set to zero because drive motors don't home)
-const double 	dDefaultFalconMotionProportional		=    0.500; 	// Default proportional value.
-const double 	dDefaultFalconMotionIntegral			=    0.000;		// Default integral value.
-const double 	dDefaultFalconMotionDerivative		    =    0.000;		// Default derivative value.
-const double	dDefaultFalconMotionFeedForward		    =	 0.000;		// Default feed forward value.
-const double 	dDefaultFalconMotionVoltageRampRate	    =    0.250;		// Default voltage ramp rate. This is in seconds from neutral to full output.
-const double 	dDefaultFalconMotionTolerance		    =    0.250;		// Default tolerance in desired units.
-const double 	dDefaultFalconMotionLowerSoftLimit	    = -250.000; 	// Default lower soft limit. This is in desired units.
-const double 	dDefaultFalconMotionUpperSoftLimit	    =  250.000; 	// Default upper soft limit. This is in desired units.
-const double 	dDefaultFalconMotionIZone			    =    5.000;		// Default IZone value. This is in the desired units.
-const double 	dDefaultFalconMotionMaxHomingTime	    =    0.000;		// Default Maximum allowable time to home. Zero to disable timeout. This is in seconds.
-const double 	dDefaultFalconMotionMaxFindingTime	    =    0.000;		// Default Maximum allowable time to move to position. Zero to disable timeout. This is in seconds.
-const double	dDefualtFalconMotionManualFwdSpeed 	    =	 0.500;
-const double	dDefualtFalconMotionManualRevSpeed	    =	-0.500;
+const int	 	nDefaultSparkMotionPulsesPerRev		=  	  2048;		// Encoder Pulses Per Revolution (Integrated).
+const double 	dDefaultSparkMotionRevsPerUnit		    =    (1.000 / (5.875* 3.1415));	// Revolutions per unit of measure. (1 revs(Encoder)/(5.875 in * PI))
+const double 	dDefaultSparkMotionFwdHomeSpeed		=    0.000;		// Homing forward speed (set to zero because drive motors don't home)
+const double 	dDefaultSparkMotionRevHomeSpeed		=    0.000;		// Homing reverse speed (set to zero because drive motors don't home)
+const double 	dDefaultSparkMotionProportional		=    0.500; 	// Default proportional value.
+const double 	dDefaultSparkMotionIntegral			=    0.000;		// Default integral value.
+const double 	dDefaultSparkMotionDerivative		    =    0.000;		// Default derivative value.
+const double	dDefaultSparkMotionFeedForward		    =	 0.000;		// Default feed forward value.
+const double 	dDefaultSparkMotionVoltageRampRate	    =    0.250;		// Default voltage ramp rate. This is in seconds from neutral to full output.
+const double 	dDefaultSparkMotionTolerance		    =    0.250;		// Default tolerance in desired units.
+const double 	dDefaultSparkMotionLowerSoftLimit	    = -250.000; 	// Default lower soft limit. This is in desired units.
+const double 	dDefaultSparkMotionUpperSoftLimit	    =  250.000; 	// Default upper soft limit. This is in desired units.
+const double 	dDefaultSparkMotionIZone			    =    5.000;		// Default IZone value. This is in the desired units.
+const double 	dDefaultSparkMotionMaxHomingTime	    =    0.000;		// Default Maximum allowable time to home. Zero to disable timeout. This is in seconds.
+const double 	dDefaultSparkMotionMaxFindingTime	    =    0.000;		// Default Maximum allowable time to move to position. Zero to disable timeout. This is in seconds.
+const double	dDefualtSparkMotionManualFwdSpeed 	    =	 0.500;
+const double	dDefualtSparkMotionManualRevSpeed	    =	-0.500;
 enum State {eIdle, eHomingReverse, eHomingForward, eFinding, eManualForward, eManualReverse};
 ///////////////////////////////////////////////////////////////////////////////
 
 
-class CFalconMotion
+class CSparkMotion
 {
 public:
     // Method Prototypes.
-    CFalconMotion(int nDeviceID);
-    ~CFalconMotion();
+    CSparkMotion(int nDeviceID);
+    ~CSparkMotion();
 
 	void	ClearStickyFaults();
 	void	ConfigLimitSwitches(bool bFwdLimitNormallyOpen, bool bRevLimitNormallyOpen);
@@ -65,7 +65,6 @@ public:
 	void	SetPIDValues(double dProportional, double dIntegral, double dDerivative, double dFeedForward = 0.000);
 	void	SetPulsesPerRev(int nPPR);
 	void	SetRevsPerUnit(double dRPU);
-	void	SetSensorInverted(bool bInverted);
 	void	SetSetpoint(double dPosition);
 	void	SetSoftLimits(double dMinValue, double dMaxValue);
 	void	SetTolerance(double dValue);
@@ -74,7 +73,7 @@ public:
     void	Tick();
 
     // One-line Methods.
-    WPI_TalonFX*	GetMotorPointer()					{ return m_pMotor;														};
+    CANSparkMax*	GetMotorPointer()			    	{ return m_pMotor;														};
 	bool	IsReady()									{ return m_bReady;														};
 	bool	IsHomingComplete()							{ return m_bHomingComplete;												};
 	void	SetMaxHomingTime(double dMaxHomingTime)		{ m_dMaxHomingTime = dMaxHomingTime;									};
@@ -82,16 +81,16 @@ public:
 	State	GetState()									{ return m_nCurrentState;												};
 	void	SetState(State nNewState)					{ m_nCurrentState = nNewState;											};
 	double	GetMotorCurrent()							{ return m_pMotor->GetOutputCurrent();									};
-	double	GetMotorVoltage()							{ return m_pMotor->GetMotorOutputVoltage(); 							};
+	double	GetMotorVoltage()							{ return m_pMotor->GetBusVoltage(); 							};
 	double	GetRevsPerUnit()							{ return m_dRevsPerUnit;												};
 	int		GetPulsesPerRev()							{ return m_nPulsesPerRev;												};
-	int		GetRawEncoderCounts()						{ return m_pMotor->GetSelectedSensorPosition();	                        };
+//	int		GetRawEncoderCounts()						{ return m_pMotor->GetSelectedSensorPosition();	                        };
 	void	BackOffHome(bool bBackOff)					{ m_bBackOffHome = bBackOff;											};
 	void	UseMotionMagic(bool bEnabled)				{ m_bMotionMagic = bEnabled;											};
 
 private:
 	// Object Pointers.
-    WPI_TalonFX*            m_pMotor;
+    CANSparkMax*            m_pMotor;
 	Timer*                  m_pTimer;
 
 	// Member Variables.

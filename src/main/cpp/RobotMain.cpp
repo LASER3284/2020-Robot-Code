@@ -61,6 +61,11 @@ void CRobotMain::RobotInit()
 
 }
 
+void CRobotMain::RobotPeriodic()
+{
+
+}
+
 void CRobotMain::AutonomousInit()
 {
 
