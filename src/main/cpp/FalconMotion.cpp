@@ -30,16 +30,20 @@ CFalconMotion::CFalconMotion(int nDeviceID)
 	m_bHomingComplete				= false;
 	m_bBackOffHome					= true;
 	m_bMotionMagic					= false;
+	m_bUsePosition					= true;
 	m_dSetpoint						= 0.000;
 	m_nPulsesPerRev					= nDefaultFalconMotionPulsesPerRev;
 	m_dRevsPerUnit					= dDefaultFalconMotionRevsPerUnit;
+	m_dTimeUnitInterval				= dDefaultFalconMotionTimeUnitInterval;
 	m_dFwdMoveSpeed					= dDefualtFalconMotionManualFwdSpeed;
 	m_dRevMoveSpeed					= dDefualtFalconMotionManualRevSpeed;
 	m_dFwdHomeSpeed					= dDefaultFalconMotionFwdHomeSpeed;
 	m_dRevHomeSpeed					= dDefaultFalconMotionRevHomeSpeed;
 	m_dTolerance					= dDefaultFalconMotionTolerance;
-	m_dLowerSoftLimit				= dDefaultFalconMotionLowerSoftLimit;
-	m_dUpperSoftLimit				= dDefaultFalconMotionUpperSoftLimit;
+	m_dLowerPositionSoftLimit		= dDefaultFalconMotionLowerPositionSoftLimit;
+	m_dUpperPositionSoftLimit		= dDefaultFalconMotionUpperPositionSoftLimit;
+	m_dLowerVelocitySoftLimit		= dDefaultFalconMotionLowerVelocitySoftLimit;
+	m_dUpperVelocitySoftLimit		= dDefaultFalconMotionUpperVelocitySoftLimit;
 	m_dIZone						= dDefaultFalconMotionIZone;
 	m_dMaxHomingTime				= dDefaultFalconMotionMaxHomingTime;
 	m_dMaxFindingTime				= dDefaultFalconMotionMaxFindingTime;
@@ -230,42 +234,72 @@ void CFalconMotion::Tick()
 
 /******************************************************************************
 	Description:	SetSetpoint - Sets the position for the motor.
-	Arguments:	 	dPosition - The position to move to in desired units.
+	Arguments:	 	dSetpoint - The position to move to in desired units.
+					dUsePosition - Select position or velocity setpoint.
 	Returns: 		Nothing
 ******************************************************************************/
-void CFalconMotion::SetSetpoint(double dPosition)
+void CFalconMotion::SetSetpoint(double dSetpoint, bool bUsePosition)
 {
-	// Clamp the new setpoint within soft limits.
-	if (dPosition > m_dUpperSoftLimit)
-	{
-		dPosition = m_dUpperSoftLimit;
-	}
-	else
-	{
-		if (dPosition < m_dLowerSoftLimit)
-		{
-			dPosition = m_dLowerSoftLimit;
-		}
-	}
-
-	// Set the setpoint member variable.
-	m_dSetpoint = dPosition;
+	// Set the bUsePosition member variable.
+	m_bUsePosition = bUsePosition;
 
 	// Get current time.
 	m_dFindingStartTime = m_pTimer->Get();
 
-	// Set the motor to the desired position.
-	if (m_bMotionMagic)
+	// Use either position or velocity setpoints.
+	if (bUsePosition)
 	{
-		m_pMotor->Set(ControlMode::MotionMagic, (dPosition * m_dRevsPerUnit * m_nPulsesPerRev));
+		// Set the dSetpoint member variable.
+		m_dSetpoint = dSetpoint;
+
+		// Clamp the new setpoint within soft limits.
+		if (dSetpoint > m_dUpperPositionSoftLimit)
+		{
+			dSetpoint = m_dUpperPositionSoftLimit;
+		}
+		else
+		{
+			if (dSetpoint < m_dLowerPositionSoftLimit)
+			{
+				dSetpoint = m_dLowerPositionSoftLimit;
+			}
+		}
+
+		// Set the motor to the desired position.
+		if (m_bMotionMagic)
+		{
+			m_pMotor->Set(ControlMode::MotionMagic, (dSetpoint * m_dRevsPerUnit * m_nPulsesPerRev));
+		}
+		else
+		{
+			m_pMotor->Set(ControlMode::Position, (dSetpoint * m_dRevsPerUnit * m_nPulsesPerRev));
+		}
 	}
 	else
 	{
-		m_pMotor->Set(ControlMode::Position, (dPosition * m_dRevsPerUnit * m_nPulsesPerRev));
+		// Set the dSetpoint member variable.
+		m_dSetpoint = dSetpoint;
+		
+		// Clamp the new setpoint within soft limits.
+		if (dSetpoint > m_dUpperVelocitySoftLimit)
+		{
+			dSetpoint = m_dUpperVelocitySoftLimit;
+		}
+		else
+		{
+			if (dSetpoint < m_dLowerVelocitySoftLimit)
+			{
+				dSetpoint = m_dLowerVelocitySoftLimit;
+			}
+		}
+
+		// Set the motor to the desired position.
+		m_pMotor->Set(ControlMode::Velocity, dSetpoint * m_nPulsesPerRev / m_dTimeUnitInterval);
 	}
+	
 
     // Prints can slow down the processing time of the RoboRIO, so these are for debugging.
-//	printf("CFalconMotion::SetSetpoint - Setpoint = %7.3f\n", dPosition);
+//	printf("CFalconMotion::SetSetpoint - Setpoint = %7.3f\n", dSetpoint);
 //	printf("CFalconMotion::SetSetpoint - Revs Per Unit = %7.3f\n", m_dRevsPerUnit);
 
 	// Set the state to eFinding.
@@ -343,16 +377,29 @@ double CFalconMotion::GetTolerance()
 }
 
 /******************************************************************************
-	Description:	SetSoftLimits - Sets soft limits for minimum and maximum travel.
+	Description:	SetPositionSoftLimits - Sets soft limits for minimum and maximum travel.
 	Arguments:	 	dMinValue - Minimum travel distance.
 					dMaxValue - Maximum travel distance.
 	Returns: 		Nothing
 ******************************************************************************/
-void CFalconMotion::SetSoftLimits(double dMinValue, double dMaxValue)
+void CFalconMotion::SetPositionSoftLimits(double dMinValue, double dMaxValue)
 {
 	// Set the member variables.
-	m_dLowerSoftLimit	= dMinValue;
-	m_dUpperSoftLimit	= dMaxValue;
+	m_dLowerPositionSoftLimit	= dMinValue;
+	m_dUpperPositionSoftLimit	= dMaxValue;
+}
+
+/******************************************************************************
+	Description:	SetVelocitySoftLimits - Sets soft limits for minimum and maximum speed.
+	Arguments:	 	dMinValue - Minimum travel distance.
+					dMaxValue - Maximum travel distance.
+	Returns: 		Nothing
+******************************************************************************/
+void CFalconMotion::SetVelocitySoftLimits(double dMinValue, double dMaxValue)
+{
+	// Set the member variables.
+	m_dLowerVelocitySoftLimit	= dMinValue;
+	m_dUpperVelocitySoftLimit	= dMaxValue;
 }
 
 /******************************************************************************
@@ -503,7 +550,19 @@ void CFalconMotion::SetMotorNeutralMode(int nMode)
 ******************************************************************************/
 double CFalconMotion::GetActual()
 {
-	return (m_pMotor->GetSelectedSensorPosition() / m_dRevsPerUnit / m_nPulsesPerRev);
+	// Create instance variables.
+	double dActual = 0.000;
+
+	if (m_bUsePosition)
+	{
+		dActual = (m_pMotor->GetSelectedSensorPosition() / m_dRevsPerUnit / m_nPulsesPerRev);
+	}
+	else
+	{
+		dActual = (m_pMotor->GetSelectedSensorVelocity() / m_nPulsesPerRev * m_dTimeUnitInterval);
+	}
+
+	return dActual;
 }
 
 /******************************************************************************

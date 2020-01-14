@@ -14,23 +14,26 @@ using namespace ctre::phoenix::motorcontrol::can;
 using namespace frc;
 
 // Default Constants set for drive motors.
-const int	 	nDefaultFalconMotionPulsesPerRev		=  	  2048;		// Encoder Pulses Per Revolution (Integrated).
-const double 	dDefaultFalconMotionRevsPerUnit		    =    (1.000 / (5.875* 3.1415));	// Revolutions per unit of measure. (1 revs(Encoder)/(5.875 in * PI))
-const double 	dDefaultFalconMotionFwdHomeSpeed		=    0.000;		// Homing forward speed (set to zero because drive motors don't home)
-const double 	dDefaultFalconMotionRevHomeSpeed		=    0.000;		// Homing reverse speed (set to zero because drive motors don't home)
-const double 	dDefaultFalconMotionProportional		=    0.500; 	// Default proportional value.
-const double 	dDefaultFalconMotionIntegral			=    0.000;		// Default integral value.
-const double 	dDefaultFalconMotionDerivative		    =    0.000;		// Default derivative value.
-const double	dDefaultFalconMotionFeedForward		    =	 0.000;		// Default feed forward value.
-const double 	dDefaultFalconMotionVoltageRampRate	    =    0.250;		// Default voltage ramp rate. This is in seconds from neutral to full output.
-const double 	dDefaultFalconMotionTolerance		    =    0.250;		// Default tolerance in desired units.
-const double 	dDefaultFalconMotionLowerSoftLimit	    = -250.000; 	// Default lower soft limit. This is in desired units.
-const double 	dDefaultFalconMotionUpperSoftLimit	    =  250.000; 	// Default upper soft limit. This is in desired units.
-const double 	dDefaultFalconMotionIZone			    =    5.000;		// Default IZone value. This is in the desired units.
-const double 	dDefaultFalconMotionMaxHomingTime	    =    0.000;		// Default Maximum allowable time to home. Zero to disable timeout. This is in seconds.
-const double 	dDefaultFalconMotionMaxFindingTime	    =    0.000;		// Default Maximum allowable time to move to position. Zero to disable timeout. This is in seconds.
-const double	dDefualtFalconMotionManualFwdSpeed 	    =	 0.500;
-const double	dDefualtFalconMotionManualRevSpeed	    =	-0.500;
+const int	 	nDefaultFalconMotionPulsesPerRev				=  	 21504;		// Encoder Pulses Per Revolution (84/8 * 2048).
+const double 	dDefaultFalconMotionRevsPerUnit		    		=    (1.000 / (5.875* 3.1415));	// Revolutions per unit of measure. (1 revs(Encoder)/(5.875 in * PI))
+const double	dDefaultFalconMotionTimeUnitInterval			=	10.000;		// Falcon velocity returns rotations/100ms. (x10 for seconds)
+const double 	dDefaultFalconMotionFwdHomeSpeed				=    0.000;		// Homing forward speed (set to zero because drive motors don't home)
+const double 	dDefaultFalconMotionRevHomeSpeed				=    0.000;		// Homing reverse speed (set to zero because drive motors don't home)
+const double 	dDefaultFalconMotionProportional				=    0.500; 	// Default proportional value.
+const double 	dDefaultFalconMotionIntegral					=    0.000;		// Default integral value.
+const double 	dDefaultFalconMotionDerivative		   		 	=    0.000;		// Default derivative value.
+const double	dDefaultFalconMotionFeedForward		    		=	 0.000;		// Default feed forward value.
+const double 	dDefaultFalconMotionVoltageRampRate	    		=    0.250;		// Default voltage ramp rate. This is in seconds from neutral to full output.
+const double 	dDefaultFalconMotionTolerance		    		=    0.250;		// Default tolerance in desired units.
+const double 	dDefaultFalconMotionLowerPositionSoftLimit	    = -250.000; 	// Default lower position soft limit. This is in desired units.
+const double 	dDefaultFalconMotionUpperPositionSoftLimit	    =  250.000; 	// Default upper position soft limit. This is in desired units.
+const double	dDefaultFalconMotionLowerVelocitySoftLimit		=  -10.000;		// Default lower velocity soft limit. This is in desired units.
+const double	dDefaultFalconMotionUpperVelocitySoftLimit		= 	10.000;		// Default upper velocity soft limit. This is in desired units.
+const double 	dDefaultFalconMotionIZone			    		=    5.000;		// Default IZone value. This is in the desired units.
+const double 	dDefaultFalconMotionMaxHomingTime	    		=    0.000;		// Default Maximum allowable time to home. Zero to disable timeout. This is in seconds.
+const double 	dDefaultFalconMotionMaxFindingTime	    		=    0.000;		// Default Maximum allowable time to move to position. Zero to disable timeout. This is in seconds.
+const double	dDefualtFalconMotionManualFwdSpeed 	    		=	 0.500;
+const double	dDefualtFalconMotionManualRevSpeed	    		=	-0.500;
 enum State {eIdle, eHomingReverse, eHomingForward, eFinding, eManualForward, eManualReverse};
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -66,8 +69,9 @@ public:
 	void	SetPulsesPerRev(int nPPR);
 	void	SetRevsPerUnit(double dRPU);
 	void	SetSensorInverted(bool bInverted);
-	void	SetSetpoint(double dPosition);
-	void	SetSoftLimits(double dMinValue, double dMaxValue);
+	void	SetSetpoint(double dSetpoint, bool bUsePosition);
+	void	SetPositionSoftLimits(double dMinValue, double dMaxValue);
+	void	SetVelocitySoftLimits(double dMinValue, double dMaxValue);
 	void	SetTolerance(double dValue);
     void	StartHoming();
 	void	Stop();
@@ -101,22 +105,26 @@ private:
 	bool					m_bReady;
 	bool					m_bBackOffHome;
 	bool					m_bMotionMagic;
+	bool					m_bUsePosition;
 	int						m_nPulsesPerRev;
+	int						m_nDeviceID;
 	double					m_dSetpoint;
 	double					m_dRevsPerUnit;
+	double					m_dTimeUnitInterval;
 	double					m_dFwdMoveSpeed;
 	double					m_dRevMoveSpeed;
 	double					m_dFwdHomeSpeed;
 	double					m_dRevHomeSpeed;
 	double					m_dTolerance;
-	double					m_dLowerSoftLimit;
-	double					m_dUpperSoftLimit;
+	double					m_dLowerPositionSoftLimit;
+	double					m_dUpperPositionSoftLimit;
+	double					m_dLowerVelocitySoftLimit;
+	double					m_dUpperVelocitySoftLimit;
 	double					m_dIZone;
 	double					m_dMaxHomingTime;
 	double					m_dMaxFindingTime;
 	double					m_dHomingStartTime;
 	double					m_dFindingStartTime;
 	State					m_nCurrentState;
-	int						m_nDeviceID;
 };
 #endif
