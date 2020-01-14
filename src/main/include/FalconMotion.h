@@ -4,8 +4,8 @@
 	Project:		2020 Infinite Recharge Robot Code.
 	Copyright 2020 FIRST Team 3284 - Camdenton LASER Robotics.
 ****************************************************************************/
-#ifndef CFalconMotion_H
-#define CFalconMotion_H
+#ifndef FalconMotion_H
+#define FalconMotion_H
 
 #include <ctre/phoenix/motorcontrol/can/WPI_TalonFX.h>
 #include <frc/Timer.h>
