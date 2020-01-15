@@ -249,9 +249,6 @@ void CFalconMotion::SetSetpoint(double dSetpoint, bool bUsePosition)
 	// Use either position or velocity setpoints.
 	if (bUsePosition)
 	{
-		// Set the dSetpoint member variable.
-		m_dSetpoint = dSetpoint;
-
 		// Clamp the new setpoint within soft limits.
 		if (dSetpoint > m_dUpperPositionSoftLimit)
 		{
@@ -264,6 +261,9 @@ void CFalconMotion::SetSetpoint(double dSetpoint, bool bUsePosition)
 				dSetpoint = m_dLowerPositionSoftLimit;
 			}
 		}
+		
+		// Set the dSetpoint member variable.
+		m_dSetpoint = dSetpoint;
 
 		// Set the motor to the desired position.
 		if (m_bMotionMagic)
@@ -277,9 +277,6 @@ void CFalconMotion::SetSetpoint(double dSetpoint, bool bUsePosition)
 	}
 	else
 	{
-		// Set the dSetpoint member variable.
-		m_dSetpoint = dSetpoint;
-		
 		// Clamp the new setpoint within soft limits.
 		if (dSetpoint > m_dUpperVelocitySoftLimit)
 		{
@@ -292,6 +289,9 @@ void CFalconMotion::SetSetpoint(double dSetpoint, bool bUsePosition)
 				dSetpoint = m_dLowerVelocitySoftLimit;
 			}
 		}
+		
+		// Set the dSetpoint member variable.
+		m_dSetpoint = dSetpoint;
 
 		// Set the motor to the desired position.
 		m_pMotor->Set(ControlMode::Velocity, dSetpoint * m_nPulsesPerRev / m_dTimeUnitInterval);
