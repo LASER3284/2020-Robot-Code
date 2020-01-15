@@ -11,7 +11,7 @@
 #include <frc/drive/DifferentialDrive.h>
 #include <frc/SpeedControllerGroup.h>
 #include <ctre/Phoenix.h>
-#include "RobotMain.h"
+#include "FalconMotion.h"
 
 using namespace frc;
 /////////////////////////////////////////////////////////////////////////////
@@ -26,9 +26,9 @@ public:
 
 private:
     Joystick            *m_pDriveController;
-    WPI_TalonFX         *m_pLeftMotor1;
+    CFalconMotion       *m_pLeftMotor1;
     WPI_TalonFX         *m_pLeftMotor2;
-    WPI_TalonFX         *m_pRightMotor1;
+    CFalconMotion       *m_pRightMotor1;
     WPI_TalonFX         *m_pRightMotor2;
     DifferentialDrive   *m_pRobotDrive;
 };
