@@ -54,8 +54,13 @@ CDrive::~CDrive()
 ****************************************************************************/
 void CDrive::Init()
 {
+	// Make motor 2 follow motor 1 on both sides.
 	m_pLeftMotor2->Follow(*m_pLeftMotor1->GetMotorPointer());
 	m_pRightMotor2->Follow(*m_pRightMotor1->GetMotorPointer());
+	m_pLeftMotor1->SetOpenLoopRampRate(.65);
+	m_pRightMotor1->SetOpenLoopRampRate(.65);
+	m_pLeftMotor1->ClearStickyFaults();
+	m_pRightMotor1->ClearStickyFaults();
 }
 
 /****************************************************************************
@@ -65,5 +70,20 @@ void CDrive::Init()
 ****************************************************************************/
 void CDrive::Tick()
 {
-	
+	// Set variables to joysticks.
+	double XAxis = m_pDriveController->GetRawAxis(4);
+	double YAxis = -m_pDriveController->GetRawAxis(2);
+
+	// Check if joystick is in deadzone.
+	if (fabs(XAxis) < 0.1)
+	{
+		XAxis = 0;
+	}
+	if (fabs(YAxis) < 0.1)
+	{
+		YAxis = 0;
+	}
+
+	// Drive the robot.
+	m_pRobotDrive->ArcadeDrive(YAxis, XAxis, false);
 }
