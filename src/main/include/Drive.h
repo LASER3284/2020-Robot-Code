@@ -4,12 +4,11 @@
 	Project:		2020 Infinite Recharge Robot Code.
 	Copyright 2020 First Team 3284 - Camdenton LASER Robotics.
 ****************************************************************************/
-#ifndef Drive_H
-#define Drive_H
+#ifndef Drive_h
+#define Drive_h
 
 #include <frc/Joystick.h>
 #include <frc/drive/DifferentialDrive.h>
-#include <frc/SpeedControllerGroup.h>
 #include <ctre/Phoenix.h>
 #include "FalconMotion.h"
 
@@ -25,12 +24,12 @@ public:
     void Stop();
 
 private:
-    Joystick            *m_pDriveController;
-    CFalconMotion       *m_pLeftMotor1;
-    WPI_TalonFX         *m_pLeftMotor2;
-    CFalconMotion       *m_pRightMotor1;
-    WPI_TalonFX         *m_pRightMotor2;
-    DifferentialDrive   *m_pRobotDrive;
+    Joystick*            m_pDriveController;
+    CFalconMotion*       m_pLeftMotor1;
+    WPI_TalonFX*         m_pLeftMotor2;
+    CFalconMotion*       m_pRightMotor1;
+    WPI_TalonFX*         m_pRightMotor2;
+    DifferentialDrive*   m_pRobotDrive;
 };
 /////////////////////////////////////////////////////////////////////////////
 #endif

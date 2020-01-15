@@ -31,7 +31,7 @@ CDrive::CDrive(Joystick* pDriveController)
 
 /****************************************************************************
 	Description:	CDrive Destructor.
-	Arguments:		Joystick* pDriveController
+	Arguments:		None
 	Derived From:	Nothing
 ****************************************************************************/
 CDrive::~CDrive()
@@ -40,11 +40,13 @@ CDrive::~CDrive()
 	delete m_pLeftMotor2;
 	delete m_pRightMotor1;
 	delete m_pRightMotor2;
+	delete m_pRobotDrive;
 
 	m_pLeftMotor1	= nullptr;
 	m_pLeftMotor2	= nullptr;
 	m_pRightMotor1	= nullptr;
 	m_pRightMotor2	= nullptr;
+	m_pRobotDrive	= nullptr;
 }
 
 /****************************************************************************
@@ -57,8 +59,12 @@ void CDrive::Init()
 	// Make motor 2 follow motor 1 on both sides.
 	m_pLeftMotor2->Follow(*m_pLeftMotor1->GetMotorPointer());
 	m_pRightMotor2->Follow(*m_pRightMotor1->GetMotorPointer());
+
+	// Set max acceleration to .65 seconds.
 	m_pLeftMotor1->SetOpenLoopRampRate(.65);
 	m_pRightMotor1->SetOpenLoopRampRate(.65);
+
+	// Clear persistant motor controller faults.
 	m_pLeftMotor1->ClearStickyFaults();
 	m_pRightMotor1->ClearStickyFaults();
 }
