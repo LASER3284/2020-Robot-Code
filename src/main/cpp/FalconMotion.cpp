@@ -294,7 +294,7 @@ void CFalconMotion::SetSetpoint(double dSetpoint, bool bUsePosition)
 		m_dSetpoint = dSetpoint;
 
 		// Set the motor to the desired position.
-		m_pMotor->Set(ControlMode::Velocity, dSetpoint * m_nPulsesPerRev / m_dTimeUnitInterval);
+		m_pMotor->Set(ControlMode::Velocity, dSetpoint * (84 / 8 * m_nPulsesPerRev) / m_dTimeUnitInterval);
 	}
 	
 
@@ -559,7 +559,7 @@ double CFalconMotion::GetActual()
 	}
 	else
 	{
-		dActual = (m_pMotor->GetSelectedSensorVelocity() / m_nPulsesPerRev * m_dTimeUnitInterval);
+		dActual = (m_pMotor->GetSelectedSensorVelocity() / (84 / 8 * m_nPulsesPerRev) * m_dTimeUnitInterval);
 	}
 
 	return dActual;

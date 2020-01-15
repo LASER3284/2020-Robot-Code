@@ -30,16 +30,20 @@ CSparkMotion::CSparkMotion(int nDeviceID)
 	m_bHomingComplete				= false;
 	m_bBackOffHome					= true;
 	m_bMotionMagic					= false;
+	m_bUsePosition					= true;
 	m_dSetpoint						= 0.000;
 	m_nPulsesPerRev					= nDefaultSparkMotionPulsesPerRev;
+	m_dTimeUnitInterval				= dDefaultSparkMotionTimeUnitInterval;
 	m_dRevsPerUnit					= dDefaultSparkMotionRevsPerUnit;
 	m_dFwdMoveSpeed					= dDefualtSparkMotionManualFwdSpeed;
 	m_dRevMoveSpeed					= dDefualtSparkMotionManualRevSpeed;
 	m_dFwdHomeSpeed					= dDefaultSparkMotionFwdHomeSpeed;
 	m_dRevHomeSpeed					= dDefaultSparkMotionRevHomeSpeed;
 	m_dTolerance					= dDefaultSparkMotionTolerance;
-	m_dLowerSoftLimit				= dDefaultSparkMotionLowerSoftLimit;
-	m_dUpperSoftLimit				= dDefaultSparkMotionUpperSoftLimit;
+	m_dLowerPositionSoftLimit		= dDefaultSparkMotionLowerPositionSoftLimit;
+	m_dUpperPositionSoftLimit		= dDefaultSparkMotionUpperPositionSoftLimit;
+	m_dLowerVelocitySoftLimit		= dDefaultSparkMotionLowerVelocitySoftLimit;
+	m_dUpperVelocitySoftLimit		= dDefaultSparkMotionUpperVelocitySoftLimit;
 	m_dIZone						= dDefaultSparkMotionIZone;
 	m_dMaxHomingTime				= dDefaultSparkMotionMaxHomingTime;
 	m_dMaxFindingTime				= dDefaultSparkMotionMaxFindingTime;
@@ -228,43 +232,72 @@ void CSparkMotion::Tick()
 }
 
 /******************************************************************************
-	Description:	SetSetpoint - Sets the position for the motor.
-	Arguments:	 	dPosition - The position to move to in desired units.
+	Description:	SetSetpoint - Sets the setpoint for the motor.
+	Arguments:	 	dSetpoint - The position to move to in desired units.
+					dUsePosition - Select position or velocity setpoint.
 	Returns: 		Nothing
 ******************************************************************************/
-void CSparkMotion::SetSetpoint(double dPosition)
+void CSparkMotion::SetSetpoint(double dSetpoint, bool bUsePosition)
 {
-	// Clamp the new setpoint within soft limits.
-	if (dPosition > m_dUpperSoftLimit)
+	// Set the bUsePosition member variable.
+	m_bUsePosition = bUsePosition;
+	// Set the dSetpoint member variable.
+	m_dSetpoint = dSetpoint;
+
+	// Use either position or velocity setpoints.
+	if (bUsePosition)
 	{
-		dPosition = m_dUpperSoftLimit;
+		// Clamp the new setpoint within soft limits.
+		if (dSetpoint > m_dUpperPositionSoftLimit)
+		{
+			dSetpoint = m_dUpperPositionSoftLimit;
+		}
+		else
+		{
+			if (dSetpoint < m_dLowerPositionSoftLimit)
+			{
+				dSetpoint = m_dLowerPositionSoftLimit;
+			}
+		}
+
+		// Set the motor to the desired position.
+		if (m_bMotionMagic)
+		{
+			m_pMotor->GetPIDController().SetReference(dSetpoint * m_dRevsPerUnit * m_nPulsesPerRev, ControlType::kSmartMotion);
+		}
+		else
+		{
+			m_pMotor->GetPIDController().SetReference(dSetpoint * m_dRevsPerUnit * m_nPulsesPerRev, ControlType::kPosition);
+		}
 	}
 	else
 	{
-		if (dPosition < m_dLowerSoftLimit)
+		// Clamp the new setpoint within soft limits.
+		if (dSetpoint > m_dUpperVelocitySoftLimit)
 		{
-			dPosition = m_dLowerSoftLimit;
+			dSetpoint = m_dUpperVelocitySoftLimit;
+		}
+		else
+		{
+			if (dSetpoint < m_dLowerVelocitySoftLimit)
+			{
+				dSetpoint = m_dLowerVelocitySoftLimit;
+			}
+		}
+
+		// Set the motor to the desired position.
+		if (m_bMotionMagic)
+		{
+			m_pMotor->GetPIDController().SetReference(dSetpoint * (84 /8 * m_nPulsesPerRev), ControlType::kSmartVelocity);
+		}
+		else
+		{
+			m_pMotor->GetPIDController().SetReference(dSetpoint * (84 /8 * m_nPulsesPerRev), ControlType::kVelocity);
 		}
 	}
 
-	// Set the setpoint member variable.
-	m_dSetpoint = dPosition;
-
-	// Get current time.
-	m_dFindingStartTime = m_pTimer->Get();
-
-	// Set the motor to the desired position.
-	if (m_bMotionMagic)
-	{
-		m_pMotor->GetPIDController().SetReference((dPosition * m_dRevsPerUnit * m_nPulsesPerRev), ControlType::kSmartMotion);
-	}
-	else
-	{
-		m_pMotor->GetPIDController().SetReference((dPosition * m_dRevsPerUnit * m_nPulsesPerRev), ControlType::kPosition);
-	}
-
     // Prints can slow down the processing time of the RoboRIO, so these are for debugging.
-//	printf("CSparkMotion::SetSetpoint - Setpoint = %7.3f\n", dPosition);
+//	printf("CSparkMotion::SetSetpoint - Setpoint = %7.3f\n", dSetpoint);
 //	printf("CSparkMotion::SetSetpoint - Revs Per Unit = %7.3f\n", m_dRevsPerUnit);
 
 	// Set the state to eFinding.
@@ -348,11 +381,24 @@ double CSparkMotion::GetTolerance()
 					dMaxValue - Maximum travel distance.
 	Returns: 		Nothing
 ******************************************************************************/
-void CSparkMotion::SetSoftLimits(double dMinValue, double dMaxValue)
+void CSparkMotion::SetPositionSoftLimits(double dMinValue, double dMaxValue)
 {
 	// Set the member variables.
-	m_dLowerSoftLimit	= dMinValue;
-	m_dUpperSoftLimit	= dMaxValue;
+	m_dLowerPositionSoftLimit	= dMinValue;
+	m_dUpperPositionSoftLimit	= dMaxValue;
+}
+
+/******************************************************************************
+	Description:	SetVelocitySoftLimits - Sets soft limits for minimum and maximum speed.
+	Arguments:	 	dMinValue - Minimum travel distance.
+					dMaxValue - Maximum travel distance.
+	Returns: 		Nothing
+******************************************************************************/
+void CSparkMotion::SetVelocitySoftLimits(double dMinValue, double dMaxValue)
+{
+	// Set the member variables.
+	m_dLowerVelocitySoftLimit	= dMinValue;
+	m_dUpperVelocitySoftLimit	= dMaxValue;
 }
 
 /******************************************************************************
@@ -511,8 +557,19 @@ void CSparkMotion::SetMotorNeutralMode(int nMode)
 ******************************************************************************/
 double CSparkMotion::GetActual()
 {
-	return (m_pMotor->GetEncoder().GetPosition() / m_dRevsPerUnit / m_nPulsesPerRev);
-}
+	// Create instance variables.
+	double dActual = 0.000;
+
+	if (m_bUsePosition)
+	{
+		dActual = (m_pMotor->GetEncoder().GetPosition() / m_dRevsPerUnit / m_nPulsesPerRev);
+	}
+	else
+	{
+		dActual = (m_pMotor->GetEncoder().GetVelocity() / (84 / 8 * m_nPulsesPerRev) /** m_dTimeUnitInterval*/);
+	}
+
+	return dActual;}
 
 /******************************************************************************
 	Description:	SetHomeSpeeds - Sets the home speeds for the state machine.

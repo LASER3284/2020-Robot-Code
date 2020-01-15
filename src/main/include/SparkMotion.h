@@ -14,23 +14,26 @@ using namespace rev;
 using namespace frc;
 
 // Default Constants set for drive motors.
-const int	 	nDefaultSparkMotionPulsesPerRev		=  	  2048;		// Encoder Pulses Per Revolution (Integrated).
-const double 	dDefaultSparkMotionRevsPerUnit		    =    (1.000 / (5.875* 3.1415));	// Revolutions per unit of measure. (1 revs(Encoder)/(5.875 in * PI))
-const double 	dDefaultSparkMotionFwdHomeSpeed		=    0.000;		// Homing forward speed (set to zero because drive motors don't home)
-const double 	dDefaultSparkMotionRevHomeSpeed		=    0.000;		// Homing reverse speed (set to zero because drive motors don't home)
-const double 	dDefaultSparkMotionProportional		=    0.500; 	// Default proportional value.
-const double 	dDefaultSparkMotionIntegral			=    0.000;		// Default integral value.
-const double 	dDefaultSparkMotionDerivative		    =    0.000;		// Default derivative value.
-const double	dDefaultSparkMotionFeedForward		    =	 0.000;		// Default feed forward value.
-const double 	dDefaultSparkMotionVoltageRampRate	    =    0.250;		// Default voltage ramp rate. This is in seconds from neutral to full output.
-const double 	dDefaultSparkMotionTolerance		    =    0.250;		// Default tolerance in desired units.
-const double 	dDefaultSparkMotionLowerSoftLimit	    = -250.000; 	// Default lower soft limit. This is in desired units.
-const double 	dDefaultSparkMotionUpperSoftLimit	    =  250.000; 	// Default upper soft limit. This is in desired units.
-const double 	dDefaultSparkMotionIZone			    =    5.000;		// Default IZone value. This is in the desired units.
-const double 	dDefaultSparkMotionMaxHomingTime	    =    0.000;		// Default Maximum allowable time to home. Zero to disable timeout. This is in seconds.
-const double 	dDefaultSparkMotionMaxFindingTime	    =    0.000;		// Default Maximum allowable time to move to position. Zero to disable timeout. This is in seconds.
-const double	dDefualtSparkMotionManualFwdSpeed 	    =	 0.500;
-const double	dDefualtSparkMotionManualRevSpeed	    =	-0.500;
+const int	 	nDefaultSparkMotionPulsesPerRev					=  	    42;		// Encoder Pulses Per Revolution (Integrated).
+const double 	dDefaultSparkMotionRevsPerUnit		    		=    (1.000 / (5.875* 3.1415));	// Revolutions per unit of measure. (1 revs(Encoder)/(5.875 in * PI))
+const double	dDefaultSparkMotionTimeUnitInterval				=	10.000;		//TODO: Spark MAX velocity unknown, but Falcon returns 100ms so we'll keep this
+const double 	dDefaultSparkMotionFwdHomeSpeed					=    0.000;		// Homing forward speed (set to zero because drive motors don't home)
+const double 	dDefaultSparkMotionRevHomeSpeed					=    0.000;		// Homing reverse speed (set to zero because drive motors don't home)
+const double 	dDefaultSparkMotionProportional					=    0.500; 	// Default proportional value.
+const double 	dDefaultSparkMotionIntegral						=    0.000;		// Default integral value.
+const double 	dDefaultSparkMotionDerivative		    		=    0.000;		// Default derivative value.
+const double	dDefaultSparkMotionFeedForward		    		=	 0.000;		// Default feed forward value.
+const double 	dDefaultSparkMotionVoltageRampRate	    		=    0.250;		// Default voltage ramp rate. This is in seconds from neutral to full output.
+const double 	dDefaultSparkMotionTolerance		    		=    0.250;		// Default tolerance in desired units.
+const double 	dDefaultSparkMotionLowerPositionSoftLimit	    = -250.000; 	// Default lower  position soft limit. This is in desired units.
+const double 	dDefaultSparkMotionUpperPositionSoftLimit	    =  250.000; 	// Default upper position soft limit. This is in desired units.
+const double	dDefaultSparkMotionLowerVelocitySoftLimit		=  -10.000;		// Default lower velocity soft limit. This is in desired units.
+const double	dDefaultSparkMotionUpperVelocitySoftLimit		= 	10.000;		// Default upper velocity soft limit. This is in desired units.
+const double 	dDefaultSparkMotionIZone			    		=    5.000;		// Default IZone value. This is in the desired units.
+const double 	dDefaultSparkMotionMaxHomingTime	    		=    0.000;		// Default Maximum allowable time to home. Zero to disable timeout. This is in seconds.
+const double 	dDefaultSparkMotionMaxFindingTime	    		=    0.000;		// Default Maximum allowable time to move to position. Zero to disable timeout. This is in seconds.
+const double	dDefualtSparkMotionManualFwdSpeed 	    		=	 0.500;
+const double	dDefualtSparkMotionManualRevSpeed	    		=	-0.500;
 enum State {eIdle, eHomingReverse, eHomingForward, eFinding, eManualForward, eManualReverse};
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -65,8 +68,9 @@ public:
 	void	SetPIDValues(double dProportional, double dIntegral, double dDerivative, double dFeedForward = 0.000);
 	void	SetPulsesPerRev(int nPPR);
 	void	SetRevsPerUnit(double dRPU);
-	void	SetSetpoint(double dPosition);
-	void	SetSoftLimits(double dMinValue, double dMaxValue);
+	void	SetSetpoint(double dSetpoint, bool bUsePosition);
+	void	SetPositionSoftLimits(double dMinValue, double dMaxValue);
+	void	SetVelocitySoftLimits(double dMinValue, double dMaxValue);
 	void	SetTolerance(double dValue);
     void	StartHoming();
 	void	Stop();
@@ -100,22 +104,26 @@ private:
 	bool					m_bReady;
 	bool					m_bBackOffHome;
 	bool					m_bMotionMagic;
+	bool					m_bUsePosition;
 	int						m_nPulsesPerRev;
+	int						m_nDeviceID;
 	double					m_dSetpoint;
+	double					m_dTimeUnitInterval; //TODO: Still unknown. Needs testing.
 	double					m_dRevsPerUnit;
 	double					m_dFwdMoveSpeed;
 	double					m_dRevMoveSpeed;
 	double					m_dFwdHomeSpeed;
 	double					m_dRevHomeSpeed;
 	double					m_dTolerance;
-	double					m_dLowerSoftLimit;
-	double					m_dUpperSoftLimit;
+	double					m_dLowerPositionSoftLimit;
+	double					m_dUpperPositionSoftLimit;
+	double					m_dLowerVelocitySoftLimit;
+	double					m_dUpperVelocitySoftLimit;
 	double					m_dIZone;
 	double					m_dMaxHomingTime;
 	double					m_dMaxFindingTime;
 	double					m_dHomingStartTime;
 	double					m_dFindingStartTime;
 	State					m_nCurrentState;
-	int						m_nDeviceID;
 };
 #endif
