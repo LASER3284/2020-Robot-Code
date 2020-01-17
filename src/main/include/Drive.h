@@ -39,14 +39,15 @@ public:
 
 private:
     // Object Pointers.
-    Joystick*               m_pDriveController;
-    CFalconMotion*          m_pLeftMotor1;
-    WPI_TalonFX*            m_pLeftMotor2;
-    CFalconMotion*          m_pRightMotor1;
-    WPI_TalonFX*            m_pRightMotor2;
-    DifferentialDrive*      m_pRobotDrive;
-    RamseteController*      m_pRamseteController;
-    AHRS*                   m_pGyro;
+    Joystick*                   m_pDriveController;
+    CFalconMotion*              m_pLeftMotor1;
+    WPI_TalonFX*                m_pLeftMotor2;
+    CFalconMotion*              m_pRightMotor1;
+    WPI_TalonFX*                m_pRightMotor2;
+    DifferentialDrive*          m_pRobotDrive;
+    DifferentialDriveOdometry*  m_pOdometry;
+    RamseteController*          m_pRamseteController;
+    AHRS*                       m_pGyro;
 
     // Member variables.
     double                  m_dBeta;

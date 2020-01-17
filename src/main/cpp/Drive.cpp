@@ -154,6 +154,8 @@ void CDrive::GenerateTragectory()
 		12_fps_sq				// Robot max acceleration I think.
 	};
 
+	// Initialize odometry.
+	m_pOdometry = new DifferentialDriveOdometry(Rotation2d(units::degree_t(m_pGyro->GetYaw())));
 	// Generate the trajectory.
 	m_Trajectory = TrajectoryGenerator::GenerateTrajectory(m_pStartPoint, m_pInteriorWaypoints, m_pEndPoint, m_pConfig);
 }
@@ -165,5 +167,6 @@ void CDrive::GenerateTragectory()
 ****************************************************************************/
 void CDrive::FollowTragectory()
 {
-	
+	ChassisSpeeds m_pAdjustedSpeeds = m_pRamseteController->Calculate(m_pOdometry->GetPose, goal);
+	DifferentialDriveWheelSpeeds m_pDriveSpeeds = 
 }
