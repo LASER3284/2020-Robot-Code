@@ -59,6 +59,7 @@ CRobotMain::~CRobotMain()
 void CRobotMain::RobotInit()
 {
 	m_pDrive->Init();
+	m_pDrive->GenerateTragectory();
 }
 
 void CRobotMain::RobotPeriodic()
@@ -83,7 +84,8 @@ void CRobotMain::TeleopInit()
 
 void CRobotMain::TeleopPeriodic()
 {
-	m_pDrive->Tick();
+	//m_pDrive->Tick();
+	m_pDrive->FollowTragectory();
 }
 
 void CRobotMain::TestInit() 

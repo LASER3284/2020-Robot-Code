@@ -22,13 +22,19 @@ using namespace std;
 ****************************************************************************/
 CDrive::CDrive(Joystick* pDriveController)
 {
-	m_pDriveController 	= pDriveController;
-	m_pLeftMotor1		= new CFalconMotion(1);
-	m_pLeftMotor2		= new WPI_TalonFX(2);
-	m_pRightMotor1		= new CFalconMotion(3);
-	m_pRightMotor2		= new WPI_TalonFX(4);
-	m_pRobotDrive		= new DifferentialDrive(*m_pLeftMotor1->GetMotorPointer(), *m_pRightMotor1->GetMotorPointer());
-	m_pGyro 			= new AHRS(SPI::Port::kMXP);
+	// Initialize member variables.
+	m_dBeta					= m_dDefaultBeta;
+	m_dZeta					= m_dDefaultZeta;
+
+	// Create object pointers.
+	m_pDriveController 		= pDriveController;
+	m_pLeftMotor1			= new CFalconMotion(1);
+	m_pLeftMotor2			= new WPI_TalonFX(2);
+	m_pRightMotor1			= new CFalconMotion(3);
+	m_pRightMotor2			= new WPI_TalonFX(4);
+	m_pRobotDrive			= new DifferentialDrive(*m_pLeftMotor1->GetMotorPointer(), *m_pRightMotor1->GetMotorPointer());
+	m_pRamseteController	= new RamseteController(m_dBeta, m_dZeta);
+	m_pGyro 				= new AHRS(SPI::Port::kMXP);
 }
 
 /****************************************************************************
@@ -43,12 +49,16 @@ CDrive::~CDrive()
 	delete m_pRightMotor1;
 	delete m_pRightMotor2;
 	delete m_pRobotDrive;
+	delete m_pRamseteController;
+	delete m_pGyro;
 
-	m_pLeftMotor1	= nullptr;
-	m_pLeftMotor2	= nullptr;
-	m_pRightMotor1	= nullptr;
-	m_pRightMotor2	= nullptr;
-	m_pRobotDrive	= nullptr;
+	m_pLeftMotor1			= nullptr;
+	m_pLeftMotor2			= nullptr;
+	m_pRightMotor1			= nullptr;
+	m_pRightMotor2			= nullptr;
+	m_pRobotDrive			= nullptr;
+	m_pRamseteController 	= nullptr;
+	m_pGyro					= nullptr;
 }
 
 /****************************************************************************
@@ -145,7 +155,7 @@ void CDrive::GenerateTragectory()
 	};
 
 	// Generate the trajectory.
-	auto m_pTrajectory = TrajectoryGenerator::GenerateTrajectory(m_pStartPoint, m_pInteriorWaypoints, m_pEndPoint, m_pConfig);
+	m_Trajectory = TrajectoryGenerator::GenerateTrajectory(m_pStartPoint, m_pInteriorWaypoints, m_pEndPoint, m_pConfig);
 }
 
 /****************************************************************************
@@ -155,5 +165,5 @@ void CDrive::GenerateTragectory()
 ****************************************************************************/
 void CDrive::FollowTragectory()
 {
-
+	
 }

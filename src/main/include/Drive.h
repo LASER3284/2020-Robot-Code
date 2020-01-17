@@ -11,6 +11,7 @@
 #include <ctre/Phoenix.h>
 #include <frc/drive/DifferentialDrive.h>
 #include <frc/kinematics/DifferentialDriveOdometry.h>
+#include <frc/controller/RamseteController.h>
 #include <frc/kinematics/ChassisSpeeds.h>
 #include <frc/trajectory/TrajectoryGenerator.h>
 #include <frc/trajectory/TrajectoryConfig.h>
@@ -20,6 +21,10 @@
 #include "FalconMotion.h"
 
 using namespace frc;
+
+// Default constants for the CDrive class.
+const double    m_dDefaultBeta                         = 2.0;
+const double    m_dDefaultZeta                         = 0.7;
 /////////////////////////////////////////////////////////////////////////////
 class CDrive
 {
@@ -33,13 +38,20 @@ public:
     void Stop();
 
 private:
-    Joystick*            m_pDriveController;
-    CFalconMotion*       m_pLeftMotor1;
-    WPI_TalonFX*         m_pLeftMotor2;
-    CFalconMotion*       m_pRightMotor1;
-    WPI_TalonFX*         m_pRightMotor2;
-    DifferentialDrive*   m_pRobotDrive;
-    AHRS*                 m_pGyro;
+    // Object Pointers.
+    Joystick*               m_pDriveController;
+    CFalconMotion*          m_pLeftMotor1;
+    WPI_TalonFX*            m_pLeftMotor2;
+    CFalconMotion*          m_pRightMotor1;
+    WPI_TalonFX*            m_pRightMotor2;
+    DifferentialDrive*      m_pRobotDrive;
+    RamseteController*      m_pRamseteController;
+    AHRS*                   m_pGyro;
+
+    // Member variables.
+    double                  m_dBeta;
+    double                  m_dZeta;
+    Trajectory              m_Trajectory;
 };
 /////////////////////////////////////////////////////////////////////////////
 #endif
