@@ -262,7 +262,7 @@ void CFalconMotion::SetSetpoint(double dSetpoint, bool bUsePosition)
 			}
 		}
 		
-		// Set the dSetpoint member variable.
+		// Set the dSetpoint member variable so other methods can access it.
 		m_dSetpoint = dSetpoint;
 
 		// Set the motor to the desired position.
@@ -290,7 +290,7 @@ void CFalconMotion::SetSetpoint(double dSetpoint, bool bUsePosition)
 			}
 		}
 		
-		// Set the dSetpoint member variable.
+		// Set the dSetpoint member variable so other methods can access it.
 		m_dSetpoint = dSetpoint;
 
 		// Set the motor to the desired position.
