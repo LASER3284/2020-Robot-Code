@@ -5,12 +5,13 @@
 	Copyright 2020 First Team 3284 - Camdenton LASER Robotics.
 ****************************************************************************/
 #include <frc/Timer.h>
-#include <frc/Joystick.h>
-#include <ctre/Phoenix.h>
+#include <frc/kinematics/DifferentialDriveWheelSpeeds.h>
+#include <frc/geometry/Translation2d.h>
 #include "Drive.h"
 #include "IOMap.h"
 
 using namespace ctre;
+using namespace std;
 /////////////////////////////////////////////////////////////////////////////
 
 
@@ -27,6 +28,7 @@ CDrive::CDrive(Joystick* pDriveController)
 	m_pRightMotor1		= new CFalconMotion(3);
 	m_pRightMotor2		= new WPI_TalonFX(4);
 	m_pRobotDrive		= new DifferentialDrive(*m_pLeftMotor1->GetMotorPointer(), *m_pRightMotor1->GetMotorPointer());
+	m_pGyro 			= new AHRS(SPI::Port::kMXP);
 }
 
 /****************************************************************************
@@ -92,4 +94,66 @@ void CDrive::Tick()
 
 	// Drive the robot.
 	m_pRobotDrive->ArcadeDrive(YAxis, XAxis, false);
+}
+
+/****************************************************************************
+	Description:	MotionProfiling method that generates a new trajectory.
+	Arguments: 		None
+	Returns: 		Nothing
+****************************************************************************/
+void CDrive::GenerateTragectory()
+{
+	// Create start and end poses for robot.
+	const Pose2d m_pStartPoint
+	{
+		1.5_ft,					// X starting position on field in feet.
+		24.0_ft,				// Y starting position on field in feet.
+		Rotation2d(0_deg)		// Starting rotation on field in degrees.
+	};
+	const Pose2d m_pEndPoint
+	{
+		10.0_ft,				// X ending position on field in feet.
+		24.0_ft,				// Y ending position on field in feet.
+		Rotation2d(0_deg)		// Ending rotation on field in degrees.
+	};
+
+	// Create interior waypoints for trajectory. (The current waypoints make the robot follow a 2 curve snake path.)
+	vector<Translation2d> m_pInteriorWaypoints
+	{
+		Translation2d
+		{
+			4.0_ft,				// X of point 2 on field in feet.
+			23.0_ft				// Y of point 2 on field in feet.
+		},
+		Translation2d
+		{
+			6.0_ft,				// X of point 3 on field in feet.
+			25.0_ft				// Y of point 3 on field in feet.
+		},
+		Translation2d
+		{
+			8.0_ft,				// X of point 4 on field in feet.
+			24.0_ft				// Y of point 4 on field in feet.
+		}
+	};
+
+	// Configure trajectory properties.
+	TrajectoryConfig m_pConfig
+	{
+		12_fps,					// Robot max velocity I think. (Or whatever max velocity or acceleration you wish to put.)
+		12_fps_sq				// Robot max acceleration I think.
+	};
+
+	// Generate the trajectory.
+	auto m_pTrajectory = TrajectoryGenerator::GenerateTrajectory(m_pStartPoint, m_pInteriorWaypoints, m_pEndPoint, m_pConfig);
+}
+
+/****************************************************************************
+	Description:	MotionProfiling method that follows a pre-generated trajectory.
+	Arguments: 		None
+	Returns: 		Nothing
+****************************************************************************/
+void CDrive::FollowTragectory()
+{
+
 }

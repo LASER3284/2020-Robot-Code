@@ -8,8 +8,15 @@
 #define Drive_h
 
 #include <frc/Joystick.h>
-#include <frc/drive/DifferentialDrive.h>
 #include <ctre/Phoenix.h>
+#include <frc/drive/DifferentialDrive.h>
+#include <frc/kinematics/DifferentialDriveOdometry.h>
+#include <frc/kinematics/ChassisSpeeds.h>
+#include <frc/trajectory/TrajectoryGenerator.h>
+#include <frc/trajectory/TrajectoryConfig.h>
+#include <frc/trajectory/Trajectory.h>
+#include <frc/geometry/Pose2d.h>
+#include <AHRS.h>
 #include "FalconMotion.h"
 
 using namespace frc;
@@ -21,6 +28,8 @@ public:
     ~CDrive();
     void Init();
     void Tick();
+    void GenerateTragectory();
+    void FollowTragectory();
     void Stop();
 
 private:
@@ -30,6 +39,7 @@ private:
     CFalconMotion*       m_pRightMotor1;
     WPI_TalonFX*         m_pRightMotor2;
     DifferentialDrive*   m_pRobotDrive;
+    AHRS*                 m_pGyro;
 };
 /////////////////////////////////////////////////////////////////////////////
 #endif
