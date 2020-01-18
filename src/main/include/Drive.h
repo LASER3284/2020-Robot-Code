@@ -22,14 +22,19 @@ public:
     void Init();
     void Tick();
     void Stop();
+    void SetJoystickControl(bool bJoystickControl);
+    void SetMotorExpiration(double dTimeout);
+    void SetMotorSafety(bool bEnabled);
 
 private:
-    Joystick*            m_pDriveController;
-    CFalconMotion*       m_pLeftMotor1;
-    WPI_TalonFX*         m_pLeftMotor2;
-    CFalconMotion*       m_pRightMotor1;
-    WPI_TalonFX*         m_pRightMotor2;
-    DifferentialDrive*   m_pRobotDrive;
+    Joystick*               m_pDriveController;
+    CFalconMotion*          m_pLeftMotor1;
+    WPI_TalonFX*            m_pLeftMotor2;
+    CFalconMotion*          m_pRightMotor1;
+    WPI_TalonFX*            m_pRightMotor2;
+    DifferentialDrive*      m_pRobotDrive;
+
+    bool                    m_bJoystickControl;
 };
 /////////////////////////////////////////////////////////////////////////////
 #endif

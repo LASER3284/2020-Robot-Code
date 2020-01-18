@@ -5,9 +5,11 @@
 	Copyright 2020 First Team 3284 - Camdenton LASER Robotics.
 ******************************************************************************/
 #include "RobotMain.h"
-#include "Drive.h"
+#include <frc/smartdashboard/SmartDashboard.h>
 
 using namespace frc;
+///////////////////////////////////////////////////////////////////////////////
+
 
 /******************************************************************************
 	Description:	CRobotMain Constructor.
@@ -17,25 +19,9 @@ using namespace frc;
 CRobotMain::CRobotMain()
 {
     // Create object pointers.
-    m_pDriveController  = new frc::Joystick(0);
-    m_pAuxController    = new frc::Joystick(1);
+    m_pDriveController  = new Joystick(0);
     m_pDrive            = new CDrive(m_pDriveController);
     m_pTimer            = new Timer();
-    m_pLiveWindow       = LiveWindow::GetInstance();
-
-    // Assign variables.
-    m_nTeleopState                      = eTeleopIdle;
-    m_nAutoState                        = eAutoIdle;
-    m_bDriveControllerPOVUpPressed 		= false;
-	m_bDriveControllerPOVDownPressed	= false;
-	m_bDriveControllerPOVLeftPressed	= false;
-	m_bDriveControllerPOVRightPressed	= false;
-	m_bDriveControllerButtonAPressed	= false;
-	m_bDriveControllerButtonBPressed	= false;
-	m_bDriveControllerButtonXPressed	= false;
-	m_bDriveControllerButtonYPressed	= false;
-	m_bDriveControllerButtonLSPressed	= false;
-	m_bDriveControllerButtonRSPressed	= false;
 }
 
 /******************************************************************************
@@ -46,56 +32,95 @@ CRobotMain::CRobotMain()
 CRobotMain::~CRobotMain()
 {
     delete m_pDriveController;
-    delete m_pAuxController;
-    delete m_pDrive;
+	delete m_pDrive;
     delete m_pTimer;
-
     m_pDriveController  = nullptr;
-    m_pAuxController    = nullptr;
-    m_pDrive            = nullptr;
+	m_pDrive 			= nullptr;
     m_pTimer            = nullptr;
 }
 
+/****************************************************************************
+	Description:	Ran on initial startup of the robot.
+	Arguments: 		None
+	Returns: 		Nothing
+****************************************************************************/
 void CRobotMain::RobotInit()
 {
 	m_pDrive->Init();
 }
 
+/******************************************************************************
+	Description:	Runs every 20ms in a loop after the robot has started.
+	Arguments:	 	None
+	Returns: 		Nothing
+******************************************************************************/
 void CRobotMain::RobotPeriodic()
 {
 
 }
 
+/******************************************************************************
+	Description:	Ran only once, after the robot has entered Autonomous mode.
+	Arguments:	 	None
+	Returns: 		Nothing
+******************************************************************************/
 void CRobotMain::AutonomousInit()
 {
 
 }
 
+/******************************************************************************
+	Description:	Runs every 20ms in a loop after the robot has entered
+                    Autonomous mode.
+	Arguments:	 	None
+	Returns: 		Nothing
+******************************************************************************/
 void CRobotMain::AutonomousPeriodic()
 {
 
 }
 
+/******************************************************************************
+	Description:	Ran only once, after robot has entered Teleop mode.
+	Arguments:	 	None
+	Returns: 		Nothing
+******************************************************************************/
 void CRobotMain::TeleopInit()
 {
-
 }
 
+/******************************************************************************
+	Description:	Runs every 20ms in a loop after the robot has entered 
+                    Teleop mode.
+	Arguments:	 	None
+	Returns: 		Nothing
+******************************************************************************/
 void CRobotMain::TeleopPeriodic()
 {
-	m_pDrive->Tick();
+    m_pDrive->Tick();
 }
 
+/******************************************************************************
+	Description:	Ran only once, after the robot has entered Test mode.
+	Arguments:	 	None
+	Returns: 		Nothing
+******************************************************************************/
 void CRobotMain::TestInit() 
 {
 
 }
 
+/******************************************************************************
+	Description:	Runs every 20ms in a loop after the robot has entered
+                    Test mode.
+	Arguments:	 	None
+	Returns: 		Nothing
+******************************************************************************/
 void CRobotMain::TestPeriodic()
 {
 	
 }
-
+///////////////////////////////////////////////////////////////////////////////
 #ifndef RUNNING_FRC_TESTS
 int main() { return frc::StartRobot<CRobotMain>(); }
 #endif

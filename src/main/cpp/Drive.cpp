@@ -36,12 +36,14 @@ CDrive::CDrive(Joystick* pDriveController)
 ****************************************************************************/
 CDrive::~CDrive()
 {
+	// Delete objects.
 	delete m_pLeftMotor1;
 	delete m_pLeftMotor2;
 	delete m_pRightMotor1;
 	delete m_pRightMotor2;
 	delete m_pRobotDrive;
 
+	// Set object references to nullptrs.
 	m_pLeftMotor1	= nullptr;
 	m_pLeftMotor2	= nullptr;
 	m_pRightMotor1	= nullptr;
@@ -76,20 +78,57 @@ void CDrive::Init()
 ****************************************************************************/
 void CDrive::Tick()
 {
-	// Set variables to joysticks.
-	double XAxis = m_pDriveController->GetRawAxis(4);
-	double YAxis = -m_pDriveController->GetRawAxis(2);
-
-	// Check if joystick is in deadzone.
-	if (fabs(XAxis) < 0.1)
+	if (m_bJoystickControl)
 	{
-		XAxis = 0;
+		// Set variables to joysticks.
+		double XAxis = m_pDriveController->GetRawAxis(4);
+		double YAxis = -m_pDriveController->GetRawAxis(2);
+	
+		// Check if joystick is in deadzone.
+		if (fabs(XAxis) < 0.1)
+		{
+			XAxis = 0;
+		}
+		if (fabs(YAxis) < 0.1)
+		{
+			YAxis = 0;
+		}
+	
+		// Drive the robot.
+		m_pRobotDrive->ArcadeDrive(YAxis, XAxis, false);
 	}
-	if (fabs(YAxis) < 0.1)
-	{
-		YAxis = 0;
-	}
-
-	// Drive the robot.
-	m_pRobotDrive->ArcadeDrive(YAxis, XAxis, false);
 }
+
+/****************************************************************************
+	Description:	SetJoystickControl - Sets the desired joystick control.
+	Arguments: 		bool bJoystickControl - True if joystick control enabled,
+					false otherwise.
+	Returns: 		Nothing
+****************************************************************************/
+void CDrive::SetJoystickControl(bool bJoystickControl)
+{
+	m_bJoystickControl = bJoystickControl;
+}
+
+/****************************************************************************
+	Description:	SetMotorExpiration - Sets the motor safety expiration
+					timeout.
+	Arguments: 		double dTimeout - Expiration timeout
+	Returns: 		Nothing
+****************************************************************************/
+void CDrive::SetMotorExpiration(double dTimeout)
+{
+	m_pRobotDrive->SetExpiration(dTimeout);
+}
+
+/****************************************************************************
+	Description:	SetMotorSafety - Sets the motor safety enabled for the
+					drive motors.
+	Arguments: 		bool bEnabled - True to set MotorSafetyEnabled
+	Returns: 		Nothing
+****************************************************************************/
+void CDrive::SetMotorSafety(bool bEnabled)
+{
+	m_pRobotDrive->SetSafetyEnabled(bEnabled);
+}
+///////////////////////////////////////////////////////////////////////////////

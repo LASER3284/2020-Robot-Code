@@ -11,8 +11,7 @@
 #include <frc/Timer.h>
 #include <frc/Joystick.h>
 #include <frc/LiveWindow/LiveWindow.h>
-
-class CDrive;
+#include "Drive.h"
 
 using namespace frc;
 ///////////////////////////////////////////////////////////////////////////////
@@ -49,11 +48,9 @@ private:
     };
 
     // Object pointers.
-    frc::Joystick*      m_pDriveController;
-    frc::Joystick*      m_pAuxController;
+    Joystick*           m_pDriveController;
     CDrive*             m_pDrive;
     Timer*              m_pTimer;
-    LiveWindow*         m_pLiveWindow;
 
     // Initialize variables.
     int         m_nTeleopState;
