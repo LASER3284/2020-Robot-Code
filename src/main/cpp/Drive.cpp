@@ -35,7 +35,7 @@ CDrive::CDrive(Joystick* pDriveController)
 	m_pRightMotor1			= new CFalconMotion(10);
 	m_pRightMotor2			= new WPI_TalonFX(11);
 	m_pRobotDrive			= new DifferentialDrive(*m_pLeftMotor1->GetMotorPointer(), *m_pRightMotor1->GetMotorPointer());
-	m_pKinematics			= new DifferentialDriveKinematics(meter_t(m_dDrivebaseWidth));
+	m_pKinematics			= new DifferentialDriveKinematics(inch_t(m_dDrivebaseWidth));
 	m_pRamseteController	= new RamseteController(m_dBeta, m_dZeta);
 	m_pGyro 				= new AHRS(SPI::Port::kMXP);
 	m_pTimer				= new Timer();
@@ -108,7 +108,7 @@ void CDrive::Tick()
 {
 	// Set variables to joysticks.
 	double XAxis = m_pDriveController->GetRawAxis(4);
-	double YAxis = -m_pDriveController->GetRawAxis(1);
+	double YAxis = m_pDriveController->GetRawAxis(1);
 
 	// Check if joystick is in deadzone.
 	if (fabs(XAxis) < 0.1)
@@ -127,7 +127,7 @@ void CDrive::Tick()
 	if (!m_pDriveController->GetRawButton(1))
 	{
 		// Set drivetrain powers.
-		m_pRobotDrive->ArcadeDrive(YAxis, XAxis, false);
+		m_pRobotDrive->ArcadeDrive(YAxis, -XAxis, false);
 
 		// Stop motors if we were previously following a path and reset trajectory.
 		if (m_bMotionProfile)
@@ -192,7 +192,7 @@ void CDrive::FollowTragectory()
 
 	// Set motor powers.
 	m_pLeftMotor1->SetSetpoint(double(m_pDriveSpeeds.left), false);
-	m_pRightMotor1->SetSetpoint(double(m_pDriveSpeeds.right), false);
+	m_pRightMotor1->SetSetpoint(double(-m_pDriveSpeeds.right), false);
 
 	// Call motor ticks.
 	m_pLeftMotor1->Tick();

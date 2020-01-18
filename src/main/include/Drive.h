@@ -27,7 +27,7 @@ using namespace std;
 // Default constants for the CDrive class.
 const double    m_dDefaultBeta                         = 2.0;
 const double    m_dDefaultZeta                         = 0.7;
-const double    m_dDefaultDrivebaseWidth               = 23.0;
+const double    m_dDefaultDrivebaseWidth               = 25.0;
 /////////////////////////////////////////////////////////////////////////////
 class CDrive
 {
@@ -72,7 +72,7 @@ private:
 	};
 	const Pose2d m_EndPoint
 	{
-		20.0_ft,				// X ending position on field in feet.
+		10.0_ft,				// X ending position on field in feet.
 		24.0_ft,				// Y ending position on field in feet.
 		Rotation2d(0_deg)		// Ending rotation on field in degrees.
 	};
@@ -100,8 +100,8 @@ private:
 	// Configure trajectory properties.
 	TrajectoryConfig m_Config
 	{
-		10_fps,					// Robot max velocity I think. (Or whatever max velocity or acceleration you wish to put.)
-		10_fps_sq				// Robot max acceleration I think.
+		5_fps,					// Robot max velocity I think. (Or whatever max velocity or acceleration you wish to put.)
+		5_fps_sq				// Robot max acceleration I think.
 	};
 };
 /////////////////////////////////////////////////////////////////////////////
