@@ -9,6 +9,7 @@
 
 #include <ctre/phoenix/motorcontrol/can/WPI_TalonFX.h>
 #include <frc/Timer.h>
+#include "IOMap.h"
 
 using namespace ctre::phoenix::motorcontrol::can;
 using namespace frc;
@@ -34,7 +35,6 @@ const double 	dDefaultFalconMotionMaxHomingTime	    		=    0.000;		// Default Ma
 const double 	dDefaultFalconMotionMaxFindingTime	    		=    0.000;		// Default Maximum allowable time to move to position. Zero to disable timeout. This is in seconds.
 const double	dDefualtFalconMotionManualFwdSpeed 	    		=	 0.500;
 const double	dDefualtFalconMotionManualRevSpeed	    		=	-0.500;
-enum State {eIdle, eHomingReverse, eHomingForward, eFinding, eManualForward, eManualReverse};
 ///////////////////////////////////////////////////////////////////////////////
 
 

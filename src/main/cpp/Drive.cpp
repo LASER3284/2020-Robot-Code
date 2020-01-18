@@ -22,10 +22,10 @@ using namespace ctre;
 CDrive::CDrive(Joystick* pDriveController)
 {
 	m_pDriveController 	= pDriveController;
-	m_pLeftMotor1		= new CFalconMotion(1);
-	m_pLeftMotor2		= new WPI_TalonFX(2);
-	m_pRightMotor1		= new CFalconMotion(3);
-	m_pRightMotor2		= new WPI_TalonFX(4);
+	m_pLeftMotor1		= new CFalconMotion(nLeftDriveMotor1);
+	m_pLeftMotor2		= new WPI_TalonFX(nLeftDriveMotor2);
+	m_pRightMotor1		= new CFalconMotion(nRightDriveMotor1);
+	m_pRightMotor2		= new WPI_TalonFX(nRightDriveMotor2);
 	m_pRobotDrive		= new DifferentialDrive(*m_pLeftMotor1->GetMotorPointer(), *m_pRightMotor1->GetMotorPointer());
 }
 
@@ -83,7 +83,7 @@ void CDrive::Tick()
 		// Set variables to joysticks.
 		double XAxis = m_pDriveController->GetRawAxis(4);
 		double YAxis = -m_pDriveController->GetRawAxis(2);
-	
+
 		// Check if joystick is in deadzone.
 		if (fabs(XAxis) < 0.1)
 		{
@@ -93,7 +93,7 @@ void CDrive::Tick()
 		{
 			YAxis = 0;
 		}
-	
+
 		// Drive the robot.
 		m_pRobotDrive->ArcadeDrive(YAxis, XAxis, false);
 	}
