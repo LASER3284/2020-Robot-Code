@@ -51,7 +51,7 @@ CFalconMotion::CFalconMotion(int nDeviceID)
 	m_dFindingStartTime				= 0.000;
 
 	// Set up the feedback device for a quadrature encoder.
-	m_pMotor->ConfigSelectedFeedbackSensor(FeedbackDevice::QuadEncoder);
+	m_pMotor->ConfigSelectedFeedbackSensor(FeedbackDevice::IntegratedSensor);
 	// Reset the encoder count to zero.
 	ResetEncoderPosition();
 	// Set the encoder and motor as both positive.
@@ -188,12 +188,16 @@ void CFalconMotion::Tick()
 			// Check to see if position is within tolerance or limit switch
 			// is activated in direction of travel.
 			if (IsAtSetpoint() ||
-			   (((GetSetpoint() > GetActual()) && IsFwdLimitSwitchPressed()) ||
-			    ((GetSetpoint() < GetActual()) && IsRevLimitSwitchPressed()) ||
+			   (((GetSetpoint() > GetActual(m_bUsePosition)) && IsFwdLimitSwitchPressed()) ||
+			    ((GetSetpoint() < GetActual(m_bUsePosition)) && IsRevLimitSwitchPressed()) ||
 				((m_dMaxFindingTime > 0.000) && (m_pTimer->Get() > (m_dFindingStartTime + m_dMaxFindingTime)))))
 			{
-				// Stop the motor and set the current state to eIdle.
-				Stop();
+				// Only stop motor when using position.
+				if (m_bUsePosition)
+				{
+					// Stop the motor and set the current state to eIdle.
+					Stop();
+				}
 			}
 			break;
 
@@ -294,7 +298,7 @@ void CFalconMotion::SetSetpoint(double dSetpoint, bool bUsePosition)
 		m_dSetpoint = dSetpoint;
 
 		// Set the motor to the desired position.
-		m_pMotor->Set(ControlMode::Velocity, dSetpoint * (84 / 8 * m_nPulsesPerRev) / m_dTimeUnitInterval);
+		m_pMotor->Set(ControlMode::Velocity, (dSetpoint * m_dRevsPerUnit * m_nPulsesPerRev) / m_dTimeUnitInterval);
 	}
 	
 
@@ -471,7 +475,7 @@ bool CFalconMotion::IsRevLimitSwitchPressed()
 ******************************************************************************/
 bool CFalconMotion::IsAtSetpoint()
 {
-	return (((fabs(GetSetpoint() - GetActual())) < m_dTolerance) && (fabs(m_pMotor->GetMotorOutputVoltage()) < 1.000));
+	return (((fabs(GetSetpoint() - GetActual(m_bUsePosition))) < m_dTolerance) && (fabs(m_pMotor->GetMotorOutputVoltage()) < 1.000));
 }
 
 /******************************************************************************
@@ -548,18 +552,18 @@ void CFalconMotion::SetMotorNeutralMode(int nMode)
 	Arguments:	 	None
 	Returns: 		double - Position of the motor.
 ******************************************************************************/
-double CFalconMotion::GetActual()
+double CFalconMotion::GetActual(bool bUsePosition)
 {
 	// Create instance variables.
-	double dActual = 0.000;
+	double dActual = 0.0;
 
-	if (m_bUsePosition)
+	if (bUsePosition)
 	{
 		dActual = (m_pMotor->GetSelectedSensorPosition() / m_dRevsPerUnit / m_nPulsesPerRev);
 	}
 	else
 	{
-		dActual = (m_pMotor->GetSelectedSensorVelocity() / (84 / 8 * m_nPulsesPerRev) * m_dTimeUnitInterval);
+		dActual = (m_pMotor->GetSelectedSensorVelocity() / m_dRevsPerUnit / m_nPulsesPerRev) * m_dTimeUnitInterval;
 	}
 
 	return dActual;

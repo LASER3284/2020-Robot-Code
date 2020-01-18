@@ -11,7 +11,7 @@
 #include "IOMap.h"
 
 using namespace ctre;
-using namespace std;
+using namespace units;
 /////////////////////////////////////////////////////////////////////////////
 
 
@@ -23,18 +23,23 @@ using namespace std;
 CDrive::CDrive(Joystick* pDriveController)
 {
 	// Initialize member variables.
+	m_bMotionProfile		= false;
 	m_dBeta					= m_dDefaultBeta;
 	m_dZeta					= m_dDefaultZeta;
+	m_dDrivebaseWidth		= m_dDefaultDrivebaseWidth;
 
 	// Create object pointers.
 	m_pDriveController 		= pDriveController;
-	m_pLeftMotor1			= new CFalconMotion(1);
-	m_pLeftMotor2			= new WPI_TalonFX(2);
-	m_pRightMotor1			= new CFalconMotion(3);
-	m_pRightMotor2			= new WPI_TalonFX(4);
+	m_pLeftMotor1			= new CFalconMotion(8);
+	m_pLeftMotor2			= new WPI_TalonFX(9);
+	m_pRightMotor1			= new CFalconMotion(10);
+	m_pRightMotor2			= new WPI_TalonFX(11);
 	m_pRobotDrive			= new DifferentialDrive(*m_pLeftMotor1->GetMotorPointer(), *m_pRightMotor1->GetMotorPointer());
+	m_pKinematics			= new DifferentialDriveKinematics(meter_t(m_dDrivebaseWidth));
 	m_pRamseteController	= new RamseteController(m_dBeta, m_dZeta);
 	m_pGyro 				= new AHRS(SPI::Port::kMXP);
+	m_pTimer				= new Timer();
+	m_pOdometry 			= new DifferentialDriveOdometry(Rotation2d(degree_t(m_pGyro->GetYaw())), m_StartPoint);
 }
 
 /****************************************************************************
@@ -79,6 +84,19 @@ void CDrive::Init()
 	// Clear persistant motor controller faults.
 	m_pLeftMotor1->ClearStickyFaults();
 	m_pRightMotor1->ClearStickyFaults();
+
+	// Reset motor encoders.
+	m_pLeftMotor1->ResetEncoderPosition();
+	m_pRightMotor1->ResetEncoderPosition();
+
+	// Reset robot field odometry.
+	ResetOdometry();
+
+	// Start the timer.
+	m_pTimer->Start();
+
+	// Reset gyro.
+	m_pGyro->Reset();
 }
 
 /****************************************************************************
@@ -90,7 +108,7 @@ void CDrive::Tick()
 {
 	// Set variables to joysticks.
 	double XAxis = m_pDriveController->GetRawAxis(4);
-	double YAxis = -m_pDriveController->GetRawAxis(2);
+	double YAxis = -m_pDriveController->GetRawAxis(1);
 
 	// Check if joystick is in deadzone.
 	if (fabs(XAxis) < 0.1)
@@ -102,8 +120,43 @@ void CDrive::Tick()
 		YAxis = 0;
 	}
 
+	// Update odometry. (Position on field.)
+	m_pOdometry->Update(Rotation2d(degree_t(m_pGyro->GetYaw())), inch_t(m_pLeftMotor1->GetActual(true)), inch_t(m_pRightMotor1->GetActual(true)));
+
 	// Drive the robot.
-	m_pRobotDrive->ArcadeDrive(YAxis, XAxis, false);
+	if (!m_pDriveController->GetRawButton(1))
+	{
+		// Set drivetrain powers.
+		m_pRobotDrive->ArcadeDrive(YAxis, XAxis, false);
+
+		// Stop motors if we were previously following a path and reset trajectory.
+		if (m_bMotionProfile)
+		{
+			Stop();
+			ResetOdometry();
+			m_bMotionProfile = false;
+		}
+	}
+	else
+	{
+		// Get the current time.
+		if (!m_bMotionProfile)
+		{
+			m_dPathFollowStartTime = m_pTimer->Get();
+		}
+
+		// Set that we are currently following a path.
+		m_bMotionProfile = true;
+
+		// Follow the pre-generated path.
+		FollowTragectory();
+	}
+
+	// Update Smartdashboard values.
+	SmartDashboard::PutNumber("Left Actual Velocity", m_pLeftMotor1->GetActual(false));
+	SmartDashboard::PutNumber("Right Actual Velocity", m_pRightMotor1->GetActual(false));
+	SmartDashboard::PutNumber("Left Actual Position", m_pLeftMotor1->GetActual(true));
+	SmartDashboard::PutNumber("Right Actual Position", m_pRightMotor1->GetActual(true));
 }
 
 /****************************************************************************
@@ -113,51 +166,8 @@ void CDrive::Tick()
 ****************************************************************************/
 void CDrive::GenerateTragectory()
 {
-	// Create start and end poses for robot.
-	const Pose2d m_pStartPoint
-	{
-		1.5_ft,					// X starting position on field in feet.
-		24.0_ft,				// Y starting position on field in feet.
-		Rotation2d(0_deg)		// Starting rotation on field in degrees.
-	};
-	const Pose2d m_pEndPoint
-	{
-		10.0_ft,				// X ending position on field in feet.
-		24.0_ft,				// Y ending position on field in feet.
-		Rotation2d(0_deg)		// Ending rotation on field in degrees.
-	};
-
-	// Create interior waypoints for trajectory. (The current waypoints make the robot follow a 2 curve snake path.)
-	vector<Translation2d> m_pInteriorWaypoints
-	{
-		Translation2d
-		{
-			4.0_ft,				// X of point 2 on field in feet.
-			23.0_ft				// Y of point 2 on field in feet.
-		},
-		Translation2d
-		{
-			6.0_ft,				// X of point 3 on field in feet.
-			25.0_ft				// Y of point 3 on field in feet.
-		},
-		Translation2d
-		{
-			8.0_ft,				// X of point 4 on field in feet.
-			24.0_ft				// Y of point 4 on field in feet.
-		}
-	};
-
-	// Configure trajectory properties.
-	TrajectoryConfig m_pConfig
-	{
-		12_fps,					// Robot max velocity I think. (Or whatever max velocity or acceleration you wish to put.)
-		12_fps_sq				// Robot max acceleration I think.
-	};
-
-	// Initialize odometry.
-	m_pOdometry = new DifferentialDriveOdometry(Rotation2d(units::degree_t(m_pGyro->GetYaw())));
 	// Generate the trajectory.
-	m_Trajectory = TrajectoryGenerator::GenerateTrajectory(m_pStartPoint, m_pInteriorWaypoints, m_pEndPoint, m_pConfig);
+	m_Trajectory = TrajectoryGenerator::GenerateTrajectory(m_StartPoint, m_InteriorWaypoints, m_EndPoint, m_Config);
 }
 
 /****************************************************************************
@@ -167,6 +177,56 @@ void CDrive::GenerateTragectory()
 ****************************************************************************/
 void CDrive::FollowTragectory()
 {
-	ChassisSpeeds m_pAdjustedSpeeds = m_pRamseteController->Calculate(m_pOdometry->GetPose, goal);
-	DifferentialDriveWheelSpeeds m_pDriveSpeeds = 
+	// Calculate elapsed time.
+	double dElapsedTime = (m_pTimer->Get() - m_dPathFollowStartTime);
+
+	// Sample the trajectory at .06 seconds from the last point.
+	const auto m_Goal = m_Trajectory.Sample(second_t(dElapsedTime));
+	// Calculate the wheel velocity for the next point in the trajectory path.
+	ChassisSpeeds m_pAdjustedSpeeds = m_pRamseteController->Calculate(m_pOdometry->GetPose(), m_Goal);
+	// Convert to values we can use for Differential Drive.
+	DifferentialDriveWheelSpeeds m_pDriveSpeeds = m_pKinematics->ToWheelSpeeds(m_pAdjustedSpeeds);
+
+	// Disable motor safety.
+	m_pRobotDrive->SetSafetyEnabled(false);
+
+	// Set motor powers.
+	m_pLeftMotor1->SetSetpoint(double(m_pDriveSpeeds.left), false);
+	m_pRightMotor1->SetSetpoint(double(m_pDriveSpeeds.right), false);
+
+	// Call motor ticks.
+	m_pLeftMotor1->Tick();
+	m_pRightMotor1->Tick();
+
+	// Put motor powers on dashboard.
+	SmartDashboard::PutNumber("Elapsed Time", dElapsedTime);
+	SmartDashboard::PutNumber("LeftMotorPower", double(m_pDriveSpeeds.left));
+	SmartDashboard::PutNumber("RightMotorPower", double(m_pDriveSpeeds.right));
+}
+
+/****************************************************************************
+	Description:	Method that resets encoders and odometry.
+	Arguments: 		None
+	Returns: 		Nothing
+****************************************************************************/
+void CDrive::ResetOdometry()
+{
+	// Reset drive encoders.
+	m_pLeftMotor1->ResetEncoderPosition();
+	m_pRightMotor1->ResetEncoderPosition();
+
+	// Reset field position.
+	m_pOdometry->ResetPosition(m_StartPoint, Rotation2d(degree_t(m_pGyro->GetYaw())));
+}
+
+/****************************************************************************
+	Description:	Method the stops drive motors.
+	Arguments: 		None
+	Returns: 		Nothing
+****************************************************************************/
+void CDrive::Stop()
+{
+	// Stop both drive motors.
+	m_pLeftMotor1->Stop();
+	m_pRightMotor1->Stop();
 }

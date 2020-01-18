@@ -84,8 +84,7 @@ void CRobotMain::TeleopInit()
 
 void CRobotMain::TeleopPeriodic()
 {
-	//m_pDrive->Tick();
-	m_pDrive->FollowTragectory();
+	m_pDrive->Tick();
 }
 
 void CRobotMain::TestInit() 
