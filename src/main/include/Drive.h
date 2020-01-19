@@ -25,8 +25,8 @@ using namespace frc;
 using namespace std;
 
 // Default constants for the CDrive class.
-const double    m_dDefaultBeta                         = 2.0;
-const double    m_dDefaultZeta                         = 0.7;
+const double    m_dDefaultBeta                         = 2.0;	// 2.0
+const double    m_dDefaultZeta                         = 0.7;	// 0.7
 const double    m_dDefaultDrivebaseWidth               = 25.0;
 /////////////////////////////////////////////////////////////////////////////
 class CDrive
@@ -100,8 +100,8 @@ private:
 	// Configure trajectory properties.
 	TrajectoryConfig m_Config
 	{
-		5_fps,					// Robot max velocity I think. (Or whatever max velocity or acceleration you wish to put.)
-		5_fps_sq				// Robot max acceleration I think.
+		15_fps,					// Robot max velocity I think. (Or whatever max velocity or acceleration you wish to put.)
+		15_fps_sq				// Robot max acceleration I think.
 	};
 };
 /////////////////////////////////////////////////////////////////////////////

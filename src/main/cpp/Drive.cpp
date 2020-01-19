@@ -187,8 +187,8 @@ void CDrive::FollowTragectory()
 	// Calculate elapsed time.
 	double dElapsedTime = (m_pTimer->Get() - m_dPathFollowStartTime);
 
-	// Sample the trajectory at .06 seconds from the last point.
-	const auto m_Goal = m_Trajectory.Sample(second_t(dElapsedTime));
+	// Sample the trajectory at .02 seconds from the last point.
+	const auto m_Goal = m_Trajectory.Sample(second_t(dElapsedTime + 0.02));
 	// Calculate the wheel velocity for the next point in the trajectory path.
 	ChassisSpeeds m_pAdjustedSpeeds = m_pRamseteController->Calculate(m_pOdometry->GetPose(), m_Goal);
 	// Convert to values we can use for Differential Drive.
@@ -207,6 +207,8 @@ void CDrive::FollowTragectory()
 
 	// Put motor powers on dashboard.
 	SmartDashboard::PutNumber("Elapsed Time", dElapsedTime);
+	SmartDashboard::PutNumber("Current Time Pos in Trajectory", double(m_Goal.t));
+	SmartDashboard::PutNumber("Total Trajectory Time", double(m_Trajectory.TotalTime()));
 	SmartDashboard::PutNumber("LeftMotorPower", double(m_pDriveSpeeds.left));
 	SmartDashboard::PutNumber("RightMotorPower", double(m_pDriveSpeeds.right));
 }
