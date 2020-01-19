@@ -80,18 +80,18 @@ void CDrive::Tick()
 {
 	if (m_bJoystickControl)
 	{
-		// Set variables to joysticks.
-		double XAxis = m_pDriveController->GetRawAxis(4);
-		double YAxis = -m_pDriveController->GetRawAxis(2);
+		// Set variables to joystick values.
+		double XAxis = m_pDriveController->GetRawAxis(eRightAxisX);
+		double YAxis = -m_pDriveController->GetRawAxis(eLeftAxisY);
 
 		// Check if joystick is in deadzone.
 		if (fabs(XAxis) < 0.1)
 		{
-			XAxis = 0;
+			XAxis = 0.0;
 		}
 		if (fabs(YAxis) < 0.1)
 		{
-			YAxis = 0;
+			YAxis = 0.0;
 		}
 
 		// Drive the robot.

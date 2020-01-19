@@ -4,8 +4,9 @@
 	Project:		2020 Infinite Recharge Robot Code.
 	Copyright 2020 First Team 3284 - Camdenton LASER Robotics.
 ******************************************************************************/
-#include "RobotMain.h"
 #include <frc/smartdashboard/SmartDashboard.h>
+#include "RobotMain.h"
+#include "Intake.h"
 
 using namespace frc;
 ///////////////////////////////////////////////////////////////////////////////
@@ -20,8 +21,9 @@ CRobotMain::CRobotMain()
 {
     // Create object pointers.
     m_pDriveController  = new Joystick(0);
-    m_pDrive            = new CDrive(m_pDriveController);
     m_pTimer            = new Timer();
+    m_pDrive            = new CDrive(m_pDriveController);
+	m_pIntake			= new CIntake();
 }
 
 /******************************************************************************
@@ -31,12 +33,17 @@ CRobotMain::CRobotMain()
 ******************************************************************************/
 CRobotMain::~CRobotMain()
 {
+    // Delete objects.
     delete m_pDriveController;
-	delete m_pDrive;
     delete m_pTimer;
+	delete m_pDrive;
+	delete m_pIntake;
+
+    // Set pointers to nullptrs.
     m_pDriveController  = nullptr;
-	m_pDrive 			= nullptr;
     m_pTimer            = nullptr;
+	m_pDrive 			= nullptr;
+	m_pIntake			= nullptr;
 }
 
 /****************************************************************************
@@ -47,6 +54,7 @@ CRobotMain::~CRobotMain()
 void CRobotMain::RobotInit()
 {
 	m_pDrive->Init();
+	m_pIntake->Init();
 }
 
 /******************************************************************************
@@ -59,6 +67,27 @@ void CRobotMain::RobotPeriodic()
 
 }
 
+/****************************************************************************
+	Description:	Ran only once, when robot enters Disabled mode.
+	Arguments: 		None
+	Returns: 		Nothing
+****************************************************************************/
+void CRobotMain::DisabledInit()
+{
+	
+}
+
+/******************************************************************************
+	Description:	Runs every 20ms in a loop after the robot has entered
+					Disabled mode.
+	Arguments:	 	None
+	Returns: 		Nothing
+******************************************************************************/
+void CRobotMain::DisabledPeriodic()
+{
+
+}
+
 /******************************************************************************
 	Description:	Ran only once, after the robot has entered Autonomous mode.
 	Arguments:	 	None
@@ -66,7 +95,8 @@ void CRobotMain::RobotPeriodic()
 ******************************************************************************/
 void CRobotMain::AutonomousInit()
 {
-
+    // Disable joystick control to prevent issues during Autonomous.
+    m_pDrive->SetJoystickControl(false);
 }
 
 /******************************************************************************
@@ -87,6 +117,8 @@ void CRobotMain::AutonomousPeriodic()
 ******************************************************************************/
 void CRobotMain::TeleopInit()
 {
+    // Enable joystick control for Teleop use.
+    m_pDrive->SetJoystickControl(true);
 }
 
 /******************************************************************************
@@ -97,6 +129,7 @@ void CRobotMain::TeleopInit()
 ******************************************************************************/
 void CRobotMain::TeleopPeriodic()
 {
+	// Update Drive.
     m_pDrive->Tick();
 }
 

@@ -9,12 +9,14 @@
 /////////////////////////////////////////////////////////////////////////////
 
 // Solenoid Channels.
+const int nIntakeSolenoid				=	0;		// Intake Solenoid Channel Number
 
 // CAN Device IDs.
 const int nLeftDriveMotor1		  		=  	1;		// Falcon ID for left drive motor 1
 const int nLeftDriveMotor2		  		=  	2;		// Falcon ID for left drive motor 2 						
 const int nRightDriveMotor1		  		=   3;		// Falcon ID for right drive motor 1
 const int nRightDriveMotor2		  		=   4;		// Falcon ID for right drive motor 2						
+const int nIntakeMotor					=	8;		// SparkMax ID for Intake Motor
 
 // PWM Channels.
 

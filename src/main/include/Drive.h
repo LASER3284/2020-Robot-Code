@@ -14,6 +14,13 @@
 
 using namespace frc;
 /////////////////////////////////////////////////////////////////////////////
+
+
+/******************************************************************************
+	Description:	CDrive class definition.
+	Arguments:		Joystick pDriveController
+	Derived From:	Nothing
+******************************************************************************/
 class CDrive
 {
 public:
