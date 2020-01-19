@@ -30,10 +30,10 @@ CDrive::CDrive(Joystick* pDriveController)
 
 	// Create object pointers.
 	m_pDriveController 		= pDriveController;
-	m_pLeftMotor1			= new CFalconMotion(8);
-	m_pLeftMotor2			= new WPI_TalonFX(9);
-	m_pRightMotor1			= new CFalconMotion(10);
-	m_pRightMotor2			= new WPI_TalonFX(11);
+	m_pLeftMotor1			= new CFalconMotion(10);
+	m_pLeftMotor2			= new WPI_TalonFX(11);
+	m_pRightMotor1			= new CFalconMotion(8);
+	m_pRightMotor2			= new WPI_TalonFX(9);
 	m_pRobotDrive			= new DifferentialDrive(*m_pLeftMotor1->GetMotorPointer(), *m_pRightMotor1->GetMotorPointer());
 	m_pKinematics			= new DifferentialDriveKinematics(inch_t(m_dDrivebaseWidth));
 	m_pRamseteController	= new RamseteController(m_dBeta, m_dZeta);
@@ -85,9 +85,16 @@ void CDrive::Init()
 	m_pLeftMotor1->ClearStickyFaults();
 	m_pRightMotor1->ClearStickyFaults();
 
+	// Invert the left side.
+	m_pLeftMotor1->SetMotorInverted(true);
+	m_pLeftMotor2->SetInverted(true);
+
 	// Reset motor encoders.
 	m_pLeftMotor1->ResetEncoderPosition();
 	m_pRightMotor1->ResetEncoderPosition();
+
+	// Don't let the DifferentialDrive Invert anything.
+	m_pRobotDrive->SetRightSideInverted(false);
 
 	// Reset robot field odometry.
 	ResetOdometry();
@@ -108,7 +115,7 @@ void CDrive::Tick()
 {
 	// Set variables to joysticks.
 	double XAxis = m_pDriveController->GetRawAxis(4);
-	double YAxis = m_pDriveController->GetRawAxis(1);
+	double YAxis = -m_pDriveController->GetRawAxis(1);
 
 	// Check if joystick is in deadzone.
 	if (fabs(XAxis) < 0.1)
@@ -121,13 +128,13 @@ void CDrive::Tick()
 	}
 
 	// Update odometry. (Position on field.)
-	m_pOdometry->Update(Rotation2d(degree_t(m_pGyro->GetYaw())), inch_t(m_pLeftMotor1->GetActual(true)), inch_t(m_pRightMotor1->GetActual(true)));
+	m_pOdometry->Update(Rotation2d(degree_t(-m_pGyro->GetYaw())), inch_t(m_pLeftMotor1->GetActual(true)), inch_t(m_pRightMotor1->GetActual(true)));
 
 	// Drive the robot.
 	if (!m_pDriveController->GetRawButton(1))
 	{
 		// Set drivetrain powers.
-		m_pRobotDrive->ArcadeDrive(YAxis, -XAxis, false);
+		m_pRobotDrive->ArcadeDrive(YAxis, XAxis, false);
 
 		// Stop motors if we were previously following a path and reset trajectory.
 		if (m_bMotionProfile)
@@ -192,7 +199,7 @@ void CDrive::FollowTragectory()
 
 	// Set motor powers.
 	m_pLeftMotor1->SetSetpoint(double(m_pDriveSpeeds.left), false);
-	m_pRightMotor1->SetSetpoint(double(-m_pDriveSpeeds.right), false);
+	m_pRightMotor1->SetSetpoint(double(m_pDriveSpeeds.right), false);
 
 	// Call motor ticks.
 	m_pLeftMotor1->Tick();

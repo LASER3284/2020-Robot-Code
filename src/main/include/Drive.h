@@ -72,7 +72,7 @@ private:
 	};
 	const Pose2d m_EndPoint
 	{
-		10.0_ft,				// X ending position on field in feet.
+		30.0_ft,				// X ending position on field in feet.
 		24.0_ft,				// Y ending position on field in feet.
 		Rotation2d(0_deg)		// Ending rotation on field in degrees.
 	};
@@ -82,17 +82,17 @@ private:
 	{
 		Translation2d
 		{
-			4.0_ft,				// X of point 2 on field in feet.
-			24.0_ft				// Y of point 2 on field in feet.
+			13.0_ft,				// X of point 2 on field in feet.
+			15.0_ft				// Y of point 2 on field in feet.
 		},
 		Translation2d
 		{
-			6.0_ft,				// X of point 3 on field in feet.
-			24.0_ft				// Y of point 3 on field in feet.
+			18.0_ft,				// X of point 3 on field in feet.
+			30.0_ft				// Y of point 3 on field in feet.
 		},
 		Translation2d
 		{
-			8.0_ft,				// X of point 4 on field in feet.
+			25.0_ft,				// X of point 4 on field in feet.
 			24.0_ft				// Y of point 4 on field in feet.
 		}
 	};
