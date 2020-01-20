@@ -7,6 +7,7 @@
 #include <frc/smartdashboard/SmartDashboard.h>
 #include "RobotMain.h"
 #include "Intake.h"
+#include "Turret.h"
 
 using namespace frc;
 ///////////////////////////////////////////////////////////////////////////////
@@ -24,6 +25,7 @@ CRobotMain::CRobotMain()
     m_pTimer            = new Timer();
     m_pDrive            = new CDrive(m_pDriveController);
 	m_pIntake			= new CIntake();
+	m_pTurret			= new CTurret();
 }
 
 /******************************************************************************
@@ -38,12 +40,14 @@ CRobotMain::~CRobotMain()
     delete m_pTimer;
 	delete m_pDrive;
 	delete m_pIntake;
+	delete m_pTurret;
 
     // Set pointers to nullptrs.
     m_pDriveController  = nullptr;
     m_pTimer            = nullptr;
 	m_pDrive 			= nullptr;
 	m_pIntake			= nullptr;
+	m_pTurret			= nullptr;
 }
 
 /****************************************************************************
@@ -55,6 +59,7 @@ void CRobotMain::RobotInit()
 {
 	m_pDrive->Init();
 	m_pIntake->Init();
+	m_pTurret->Init();
 }
 
 /******************************************************************************
@@ -129,8 +134,31 @@ void CRobotMain::TeleopInit()
 ******************************************************************************/
 void CRobotMain::TeleopPeriodic()
 {
+	if (m_pDriveController->GetRawButtonPressed(eButtonB))
+	{
+		m_pTurret->SetSetpoint(210.0);
+	}
+
+	if (m_pDriveController->GetRawButtonPressed(eButtonA))
+	{
+		m_pTurret->SetSetpoint(-90.0);
+	}
+
+	if (m_pDriveController->GetRawButtonPressed(eButtonX))
+	{
+		m_pTurret->SetSetpoint(0.0);
+	}
+
+	if (m_pDriveController->GetRawButtonPressed(eButtonY))
+	{
+		m_pTurret->SetState(eTurretIdle);
+	}
+
 	// Update Drive.
     m_pDrive->Tick();
+	m_pTurret->Tick();
+
+	SmartDashboard::PutNumber("State", (int)m_pTurret->GetState());
 }
 
 /******************************************************************************

@@ -13,6 +13,7 @@
 #include <frc/LiveWindow/LiveWindow.h>
 #include "Drive.h"
 #include "Intake.h"
+#include "Turret.h"
 
 using namespace frc;
 ///////////////////////////////////////////////////////////////////////////////
@@ -62,6 +63,7 @@ private:
     Timer*              m_pTimer;
     CDrive*             m_pDrive;
     CIntake*            m_pIntake;
+    CTurret*            m_pTurret;
 
     // Declare variables.
     int         m_nTeleopState;
