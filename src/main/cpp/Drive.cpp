@@ -134,6 +134,8 @@ void CDrive::Tick()
 	if (!m_pDriveController->GetRawButton(1))
 	{
 		// Set drivetrain powers.
+		//m_pLeftMotor1->SetSetpoint(30, true);
+		//m_pRightMotor1->SetSetpoint(30, true);
 		m_pRobotDrive->ArcadeDrive(YAxis, XAxis, false);
 
 		// Stop motors if we were previously following a path and reset trajectory.
@@ -160,8 +162,8 @@ void CDrive::Tick()
 	}
 
 	// Update Smartdashboard values.
-	SmartDashboard::PutNumber("Left Actual Velocity", m_pLeftMotor1->GetActual(false));
-	SmartDashboard::PutNumber("Right Actual Velocity", m_pRightMotor1->GetActual(false));
+	SmartDashboard::PutNumber("Left Actual Velocity", (m_pLeftMotor1->GetActual(false)));	// 21870 
+	SmartDashboard::PutNumber("Right Actual Velocity", (m_pRightMotor1->GetActual(false)));
 	SmartDashboard::PutNumber("Left Actual Position", m_pLeftMotor1->GetActual(true));
 	SmartDashboard::PutNumber("Right Actual Position", m_pRightMotor1->GetActual(true));
 }
@@ -184,22 +186,26 @@ void CDrive::GenerateTragectory()
 ****************************************************************************/
 void CDrive::FollowTragectory()
 {
+	// Disable motor safety.
+	m_pRobotDrive->SetSafetyEnabled(false);
+
 	// Calculate elapsed time.
 	double dElapsedTime = (m_pTimer->Get() - m_dPathFollowStartTime);
 
 	// Sample the trajectory at .02 seconds from the last point.
-	const auto m_Goal = m_Trajectory.Sample(second_t(dElapsedTime + 0.02));
+	const auto m_Goal = m_Trajectory.Sample(second_t(dElapsedTime));
 	// Calculate the wheel velocity for the next point in the trajectory path.
 	ChassisSpeeds m_pAdjustedSpeeds = m_pRamseteController->Calculate(m_pOdometry->GetPose(), m_Goal);
 	// Convert to values we can use for Differential Drive.
 	DifferentialDriveWheelSpeeds m_pDriveSpeeds = m_pKinematics->ToWheelSpeeds(m_pAdjustedSpeeds);
 
-	// Disable motor safety.
-	m_pRobotDrive->SetSafetyEnabled(false);
+	// Convert from meters/sec to inch/sec.
+	double dSpeedLeft = double(m_pDriveSpeeds.left) * 39.37;
+	double dSpeedRight = double(m_pDriveSpeeds.right) * 39.37;
 
 	// Set motor powers.
-	m_pLeftMotor1->SetSetpoint(double(m_pDriveSpeeds.left), false);
-	m_pRightMotor1->SetSetpoint(double(m_pDriveSpeeds.right), false);
+	m_pLeftMotor1->SetSetpoint(dSpeedLeft, false);
+	m_pRightMotor1->SetSetpoint(dSpeedRight, false);
 
 	// Call motor ticks.
 	m_pLeftMotor1->Tick();
@@ -209,8 +215,8 @@ void CDrive::FollowTragectory()
 	SmartDashboard::PutNumber("Elapsed Time", dElapsedTime);
 	SmartDashboard::PutNumber("Current Time Pos in Trajectory", double(m_Goal.t));
 	SmartDashboard::PutNumber("Total Trajectory Time", double(m_Trajectory.TotalTime()));
-	SmartDashboard::PutNumber("LeftMotorPower", double(m_pDriveSpeeds.left));
-	SmartDashboard::PutNumber("RightMotorPower", double(m_pDriveSpeeds.right));
+	SmartDashboard::PutNumber("LeftMotorPower", dSpeedLeft);
+	SmartDashboard::PutNumber("RightMotorPower", dSpeedRight);
 }
 
 /****************************************************************************

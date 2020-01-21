@@ -25,8 +25,8 @@ using namespace frc;
 using namespace std;
 
 // Default constants for the CDrive class.
-const double    m_dDefaultBeta                         = 2.0;	// 2.0
-const double    m_dDefaultZeta                         = 0.7;	// 0.7
+const double    m_dDefaultBeta                         = 0.2;	// 2.0
+const double    m_dDefaultZeta                         = 1.0;	// 0.7
 const double    m_dDefaultDrivebaseWidth               = 25.0;
 /////////////////////////////////////////////////////////////////////////////
 class CDrive
@@ -66,14 +66,14 @@ private:
     // Start and End poses for robot field position.
 	const Pose2d m_StartPoint
 	{
-		1.0_ft,					// X starting position on field in feet.
-		24.0_ft,				// Y starting position on field in feet.
+		3.0_ft,					// X starting position on field in feet.
+		12.0_ft,				// Y starting position on field in feet.
 		Rotation2d(0_deg)		// Starting rotation on field in degrees.
 	};
 	const Pose2d m_EndPoint
 	{
-		30.0_ft,				// X ending position on field in feet.
-		24.0_ft,				// Y ending position on field in feet.
+		7.0_ft,				// X ending position on field in feet.
+		16.0_ft,				// Y ending position on field in feet.
 		Rotation2d(0_deg)		// Ending rotation on field in degrees.
 	};
 
@@ -82,26 +82,26 @@ private:
 	{
 		Translation2d
 		{
-			13.0_ft,				// X of point 2 on field in feet.
-			15.0_ft				// Y of point 2 on field in feet.
+			5.0_ft,				// X of point 2 on field in feet.
+			14.0_ft					// Y of point 2 on field in feet.
 		},
-		Translation2d
-		{
-			18.0_ft,				// X of point 3 on field in feet.
-			30.0_ft				// Y of point 3 on field in feet.
-		},
-		Translation2d
-		{
-			25.0_ft,				// X of point 4 on field in feet.
-			24.0_ft				// Y of point 4 on field in feet.
-		}
+		// Translation2d
+		// {
+		// 	18.0_ft,				// X of point 3 on field in feet.
+		// 	30.0_ft					// Y of point 3 on field in feet.
+		// },
+		// Translation2d
+		// {
+		// 	25.0_ft,				// X of point 4 on field in feet.
+		// 	24.0_ft					// Y of point 4 on field in feet.
+		// }
 	};
 
 	// Configure trajectory properties.
 	TrajectoryConfig m_Config
 	{
-		15_fps,					// Robot max velocity I think. (Or whatever max velocity or acceleration you wish to put.)
-		15_fps_sq				// Robot max acceleration I think.
+		1_fps,					// Robot max velocity I think. (Or whatever max velocity or acceleration you wish to put.)
+		1_fps_sq				// Robot max acceleration I think.
 	};
 };
 /////////////////////////////////////////////////////////////////////////////

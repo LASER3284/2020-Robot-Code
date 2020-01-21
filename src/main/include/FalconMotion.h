@@ -15,15 +15,15 @@ using namespace ctre::phoenix::motorcontrol::can;
 using namespace frc;
 
 // Default Constants set for drive motors.
-const int	 	nDefaultFalconMotionPulsesPerRev				=  	 43008;		// Encoder Pulses Per Revolution (84/8 * 2048).
+const int	 	nDefaultFalconMotionPulsesPerRev				=  	 21504;		// Encoder Pulses Per Revolution (84/8 * 2048).
 const double 	dDefaultFalconMotionRevsPerUnit		    		=    (1.000 / (5.875 * 3.1415));	// Revolutions per unit of measure. (1 revs(Encoder)/(5.875 in * PI))
 const double	dDefaultFalconMotionTimeUnitInterval			=	10.000;		// Falcon velocity returns rotations/100ms. (x10 for seconds)
 const double 	dDefaultFalconMotionFwdHomeSpeed				=    0.000;		// Homing forward speed (set to zero because drive motors don't home)
 const double 	dDefaultFalconMotionRevHomeSpeed				=    0.000;		// Homing reverse speed (set to zero because drive motors don't home)
-const double 	dDefaultFalconMotionProportional				=    0.080; 	// Default proportional value.
+const double 	dDefaultFalconMotionProportional				=    0.020; 	// Default proportional value.
 const double 	dDefaultFalconMotionIntegral					=    0.000;		// Default integral value.
 const double 	dDefaultFalconMotionDerivative		   		 	=    0.000;		// Default derivative value.
-const double	dDefaultFalconMotionFeedForward		    		=	 0.105;		// Default feed forward value.
+const double	dDefaultFalconMotionFeedForward		    		=	 0.350;		// Default feed forward value.
 const double 	dDefaultFalconMotionVoltageRampRate	    		=    0.250;		// Default voltage ramp rate. This is in seconds from neutral to full output.
 const double 	dDefaultFalconMotionTolerance		    		=    0.250;		// Default tolerance in desired units.
 const double 	dDefaultFalconMotionLowerPositionSoftLimit	    = -250.000; 	// Default lower position soft limit. This is in desired units.
