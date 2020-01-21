@@ -17,10 +17,10 @@ using namespace ctre::phoenix::motorcontrol;
 ******************************************************************************/
 CFalconMotion::CFalconMotion(int nDeviceID)
 {
-	m_nDeviceID = nDeviceID;
 	// Create the object pointers.
 	m_pMotor						= new WPI_TalonFX(nDeviceID);
 	m_pTimer						= new Timer();
+	m_pPID							= new frc2::PIDController(dDefaultFalconMotionVelocityProportional, dDefaultFalconMotionVelocityIntegral, dDefaultFalconMotionVelocityDerivative, 20_ms);
 
 	// Initialize member variables.
 	m_nCurrentState					= eIdle;
@@ -32,6 +32,7 @@ CFalconMotion::CFalconMotion(int nDeviceID)
 	m_bMotionMagic					= false;
 	m_bUsePosition					= true;
 	m_dSetpoint						= 0.000;
+	m_nDeviceID 					= nDeviceID;
 	m_nPulsesPerRev					= nDefaultFalconMotionPulsesPerRev;
 	m_dRevsPerUnit					= dDefaultFalconMotionRevsPerUnit;
 	m_dTimeUnitInterval				= dDefaultFalconMotionTimeUnitInterval;
@@ -39,7 +40,14 @@ CFalconMotion::CFalconMotion(int nDeviceID)
 	m_dRevMoveSpeed					= dDefualtFalconMotionManualRevSpeed;
 	m_dFwdHomeSpeed					= dDefaultFalconMotionFwdHomeSpeed;
 	m_dRevHomeSpeed					= dDefaultFalconMotionRevHomeSpeed;
-	m_dTolerance					= dDefaultFalconMotionTolerance;
+	m_dPositionProportional			= dDefaultFalconMotionPositionProportional;
+	m_dPositionIntegral				= dDefaultFalconMotionPositionIntegral;
+	m_dPositionDerivative			= dDefaultFalconMotionPositionDerivative;
+	m_dVelocityProportional			= dDefaultFalconMotionVelocityProportional;
+	m_dVelocityIntegral				= dDefaultFalconMotionVelocityIntegral;
+	m_dVelocityDerivative			= dDefaultFalconMotionVelocityDerivative;
+	m_dPositionTolerance			= dDefaultFalconMotionPositionTolerance;
+	m_dVelocityTolerance			= dDefaultFalconMotionVelocityTolerance;
 	m_dLowerPositionSoftLimit		= dDefaultFalconMotionLowerPositionSoftLimit;
 	m_dUpperPositionSoftLimit		= dDefaultFalconMotionUpperPositionSoftLimit;
 	m_dLowerVelocitySoftLimit		= dDefaultFalconMotionLowerVelocitySoftLimit;
@@ -61,10 +69,11 @@ CFalconMotion::CFalconMotion(int nDeviceID)
 	SetNominalOutputVoltage(0.000, 0.000);
 	// Set the peak (maximum) motor output for both directions.
 	SetPeakOutputPercent(1.000, -1.000);
-	// Set the tolerance.
-	SetTolerance(m_dTolerance);
-	// Set the PID and feed forward values.
-	SetPIDValues(dDefaultFalconMotionProportional, dDefaultFalconMotionIntegral, dDefaultFalconMotionDerivative, dDefaultFalconMotionFeedForward);
+	// Set the tolerance for position and velocity PIDs.
+	SetTolerance(m_dPositionTolerance, true);
+	SetTolerance(m_dVelocityTolerance, false);
+	// Set the PID and feed forward values for position.
+	SetPIDValues(dDefaultFalconMotionPositionProportional, dDefaultFalconMotionPositionIntegral, dDefaultFalconMotionPositionDerivative, true, dDefaultFalconMotionFeedForward);
 	// Stop the motor.
 	Stop();
 	// Set the neutral mode to brake.
@@ -185,19 +194,28 @@ void CFalconMotion::Tick()
 			// the PID reaches the target or until the limit switch in
 			// the direction of travel is pressed. The state then becomes idle.
 			m_bReady = false;
+			static double dMotorPower = 0.00;
 			// Check to see if position is within tolerance or limit switch
 			// is activated in direction of travel.
 			if (IsAtSetpoint() ||
-			   (((GetSetpoint() > GetActual(m_bUsePosition)) && IsFwdLimitSwitchPressed()) ||
-			    ((GetSetpoint() < GetActual(m_bUsePosition)) && IsRevLimitSwitchPressed()) ||
+				(((GetSetpoint() > GetActual(m_bUsePosition)) && IsFwdLimitSwitchPressed()) ||
+				((GetSetpoint() < GetActual(m_bUsePosition)) && IsRevLimitSwitchPressed()) ||
 				((m_dMaxFindingTime > 0.000) && (m_pTimer->Get() > (m_dFindingStartTime + m_dMaxFindingTime)))))
 			{
-				// Only stop motor when using position.
+				// Only stop timer when using position.
 				if (m_bUsePosition)
 				{
 					// Stop the motor and set the current state to eIdle.
 					Stop();
-				}
+				}				
+			}	
+			else
+			{
+				// Calculate motor power with PID.
+				dMotorPower += m_pPID->Calculate(GetActual(false));
+				m_pMotor->Set(ControlMode::PercentOutput, dMotorPower);
+				SmartDashboard::PutNumber("PID Output", m_pPID->Calculate(GetActual(false)));
+				SmartDashboard::PutNumber("Error", m_pPID->GetPositionError());
 			}
 			break;
 
@@ -272,11 +290,11 @@ void CFalconMotion::SetSetpoint(double dSetpoint, bool bUsePosition)
 		// Set the motor to the desired position.
 		if (m_bMotionMagic)
 		{
-			m_pMotor->Set(ControlMode::MotionMagic, (dSetpoint * m_dRevsPerUnit * m_nPulsesPerRev));
+			m_pMotor->Set(ControlMode::MotionMagic, dSetpoint);
 		}
 		else
 		{
-			m_pMotor->Set(ControlMode::Position, (dSetpoint * m_dRevsPerUnit * m_nPulsesPerRev));
+			m_pMotor->Set(ControlMode::Position, dSetpoint);
 		}
 	}
 	else
@@ -298,13 +316,9 @@ void CFalconMotion::SetSetpoint(double dSetpoint, bool bUsePosition)
 		m_dSetpoint = dSetpoint;
 
 		// Set the motor to the desired position.
-		m_pMotor->Set(ControlMode::Velocity, (dSetpoint * m_dRevsPerUnit * m_nPulsesPerRev) / m_dTimeUnitInterval);
+		m_pPID->SetSetpoint(m_dSetpoint);
+		SmartDashboard::PutNumber("Setpoint", m_dSetpoint);
 	}
-	
-
-    // Prints can slow down the processing time of the RoboRIO, so these are for debugging.
-//	printf("CFalconMotion::SetSetpoint - Setpoint = %7.3f\n", dSetpoint);
-//	printf("CFalconMotion::SetSetpoint - Revs Per Unit = %7.3f\n", m_dRevsPerUnit);
 
 	// Set the state to eFinding.
 	m_nCurrentState = eFinding;
@@ -361,23 +375,45 @@ void CFalconMotion::Stop()
 	Arguments:	 	dValue - Tolerance in the desired units.
 	Returns: 		Nothing
 ******************************************************************************/
-void CFalconMotion::SetTolerance(double dValue)
+void CFalconMotion::SetTolerance(double dValue, bool bUsePosition)
 {
-	// Set the member variable.
-	m_dTolerance = dValue;
-
 	// Set the allowed error for the PID. This is in quadrature pulses.
-	m_pMotor->ConfigAllowableClosedloopError(0, m_dTolerance * m_dRevsPerUnit * m_nPulsesPerRev);
+	if (bUsePosition)
+	{
+		m_pMotor->ConfigAllowableClosedloopError(0, m_dPositionTolerance * m_dRevsPerUnit * m_nPulsesPerRev);
+
+		// Set the member variable.
+		m_dPositionTolerance = dValue;
+	}
+	else
+	{
+		m_pPID->SetTolerance(m_dPositionTolerance);
+		
+		// Set the member variable.
+		m_dPositionTolerance = dValue;
+	}
 }
 
 /******************************************************************************
 	Description:	GetTolerance - Returns the tolerance in the desired units.
-	Arguments:	 	None
+	Arguments:	 	bUsePosition - Get the position tolerance.
 	Returns: 		dValue - Tolerance in the desired units.
 ******************************************************************************/
-double CFalconMotion::GetTolerance()
+double CFalconMotion::GetTolerance(bool bUsePosition)
 {
-	return m_dTolerance;
+	// Create instance variables.
+	double dTolerance = 0.000;
+
+	if (bUsePosition)
+	{
+		dTolerance = m_dPositionTolerance;
+	}
+	else
+	{
+		dTolerance = m_dVelocityTolerance;
+	}
+
+	return dTolerance;
 }
 
 /******************************************************************************
@@ -475,7 +511,19 @@ bool CFalconMotion::IsRevLimitSwitchPressed()
 ******************************************************************************/
 bool CFalconMotion::IsAtSetpoint()
 {
-	return (((fabs(GetSetpoint() - GetActual(m_bUsePosition))) < m_dTolerance) && (fabs(m_pMotor->GetMotorOutputVoltage()) < 1.000));
+	// Create instance variables.
+	bool bIsAtSetpoint = false;
+
+	if (m_bUsePosition)
+	{
+		bIsAtSetpoint = (((fabs(GetSetpoint() - GetActual(m_bUsePosition))) < m_dPositionTolerance) && (fabs(m_pMotor->GetMotorOutputVoltage()) < 1.000));
+	}
+	else
+	{
+		bIsAtSetpoint = (((fabs(GetSetpoint() - GetActual(m_bUsePosition))) < m_dVelocityTolerance) && (fabs(m_pMotor->GetMotorOutputVoltage()) < 1.000));
+	}
+
+	return bIsAtSetpoint;
 }
 
 /******************************************************************************
@@ -609,15 +657,26 @@ void CFalconMotion::SetRevsPerUnit(double dRPU)
 	Arguments:	 	double dProportional 	- Proportion Gain
 					double dIntegral		- Integral Gain
 					double dDerivative		- Derivative Gain
+					bool   bUsePosition		- Set Position PID Values
 					double dFeedForward		- Feed Forward Gain
 	Returns: 		Nothing
 ******************************************************************************/
-void CFalconMotion::SetPIDValues(double dProportional, double dIntegral, double dDerivative, double dFeedForward)
+void CFalconMotion::SetPIDValues(double dProportional, double dIntegral, double dDerivative, bool bUsePosition, double dFeedForward)
 {
-	m_pMotor->Config_kP(0, dProportional);
-	m_pMotor->Config_kI(0, dIntegral);
-	m_pMotor->Config_kD(0, dDerivative);
-	m_pMotor->Config_kF(0, dFeedForward);
+	// Set PID values for either position or velocity.
+	if (bUsePosition)
+	{
+		m_pMotor->Config_kP(0, dProportional);
+		m_pMotor->Config_kI(0, dIntegral);
+		m_pMotor->Config_kD(0, dDerivative);
+		m_pMotor->Config_kF(0, dFeedForward);
+	}
+	else
+	{
+		m_pPID->SetP(dProportional);
+		m_pPID->SetI(dIntegral);
+		m_pPID->SetD(dDerivative);
+	}
 }
 
 /******************************************************************************
