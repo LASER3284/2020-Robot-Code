@@ -72,7 +72,7 @@ void CTurret::Init()
 	// Set the tolerance.
 	SetTolerance(m_dTolerance);
 	// Set the PID and feed forward values.
-	SetPID(1.0, 0.0, 0.0);
+	SetPID(0.0001, 0.0, 0.0);
 	// Stop the motor.
 	Stop();
 	// Set the neutral mode to brake.
@@ -110,15 +110,14 @@ void CTurret::Tick()
 			// Finding - Motor uses built-in PID controller to seek the
 			// given Setpoint, and performs checks to ensure we are within
 			// the given tolerance.
-			if (IsAtSetpoint() || ((m_pTimer->Get() - m_dFindingStartTime) > m_dMaxFindingTime))
+			std::cout << "FINDING" << std::endl;
+			// Move the motor to a given point.
+			m_pTurretMotor->Set(ControlMode::PercentOutput, m_pPIDController->Calculate(m_dActual));
+			// Check to make sure it is or is not at setpoint.
+			if (IsAtSetpoint() /*|| ((m_pTimer->Get() - m_dFindingStartTime) > m_dMaxFindingTime)*/)
 			{
 				// Stop the motor, return to Idle.
 				Stop();
-			}
-			else
-			{
-				// Not at setpoint, continue.
-				m_pPIDController->Calculate(m_dActual);
 			}
 			break;
 
@@ -137,10 +136,12 @@ void CTurret::Tick()
 			break;
 	}
 
+	SmartDashboard::PutNumber("PID Output", m_pPIDController->Calculate(m_dActual));
 	SmartDashboard::PutNumber("Turret Position", m_dActual / dTurretRevsPerUnit / dTurretPulsesPerRev);
-	SmartDashboard::PutNumber("Turret User Setpoint", m_dSetpoint * dTurretPulsesPerRev* dTurretRevsPerUnit);
+	SmartDashboard::PutNumber("Turret User Setpoint", m_dSetpoint);
 	SmartDashboard::PutNumber("Turret Internal Setpoint", m_pPIDController->GetSetpoint());
 	SmartDashboard::PutNumber("Turret Error", m_pPIDController->GetPositionError() / dTurretRevsPerUnit / dTurretPulsesPerRev);
+	SmartDashboard::PutNumber("Turret Tolerance", m_dTolerance * dTurretPulsesPerRev * dTurretRevsPerUnit);
 }
 
 /****************************************************************************
@@ -178,6 +179,7 @@ void CTurret::SetSetpoint(double dSetpoint)
 	// Set the member variable.
 	m_dSetpoint = dSetpoint;
 
+	// Give the PID controller a setpoint.
 	m_pPIDController->SetSetpoint(m_dSetpoint * dTurretPulsesPerRev * dTurretRevsPerUnit);
 
 	// Start the timer for beginning finding.
@@ -209,6 +211,7 @@ void CTurret::SetTolerance(double dTolerance)
 {
 	// Set member variable.
 	m_dTolerance = dTolerance;
+	m_pPIDController->SetTolerance(dTolerance * dTurretPulsesPerRev * dTurretRevsPerUnit);
 }
 
 /****************************************************************************
@@ -233,7 +236,6 @@ void CTurret::Stop()
 ****************************************************************************/
 bool CTurret::IsAtSetpoint()
 {
-	return ((fabs(m_pPIDController->GetPositionError() * dTurretRevsPerUnit * dTurretPulsesPerRev) <= m_dTolerance)
-		     ? true : false);
+	return (m_pPIDController->AtSetpoint());
 }
 /////////////////////////////////////////////////////////////////////////////
