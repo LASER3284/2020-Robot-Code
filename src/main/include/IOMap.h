@@ -16,10 +16,13 @@ const int nLeftDriveMotor1		  		=  	1;		// Falcon ID for left drive motor 1
 const int nLeftDriveMotor2		  		=  	2;		// Falcon ID for left drive motor 2 						
 const int nRightDriveMotor1		  		=   3;		// Falcon ID for right drive motor 1
 const int nRightDriveMotor2		  		=   4;		// Falcon ID for right drive motor 2						
-const int nIntakeMotor					=	5;		// SparkMAX ID for Intake motor
-const int nTurretMotor					=	6;		// Talon SRX ID for Turret motor
+const int nIntakeMotor					=	5;		// Spark MAX ID for intake motor
+const int nTurretMotor					=	6;		// Talon SRX ID for turret motor
+const int nShooterLeft					=	7;		// Spark MAX ID for left shooter motor
+const int nShooterRight					= 	8;		// Spark MAX ID for right shooter motor
 
 // PWM Channels.
+const int nHoodServo					= 	0;		// PWM channel for Hood actuation servo
 
 // Relay Channels.
 
