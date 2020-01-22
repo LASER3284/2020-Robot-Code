@@ -39,6 +39,7 @@ public:
     void GenerateTragectory();
     void FollowTragectory();
     void ResetOdometry();
+	void ResetEncoders();
     void Stop();
 
 private:

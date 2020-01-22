@@ -143,7 +143,6 @@ void CDrive::Tick()
 		if (m_bMotionProfile)
 		{
 			Stop();
-			ResetOdometry();
 			m_pRobotDrive->SetSafetyEnabled(true);
 			m_bMotionProfile = false;
 		}
@@ -153,7 +152,11 @@ void CDrive::Tick()
 		// Get the current time.
 		if (!m_bMotionProfile)
 		{
+			// Get start time.
 			m_dPathFollowStartTime = m_pTimer->Get();
+
+			// Reset robot field position and encoders.
+			ResetOdometry();
 		}
 
 		// Set that we are currently following a path.
@@ -168,6 +171,9 @@ void CDrive::Tick()
 	SmartDashboard::PutNumber("Right Actual Velocity", (m_pRightMotor1->GetActual(false)));
 	SmartDashboard::PutNumber("Left Actual Position", m_pLeftMotor1->GetActual(true));
 	SmartDashboard::PutNumber("Right Actual Position", m_pRightMotor1->GetActual(true));
+	SmartDashboard::PutNumber("Odometry Field Position X", double(m_pOdometry->GetPose().Translation().X()));
+	SmartDashboard::PutNumber("Odometry Field Position Y", double(m_pOdometry->GetPose().Translation().Y()));
+	SmartDashboard::PutNumber("Odometry Field Position Rotation", double(m_pOdometry->GetPose().Rotation().Degrees()));	
 }
 
 /****************************************************************************
@@ -234,15 +240,26 @@ void CDrive::FollowTragectory()
 void CDrive::ResetOdometry()
 {
 	// Reset drive encoders.
-	m_pLeftMotor1->ResetEncoderPosition();
-	m_pRightMotor1->ResetEncoderPosition();
+	ResetEncoders();
 
 	// Reset field position.
 	m_pOdometry->ResetPosition(m_StartPoint, Rotation2d(degree_t(m_pGyro->GetYaw())));
 }
 
 /****************************************************************************
-	Description:	Method the stops drive motors.
+	Description:	Method that reset encoder values back to zero.
+	Arguments: 		None
+	Returns: 		Nothing
+****************************************************************************/
+void CDrive::ResetEncoders()
+{
+	// Reset drive encoders.
+	m_pLeftMotor1->ResetEncoderPosition();
+	m_pRightMotor1->ResetEncoderPosition();
+}
+
+/****************************************************************************
+	Description:	Method that stops drive motors.
 	Arguments: 		None
 	Returns: 		Nothing
 ****************************************************************************/
