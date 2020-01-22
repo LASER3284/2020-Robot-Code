@@ -54,6 +54,8 @@ private:
     RamseteController*              m_pRamseteController;
     AHRS*                           m_pGyro;
     Timer*                          m_pTimer;
+	Trajectory              		m_Trajectory;
+
 
     // Member variables.
     bool                    m_bMotionProfile;
@@ -61,7 +63,6 @@ private:
     double                  m_dZeta;
     double                  m_dDrivebaseWidth;
     double                  m_dPathFollowStartTime;
-    Trajectory              m_Trajectory;
 
     // Start and End poses for robot field position.
 	const Pose2d m_StartPoint

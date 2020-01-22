@@ -144,6 +144,7 @@ void CDrive::Tick()
 		{
 			Stop();
 			ResetOdometry();
+			m_pRobotDrive->SetSafetyEnabled(true);
 			m_bMotionProfile = false;
 		}
 	}
@@ -187,11 +188,16 @@ void CDrive::GenerateTragectory()
 ****************************************************************************/
 void CDrive::FollowTragectory()
 {
+	// Create instance variables.
+	double dElapsedTime = 0.000;
+	double dSpeedLeft 	= 0.000;
+	double dSpeedRight	= 0.000;
+
 	// Disable motor safety.
 	m_pRobotDrive->SetSafetyEnabled(false);
 
 	// Calculate elapsed time.
-	double dElapsedTime = (m_pTimer->Get() - m_dPathFollowStartTime);
+	dElapsedTime = (m_pTimer->Get() - m_dPathFollowStartTime);
 
 	// Sample the trajectory at .02 seconds from the last point.
 	const auto m_Goal = m_Trajectory.Sample(second_t(dElapsedTime));
@@ -201,8 +207,8 @@ void CDrive::FollowTragectory()
 	DifferentialDriveWheelSpeeds m_pDriveSpeeds = m_pKinematics->ToWheelSpeeds(m_pAdjustedSpeeds);
 
 	// Convert from meters/sec to inch/sec.
-	double dSpeedLeft = double(m_pDriveSpeeds.left) * 39.37;
-	double dSpeedRight = double(m_pDriveSpeeds.right) * 39.37;
+	dSpeedLeft = double(m_pDriveSpeeds.left) * 39.37;
+	dSpeedRight = double(m_pDriveSpeeds.right) * 39.37;
 
 	// Set motor powers.
 	m_pLeftMotor1->SetSetpoint(dSpeedLeft, false);
