@@ -37,7 +37,7 @@ CDrive::CDrive(Joystick* pDriveController)
 	m_pRightMotor2			= new WPI_TalonFX(9);
 	m_pRobotDrive			= new DifferentialDrive(*m_pLeftMotor1->GetMotorPointer(), *m_pRightMotor1->GetMotorPointer());
 	m_pKinematics			= new DifferentialDriveKinematics(inch_t(m_dDrivebaseWidth));
-	m_pRamseteController	= new RamseteController(m_dBeta, m_dZeta); // SimpleMotorFeedforward(, 16.45, 5));
+	m_pRamseteController	= new RamseteController(m_dBeta, m_dZeta);
 	m_pGyro 				= new AHRS(SPI::Port::kMXP);
 	m_pTimer				= new Timer();
 	m_pOdometry 			= new DifferentialDriveOdometry(Rotation2d(degree_t(m_pGyro->GetYaw())), m_StartPoint);

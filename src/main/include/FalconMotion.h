@@ -103,7 +103,7 @@ private:
 	// Object Pointers.
     WPI_TalonFX*            m_pMotor;
 	Timer*                  m_pTimer;
-	frc2::PIDController*	m_pPID;
+	frc2::PIDController*	m_pPIDController;
 
 	// Member Variables.
 	bool					m_bFwdLimitSwitchNormallyOpen;

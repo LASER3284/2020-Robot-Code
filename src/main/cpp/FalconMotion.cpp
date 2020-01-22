@@ -20,7 +20,7 @@ CFalconMotion::CFalconMotion(int nDeviceID)
 	// Create the object pointers.
 	m_pMotor						= new WPI_TalonFX(nDeviceID);
 	m_pTimer						= new Timer();
-	m_pPID							= new frc2::PIDController(dDefaultFalconMotionVelocityProportional, dDefaultFalconMotionVelocityIntegral, dDefaultFalconMotionVelocityDerivative, 20_ms);
+	m_pPIDController				= new frc2::PIDController(dDefaultFalconMotionVelocityProportional, dDefaultFalconMotionVelocityIntegral, dDefaultFalconMotionVelocityDerivative, 20_ms);
 
 	// Initialize member variables.
 	m_nCurrentState					= eIdle;
@@ -212,10 +212,10 @@ void CFalconMotion::Tick()
 			else
 			{
 				// Calculate motor power with PID.
-				dMotorPower += m_pPID->Calculate(GetActual(false));
+				dMotorPower += m_pPIDController->Calculate(GetActual(false));
 				m_pMotor->Set(ControlMode::PercentOutput, dMotorPower);
-				SmartDashboard::PutNumber("PID Output", m_pPID->Calculate(GetActual(false)));
-				SmartDashboard::PutNumber("Error", m_pPID->GetPositionError());
+				SmartDashboard::PutNumber("PID Output", m_pPIDController->Calculate(GetActual(false)));
+				SmartDashboard::PutNumber("Error", m_pPIDController->GetPositionError());
 			}
 			break;
 
@@ -316,7 +316,7 @@ void CFalconMotion::SetSetpoint(double dSetpoint, bool bUsePosition)
 		m_dSetpoint = dSetpoint;
 
 		// Set the motor to the desired position.
-		m_pPID->SetSetpoint(m_dSetpoint);
+		m_pPIDController->SetSetpoint(m_dSetpoint);
 		SmartDashboard::PutNumber("Setpoint", m_dSetpoint);
 	}
 
@@ -387,7 +387,7 @@ void CFalconMotion::SetTolerance(double dValue, bool bUsePosition)
 	}
 	else
 	{
-		m_pPID->SetTolerance(m_dPositionTolerance);
+		m_pPIDController->SetTolerance(m_dPositionTolerance);
 		
 		// Set the member variable.
 		m_dPositionTolerance = dValue;
@@ -673,9 +673,9 @@ void CFalconMotion::SetPIDValues(double dProportional, double dIntegral, double 
 	}
 	else
 	{
-		m_pPID->SetP(dProportional);
-		m_pPID->SetI(dIntegral);
-		m_pPID->SetD(dDerivative);
+		m_pPIDController->SetP(dProportional);
+		m_pPIDController->SetI(dIntegral);
+		m_pPIDController->SetD(dDerivative);
 	}
 }
 
