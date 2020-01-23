@@ -9,6 +9,7 @@
 
 #include <frc/Solenoid.h>
 #include <frc/Servo.h>
+#include <frc/Encoder.h>
 #include <rev/CANSparkMax.h>
 #include <frc/controller/PIDController.h>
 #include "IOMap.h"
@@ -18,6 +19,10 @@ using namespace frc;
 // Shooter Constants.
 const double dShooterOpenLoopRamp		=     0.250;
 const double dShooterClosedLoopRamp		=     0.250;
+const double dShooterManualFwdSpeed		=	  0.500;
+const double dShooterManualRevSpeed		=	 -0.500;
+const double dShooterMaxVelocity		= 	5700.00;
+const double dShooterMinVelocity		=	 200.00;
 // Hood Constants.
 const double dHoodMaxPosition			=      35.0;
 const double dHoodMinPosition			=    	0.0;
@@ -55,10 +60,10 @@ public:
 	// Shooter methods.
 	void			SetShooterPID(double dProportional, double dIntegral, double dDerivative, double dFeedForward);
 	void 			SetShooterSetpoint(double dSetpoint);
-	void 			SetShooterState(ShooterState nState);
+	void 			SetShooterState(ShooterState nState)								{	m_nShooterState = nState;							};
 	void 			SetShooterTolerance(double dTolerance);
 	bool			IsShooterAtSetpoint();
-	double			GetShooterActual();
+	double			GetShooterActual()													{	return m_pLeftShooter->GetEncoder().GetVelocity();	};
 	double 			GetShooterSetpoint()												{	return m_dShooterSetpoint;							};
 	double			GetShooterTolerance()												{	return m_dShooterTolerance;							};
 	ShooterState 	GetShooterState()													{	return m_nShooterState;								};		
@@ -66,23 +71,22 @@ public:
 	// Hood methods.
 	void			SetHoodPID(double dProportional, double dIntegral, double dDerivative);
 	void 			SetHoodSetpoint(double dSetpoint);
-	void 			SetHoodState(ShooterState nState);
+	void 			SetHoodState(HoodState nState)										{	m_nHoodState = nState;								};
 	void 			SetHoodTolerance(double dTolerance);
 	bool			IsHoodAtSetpoint();
-	double			GetHoodActual();
+	double			GetHoodActual()														{	return m_pHoodEncoder->GetDistance();				};
 	double 			GetHoodSetpoint()													{	return m_dHoodSetpoint;								};
 	double			GetHoodTolerance()													{	return m_dHoodTolerance;							};
 	HoodState		GetHoodState()														{	return m_nHoodState;								};
-
 
 private:
 	// Object pointers.
     Servo*					m_pHoodServo;
 	rev::CANSparkMax*		m_pLeftShooter;
 	rev::CANSparkMax*		m_pRightShooter;
-	rev::CANPIDController*	m_pLeftPID;
-	rev::CANPIDController*	m_pRightPID;
-	frc2::PIDController*	m_pServoController;
+	rev::CANPIDController*	m_pShooterPID;
+	Encoder*				m_pHoodEncoder;
+	frc2::PIDController*	m_pHoodPID;
 	Timer*					m_pTimer;
 
     // Declare variables.

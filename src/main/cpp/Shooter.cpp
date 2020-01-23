@@ -22,10 +22,13 @@ CShooter::CShooter()
 	m_pHoodServo		= new Servo(nHoodServo);
 	m_pLeftShooter		= new CANSparkMax(nShooterLeft, CANSparkMax::MotorType::kBrushless);
 	m_pRightShooter		= new CANSparkMax(nShooterRight, CANSparkMax::MotorType::kBrushless);
-	m_pLeftPID			= &m_pLeftShooter->GetPIDController();
-	m_pRightPID			= &m_pRightShooter->GetPIDController();
-	m_pServoController	= new frc2::PIDController(1.0, 0.0, 0.0);
+	m_pShooterPID		= new CANPIDController(*m_pLeftShooter);
+	m_pHoodEncoder		= new Encoder(nHoodEncoderChannelA, nHoodEncoderChannelB);
+	m_pHoodPID			= new frc2::PIDController(1.0, 0.0, 0.0);
 	m_pTimer			= new Timer();
+
+	// Set Right shooter to follow Left shooter.
+	m_pRightShooter->Follow(*m_pLeftShooter, true);
 }
 
 /****************************************************************************
@@ -40,13 +43,15 @@ CShooter::~CShooter()
 	delete m_pLeftShooter;
 	delete m_pRightShooter;
 	delete m_pTimer;
-	delete m_pServoController;
+	delete m_pHoodEncoder;
+	delete m_pHoodPID;
 	// Set objects to nullptrs.
 	m_pHoodServo		= nullptr;
 	m_pLeftShooter		= nullptr;
 	m_pRightShooter		= nullptr;
 	m_pTimer			= nullptr;
-	m_pServoController	= nullptr;
+	m_pHoodEncoder		= nullptr;
+	m_pHoodPID			= nullptr;
 }
 
 /****************************************************************************
@@ -84,9 +89,8 @@ void CShooter::Init()
 	// Set the shooter motors inverted from each other.
 	m_pLeftShooter->SetInverted(false);
     m_pRightShooter->SetInverted(true);
-	// Set the peak (maximum) motor output for both directions.
-	m_pLeftShooter->GetPIDController().SetOutputRange(-1.0, 1.0);
-	m_pRightShooter->GetPIDController().SetOutputRange(-1.0, 1.0);
+	// Set the peak (maximum) motor output for both controllers.
+	m_pShooterPID->SetOutputRange(-1.0, 1.0);
 	// Set the tolerances.
     SetShooterTolerance(m_dShooterTolerance);
 	SetHoodTolerance(m_dHoodTolerance);
@@ -95,7 +99,7 @@ void CShooter::Init()
     SetHoodPID(m_dHoodProportional, m_dHoodIntegral, m_dHoodDerivative);
 	// Stop the mechanism.
 	Stop();
-	// Set the neutral mode to brake.
+	// Set the neutral mode of the Shooter to coast.
 	m_pLeftShooter->SetIdleMode(CANSparkMax::IdleMode::kCoast);
     m_pRightShooter->SetIdleMode(CANSparkMax::IdleMode::kCoast);
 	// Set acceleration (seconds from neutral to full output).
@@ -116,15 +120,16 @@ void CShooter::Init()
 ****************************************************************************/
 void CShooter::Tick()
 {
-	// Update Actual variable.
-	m_dActual = (m_pShooterMotor->GetSensorCollection().GetPulseWidthRiseToFallUs() - 1024) / 8.0;
+	// Update Actual variables.
+	m_dShooterActual = m_pLeftShooter->GetEncoder().GetVelocity();
+	m_dHoodActual	 = m_pHoodPID->GetPositionError();
 
-	switch(m_nState)
+	// Shooter state machine.
+	switch(m_nShooterState)
 	{
 		case eShooterIdle :
 			// Idle - Motor is off, and ready to move again.
-			m_pPIDController->Reset();
-			m_pShooterMotor->Set(ControlMode::PercentOutput, 0.00);
+			m_pLeftShooter->Set(0.00);
 			m_bIsReady = true;
 			break;
 
@@ -132,38 +137,42 @@ void CShooter::Tick()
 			// Finding - Motor uses built-in PID controller to seek the
 			// given Setpoint, and performs checks to ensure we are within
 			// the given tolerance.
-			std::cout << "FINDING" << std::endl;
 			// Move the motor to a given point.
-			m_pShooterMotor->Set(ControlMode::PercentOutput, m_pPIDController->Calculate(m_dActual));
+			m_pShooterPID->SetReference(m_dShooterSetpoint, m_bMotionMagic ? kSmartVelocity : kVelocity);
 			// Check to make sure it is or is not at setpoint.
-			if (IsAtSetpoint() /*|| ((m_pTimer->Get() - m_dFindingStartTime) > m_dMaxFindingTime)*/)
-			{
-				// Stop the motor, return to Idle.
-				Stop();
-			}
+			m_bShooterIsReady = (m_dShooterSetpoint - m_dShooterActual) <= m_dShooterTolerance;
 			break;
 
 		case eShooterManualFwd :
 			// ManualFwd - Manually move the motor forward at a constant speed.
-			m_pShooterMotor->Set(ControlMode::PercentOutput, dShooterManualFwdSpeed);
+			m_pLeftShooter->Set(dShooterManualFwdSpeed);
 			break;
 		
 		case eShooterManualRev :
 			// ManualRev - Manually move the motor backwards at a constant speed.
-			m_pShooterMotor->Set(ControlMode::PercentOutput, dShooterManualRevSpeed);
+			m_pLeftShooter->Set(dShooterManualRevSpeed);
 			break;
 
 		default :
-			m_nState = eShooterIdle;
+			m_nShooterState = eShooterIdle;
 			break;
 	}
 
-	SmartDashboard::PutNumber("PID Output", m_pPIDController->Calculate(m_dActual));
-	SmartDashboard::PutNumber("Shooter Position", m_dActual / dShooterRevsPerUnit / dShooterPulsesPerRev);
-	SmartDashboard::PutNumber("Shooter User Setpoint", m_dSetpoint);
-	SmartDashboard::PutNumber("Shooter Internal Setpoint", m_pPIDController->GetSetpoint());
-	SmartDashboard::PutNumber("Shooter Error", m_pPIDController->GetPositionError() / dShooterRevsPerUnit / dShooterPulsesPerRev);
-	SmartDashboard::PutNumber("Shooter Tolerance", m_dTolerance * dShooterPulsesPerRev * dShooterRevsPerUnit);
+	// Hood state machine.
+	switch(m_nHoodState)
+	{
+		case eHoodIdle :
+			break;
+
+		case eHoodFinding :
+			break;
+		
+		case eHoodManualFwd :
+			break;
+
+		case eHoodManualRev :
+			break;
+	}
 }
 
 /****************************************************************************
@@ -174,10 +183,26 @@ void CShooter::Tick()
 					double dFeedForward
 	Returns: 		Nothing
 ****************************************************************************/
-void CShooter::SetPID(double dProportional, double dIntegral, double dDerivative)
+void CShooter::SetShooterPID(double dProportional, double dIntegral, double dDerivative, double dFeedForward)
 {
 	// Configure PID controller to use the given values.
-	m_pPIDController->SetPID(dProportional, dIntegral, dDerivative);
+	m_pShooterPID->SetP(dProportional);
+	m_pShooterPID->SetI(dIntegral);
+	m_pShooterPID->SetD(dDerivative);
+	m_pShooterPID->SetFF(dFeedForward);
+}
+
+/****************************************************************************
+	Description:	Set the variables of the PID controller for position.
+	Arguments: 		double dProportional
+					double dIntegral
+					double dDerivative
+	Returns: 		Nothing
+****************************************************************************/
+void CShooter::SetHoodPID(double dProportional, double dIntegral, double dDerivative)
+{
+	// Configure PID controller to use the given values.
+	m_pHoodPID->SetPID(dProportional, dIntegral, dDerivative);
 }
 
 /****************************************************************************
@@ -186,42 +211,68 @@ void CShooter::SetPID(double dProportional, double dIntegral, double dDerivative
 	Arguments: 		double dSetpoint - Units in degrees
 	Returns: 		Nothing
 ****************************************************************************/
-void CShooter::SetSetpoint(double dSetpoint)
+void CShooter::SetShooterSetpoint(double dSetpoint)
 {
 	// Check the bounds of the setpoint. Change if neccessary.
-	if (dSetpoint > dShooterMaxPosition)
+	if (dSetpoint > dShooterMaxVelocity)
 	{
-		dSetpoint = dShooterMaxPosition;
+		dSetpoint = dShooterMaxVelocity;
 	}
-	if (dSetpoint < dShooterMinPosition)
+	if (dSetpoint < dShooterMinVelocity)
 	{
-		dSetpoint = dShooterMinPosition;
+		dSetpoint = dShooterMinVelocity;
 	}
 
 	// Set the member variable.
-	m_dSetpoint = dSetpoint;
+	m_dShooterSetpoint = dSetpoint;
 
 	// Give the PID controller a setpoint.
-	m_pPIDController->SetSetpoint(m_dSetpoint * dShooterPulsesPerRev * dShooterRevsPerUnit);
+	if (m_bMotionMagic)
+	{
+		m_pShooterPID->SetReference(m_dShooterSetpoint, ControlType::kSmartVelocity);
+	}
+	else
+	{
+		m_pShooterPID->SetReference(m_dShooterSetpoint, ControlType::kVelocity);
+	}
+	
 
 	// Start the timer for beginning finding.
-	m_dFindingStartTime = m_pTimer->Get();
+	m_dShooterFindingStartTime = m_pTimer->Get();
 
 	// Set Shooter state to finding.
-	SetState(eShooterFinding);
-
-	std::cout << "Setpoint - " << m_dSetpoint << std::endl;
+	SetShooterState(eShooterFinding);
 }
 
 /****************************************************************************
-	Description:	Set the State Machine to the given state.
-	Arguments: 		ShooterState nState - Given state in state machine
+	Description:	Set the setpoint of the Hood's PID controller and move
+					to that position.
+	Arguments: 		double dSetpoint - Units in degrees
 	Returns: 		Nothing
 ****************************************************************************/
-void CShooter::SetState(ShooterState nState)
+void CShooter::SetHoodSetpoint(double dSetpoint)
 {
-	// Set member variable.
-	m_nState = nState;
+	// Check the bounds of the setpoint. Change if neccessary.
+	if (dSetpoint > dHoodMaxPosition)
+	{
+		dSetpoint = dHoodMaxPosition;
+	}
+	if (dSetpoint < dHoodMinPosition)
+	{
+		dSetpoint = dHoodMinPosition;
+	}
+
+	// Set the member variable.
+	m_dHoodSetpoint = dSetpoint;
+
+	// Give the PID controller a setpoint.
+	m_pHoodPID->SetSetpoint(m_dHoodSetpoint);
+
+	// Start the timer for beginning finding.
+	m_dHoodFindingStartTime = m_pTimer->Get();
+
+	// Set Shooter state to finding.
+	SetShooterState(eShooterFinding);
 }
 
 /****************************************************************************
@@ -229,12 +280,24 @@ void CShooter::SetState(ShooterState nState)
 	Arguments: 		double dSetpoint - Units in degrees
 	Returns: 		Nothing
 ****************************************************************************/
-void CShooter::SetTolerance(double dTolerance)
+void CShooter::SetShooterTolerance(double dTolerance)
 {
 	// Set member variable.
-	m_dTolerance = dTolerance;
-	m_pPIDController->SetTolerance(dTolerance * dShooterPulsesPerRev * dShooterRevsPerUnit);
+	m_dShooterTolerance = dTolerance;
 }
+
+/****************************************************************************
+	Description:	Sets the tolerance to be used in PID controller.
+	Arguments: 		double dSetpoint - Units in degrees
+	Returns: 		Nothing
+****************************************************************************/
+void CShooter::SetHoodTolerance(double dTolerance)
+{
+	// Set member variable.
+	m_dHoodTolerance = dTolerance;
+	m_pHoodPID->SetTolerance(m_dHoodTolerance);
+}
+
 
 /****************************************************************************
 	Description:	Stops the Shooter at it's position, resets state to idle.
@@ -244,11 +307,22 @@ void CShooter::SetTolerance(double dTolerance)
 void CShooter::Stop()
 {
 	// Disable the PID controller to stop any movement.
-	m_pPIDController->Reset();
+	m_pHoodPID->Reset();
 	// Stop the motor.
-	m_pShooterMotor->Set(ControlMode::PercentOutput, 0.00);
+	m_pShooterPID->SetReference(0.0, ControlType::kDutyCycle);
 	// Set the state to idle.
-	SetState(eShooterIdle);
+	SetShooterState(eShooterIdle);
+	SetHoodState(eHoodIdle);
+}
+
+/****************************************************************************
+	Description:	Checks to see if the hood is within tolerance of the setpoint.
+	Arguments: 		None
+	Returns: 		Nothing
+****************************************************************************/
+bool CShooter::IsHoodAtSetpoint()
+{
+	return (m_pHoodPID->AtSetpoint());
 }
 
 /****************************************************************************
@@ -256,8 +330,8 @@ void CShooter::Stop()
 	Arguments: 		None
 	Returns: 		Nothing
 ****************************************************************************/
-bool CShooter::IsAtSetpoint()
+bool CShooter::IsShooterAtSetpoint()
 {
-	return (m_pPIDController->AtSetpoint());
+	return (m_dShooterSetpoint - m_pLeftShooter->GetEncoder().GetVelocity()) <= m_dShooterTolerance;
 }
 /////////////////////////////////////////////////////////////////////////////
