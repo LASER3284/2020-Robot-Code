@@ -16,7 +16,7 @@ using namespace rev;
 
 // Intake Contants.
 const double dIntakeFwdSpeed	=  1.0;
-const double dIntakeRevSpeed	= -1.0;
+const double dIntakeRevSpeed	= -0.5;
 
 // Intake Motor enum.
 enum MotorStates {eMotorReverse, eMotorStopped, eMotorForward};
