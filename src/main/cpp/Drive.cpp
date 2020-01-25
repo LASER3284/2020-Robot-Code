@@ -27,7 +27,10 @@ CDrive::CDrive(Joystick* pDriveController)
 	m_bMotionProfile		= false;
 	m_dBeta					= m_dDefaultBeta;
 	m_dZeta					= m_dDefaultZeta;
-	m_dDrivebaseWidth		= m_dDefaultDrivebaseWidth;
+	m_dProportional			= m_dDefaultProportional;
+	m_dIntegral				= m_dDefaultIntegral;
+	m_dDerivative			= m_dDefaultDerivative;
+	m_dDriveBaseWidth		= m_dDefaultDrivebaseWidth;
 
 	// Create object pointers.
 	m_pDriveController 		= pDriveController;
@@ -36,11 +39,9 @@ CDrive::CDrive(Joystick* pDriveController)
 	m_pRightMotor1			= new CFalconMotion(8);
 	m_pRightMotor2			= new WPI_TalonFX(9);
 	m_pRobotDrive			= new DifferentialDrive(*m_pLeftMotor1->GetMotorPointer(), *m_pRightMotor1->GetMotorPointer());
-	m_pKinematics			= new DifferentialDriveKinematics(inch_t(m_dDrivebaseWidth));
-	m_pRamseteController	= new RamseteController(m_dBeta, m_dZeta);
 	m_pGyro 				= new AHRS(SPI::Port::kMXP);
 	m_pTimer				= new Timer();
-	m_pOdometry 			= new DifferentialDriveOdometry(Rotation2d(degree_t(m_pGyro->GetYaw())), m_StartPoint);
+	m_pOdometry 			= new DifferentialDriveOdometry(Rotation2d(degree_t(-m_pGyro->GetYaw())), m_StartPoint);	
 }
 
 /****************************************************************************
@@ -55,16 +56,16 @@ CDrive::~CDrive()
 	delete m_pRightMotor1;
 	delete m_pRightMotor2;
 	delete m_pRobotDrive;
-	delete m_pRamseteController;
 	delete m_pGyro;
+	delete m_pTimer;
 
 	m_pLeftMotor1			= nullptr;
 	m_pLeftMotor2			= nullptr;
 	m_pRightMotor1			= nullptr;
 	m_pRightMotor2			= nullptr;
 	m_pRobotDrive			= nullptr;
-	m_pRamseteController 	= nullptr;
 	m_pGyro					= nullptr;
+	m_pTimer				= nullptr;
 }
 
 /****************************************************************************
@@ -143,20 +144,27 @@ void CDrive::Tick()
 		if (m_bMotionProfile)
 		{
 			Stop();
+			m_pRamseteCommand->Cancel();
 			m_pRobotDrive->SetSafetyEnabled(true);
 			m_bMotionProfile = false;
 		}
 	}
 	else
 	{
-		// Get the current time.
+		// If X is pressed regenerate path.
+		if (m_pDriveController->GetRawButton(3))
+		{
+			GenerateTragectory();
+		}
+
+		// Reset robot values.
 		if (!m_bMotionProfile)
 		{
-			// Get start time.
-			m_dPathFollowStartTime = m_pTimer->Get();
-
 			// Reset robot field position and encoders.
 			ResetOdometry();
+
+			// Go RamseteCommand!
+			m_pRamseteCommand->Schedule();
 		}
 
 		// Set that we are currently following a path.
@@ -167,12 +175,12 @@ void CDrive::Tick()
 	}
 
 	// Update Smartdashboard values.
-	SmartDashboard::PutNumber("Left Actual Velocity", (m_pLeftMotor1->GetActual(false)));	// 21870 
+	SmartDashboard::PutNumber("Left Actual Velocity", (m_pLeftMotor1->GetActual(false)));
 	SmartDashboard::PutNumber("Right Actual Velocity", (m_pRightMotor1->GetActual(false)));
 	SmartDashboard::PutNumber("Left Actual Position", m_pLeftMotor1->GetActual(true));
 	SmartDashboard::PutNumber("Right Actual Position", m_pRightMotor1->GetActual(true));
-	SmartDashboard::PutNumber("Odometry Field Position X", double(m_pOdometry->GetPose().Translation().X()));
-	SmartDashboard::PutNumber("Odometry Field Position Y", double(m_pOdometry->GetPose().Translation().Y()));
+	SmartDashboard::PutNumber("Odometry Field Position X", double(inch_t(m_pOdometry->GetPose().Translation().X())));
+	SmartDashboard::PutNumber("Odometry Field Position Y", double(inch_t(m_pOdometry->GetPose().Translation().Y())));
 	SmartDashboard::PutNumber("Odometry Field Position Rotation", double(m_pOdometry->GetPose().Rotation().Degrees()));	
 }
 
@@ -185,6 +193,22 @@ void CDrive::GenerateTragectory()
 {
 	// Generate the trajectory.
 	m_Trajectory = TrajectoryGenerator::GenerateTrajectory(m_StartPoint, m_InteriorWaypoints, m_EndPoint, m_Config);
+	
+
+	// Setup the RamseteCommand with new trajectory.
+	m_pRamseteCommand = new frc2::RamseteCommand(
+		m_Trajectory, 
+		[this]() { return m_pOdometry->GetPose(); }, 
+		RamseteController(m_dBeta, m_dZeta), 
+		SimpleMotorFeedforward<units::meters>(m_dDefaultkS, m_dDefaultkV, m_dDefaultkA), 
+		DifferentialDriveKinematics(inch_t(m_dDriveBaseWidth)), 
+		[this]() { return GetWheelSpeeds(); }, 
+		frc2::PIDController(m_dProportional, m_dIntegral, m_dDerivative), 
+		frc2::PIDController(m_dProportional, m_dIntegral, m_dDerivative), 
+		[this](auto left, auto right) { SetDrivePowers(left, right); }
+	);
+
+	m_pRamseteCommand->Initialize();
 }
 
 /****************************************************************************
@@ -194,42 +218,45 @@ void CDrive::GenerateTragectory()
 ****************************************************************************/
 void CDrive::FollowTragectory()
 {
-	// Create instance variables.
-	double dElapsedTime = 0.000;
-	double dSpeedLeft 	= 0.000;
-	double dSpeedRight	= 0.000;
-
 	// Disable motor safety.
 	m_pRobotDrive->SetSafetyEnabled(false);
 
-	// Calculate elapsed time.
-	dElapsedTime = (m_pTimer->Get() - m_dPathFollowStartTime);
+	// Update RamseteCommand.
+	m_pRamseteCommand->Execute();
 
-	// Sample the trajectory at .02 seconds from the last point.
-	const auto m_Goal = m_Trajectory.Sample(second_t(dElapsedTime));
-	// Calculate the wheel velocity for the next point in the trajectory path.
-	ChassisSpeeds m_pAdjustedSpeeds = m_pRamseteController->Calculate(m_pOdometry->GetPose(), m_Goal);
-	// Convert to values we can use for Differential Drive.
-	DifferentialDriveWheelSpeeds m_pDriveSpeeds = m_pKinematics->ToWheelSpeeds(m_pAdjustedSpeeds);
-
-	// Convert from meters/sec to inch/sec.
-	dSpeedLeft = double(m_pDriveSpeeds.left) * 39.37;
-	dSpeedRight = double(m_pDriveSpeeds.right) * 39.37;
-
-	// Set motor powers.
-	m_pLeftMotor1->SetSetpoint(dSpeedLeft, false);
-	m_pRightMotor1->SetSetpoint(dSpeedRight, false);
-
-	// Call motor ticks.
-	m_pLeftMotor1->Tick();
-	m_pRightMotor1->Tick();
-
-	// Put motor powers on dashboard.
-	SmartDashboard::PutNumber("Elapsed Time", dElapsedTime);
-	SmartDashboard::PutNumber("Current Time Pos in Trajectory", double(m_Goal.t));
+	// Put trajectory info on SmartDashboard.
 	SmartDashboard::PutNumber("Total Trajectory Time", double(m_Trajectory.TotalTime()));
-	SmartDashboard::PutNumber("LeftMotorPower", dSpeedLeft);
-	SmartDashboard::PutNumber("RightMotorPower", dSpeedRight);
+}
+
+/****************************************************************************
+	Description:	Method that sets the left and right drivetrain voltages.
+	Arguments: 		dLeftVoltage - Left motor voltage.
+					dRightVoltage - Right motor voltage.
+	Returns: 		Nothing
+****************************************************************************/
+void CDrive::SetDrivePowers(volt_t dLeftVoltage, volt_t dRightVoltage)
+{
+	// Set drivetrain powers.
+	m_pLeftMotor1->SetMotorVoltage(double(dLeftVoltage));
+	m_pRightMotor1->SetMotorVoltage(double(dRightVoltage));
+
+	// Put drive powers on SmartDashboard.
+	SmartDashboard::PutNumber("LeftMotorPower", m_pLeftMotor1->GetMotorVoltage());
+	SmartDashboard::PutNumber("RightMotorPower", m_pRightMotor1->GetMotorVoltage());
+}
+
+/****************************************************************************
+	Description:	Method that gets the wheel velocity in meters per second.
+	Arguments: 		None
+	Returns: 		DifferentialDriveWheelSpeeds - Drivetrain speeds.
+****************************************************************************/
+DifferentialDriveWheelSpeeds CDrive::GetWheelSpeeds()
+{
+	// Put wheel speeds on SmartDashboard.
+	SmartDashboard::PutNumber("LeftWheelSpeed", m_pLeftMotor1->GetActual(false) / 39.3701);
+	SmartDashboard::PutNumber("RightWheelSpeed", m_pRightMotor1->GetActual(false) / 39.3701);
+	
+	return {meters_per_second_t(m_pLeftMotor1->GetActual(false) / 39.3701), meters_per_second_t(m_pRightMotor1->GetActual(false) / 39.3701)};
 }
 
 /****************************************************************************
@@ -243,7 +270,7 @@ void CDrive::ResetOdometry()
 	ResetEncoders();
 
 	// Reset field position.
-	m_pOdometry->ResetPosition(m_StartPoint, Rotation2d(degree_t(m_pGyro->GetYaw())));
+	m_pOdometry->ResetPosition(m_StartPoint, Rotation2d(degree_t(-m_pGyro->GetYaw())));
 }
 
 /****************************************************************************

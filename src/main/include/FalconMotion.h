@@ -9,7 +9,6 @@
 
 #include <ctre/phoenix/motorcontrol/can/WPI_TalonFX.h>
 #include <frc/smartdashboard/SmartDashboard.h>
-#include <frc/controller/PIDController.h>
 #include <frc/Timer.h>
 
 using namespace ctre::phoenix::motorcontrol::can;
@@ -71,14 +70,15 @@ public:
 	void	SetNominalOutputVoltage(double dNominalFwdOutput, double dNominalRevOutput);
 	void	SetOpenLoopRampRate(double dOpenLoopRampRate);
 	void	SetPeakOutputPercent(double dMaxFwdOutput, double dMaxRevOutput);
-	void	SetPIDValues(double dProportional, double dIntegral, double dDerivative, bool bUsePosition, double dFeedForward = 0.000);
+	void	SetPIDValues(double dProportional, double dIntegral, double dDerivative, double dFeedForward = 0.000);
 	void	SetPulsesPerRev(int nPPR);
 	void	SetRevsPerUnit(double dRPU);
 	void	SetSensorInverted(bool bInverted);
 	void	SetSetpoint(double dSetpoint, bool bUsePosition);
+	void	SetMotorVoltage(double dVoltage);
 	void	SetPositionSoftLimits(double dMinValue, double dMaxValue);
 	void	SetVelocitySoftLimits(double dMinValue, double dMaxValue);
-	void	SetTolerance(double dValue, bool bUsePosition);
+	void	SetTolerance(double dValue);
     void	StartHoming();
 	void	Stop();
     void	Tick();
@@ -103,7 +103,6 @@ private:
 	// Object Pointers.
     WPI_TalonFX*            m_pMotor;
 	Timer*                  m_pTimer;
-	frc2::PIDController*	m_pPIDController;
 
 	// Member Variables.
 	bool					m_bFwdLimitSwitchNormallyOpen;

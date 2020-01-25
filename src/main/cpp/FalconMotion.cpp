@@ -7,6 +7,7 @@
 #include "FalconMotion.h"
 
 using namespace frc;
+using namespace units;
 using namespace ctre::phoenix::motorcontrol;
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -20,7 +21,6 @@ CFalconMotion::CFalconMotion(int nDeviceID)
 	// Create the object pointers.
 	m_pMotor						= new WPI_TalonFX(nDeviceID);
 	m_pTimer						= new Timer();
-	m_pPIDController				= new frc2::PIDController(dDefaultFalconMotionVelocityProportional, dDefaultFalconMotionVelocityIntegral, dDefaultFalconMotionVelocityDerivative, 20_ms);
 
 	// Initialize member variables.
 	m_nCurrentState					= eIdle;
@@ -70,10 +70,10 @@ CFalconMotion::CFalconMotion(int nDeviceID)
 	// Set the peak (maximum) motor output for both directions.
 	SetPeakOutputPercent(1.000, -1.000);
 	// Set the tolerance for position and velocity PIDs.
-	SetTolerance(m_dPositionTolerance, true);
-	SetTolerance(m_dVelocityTolerance, false);
+	SetTolerance(m_dPositionTolerance);
+	SetTolerance(m_dVelocityTolerance);
 	// Set the PID and feed forward values for position.
-	SetPIDValues(dDefaultFalconMotionPositionProportional, dDefaultFalconMotionPositionIntegral, dDefaultFalconMotionPositionDerivative, true, dDefaultFalconMotionFeedForward);
+	SetPIDValues(dDefaultFalconMotionPositionProportional, dDefaultFalconMotionPositionIntegral, dDefaultFalconMotionPositionDerivative, dDefaultFalconMotionFeedForward);
 	// Stop the motor.
 	Stop();
 	// Set the neutral mode to brake.
@@ -156,11 +156,6 @@ void CFalconMotion::Tick()
 					m_nCurrentState = eIdle;
 				}
 			}
-			else
-			{
-				// Not yet at the home limit switch, keep moving.
-				m_pMotor->Set(ControlMode::PercentOutput, m_dRevHomeSpeed);
-			}
 			break;
 
 		case eHomingForward :
@@ -194,7 +189,6 @@ void CFalconMotion::Tick()
 			// the PID reaches the target or until the limit switch in
 			// the direction of travel is pressed. The state then becomes idle.
 			m_bReady = false;
-			static double dMotorPower = 0.00;
 			// Check to see if position is within tolerance or limit switch
 			// is activated in direction of travel.
 			if (IsAtSetpoint() ||
@@ -209,14 +203,6 @@ void CFalconMotion::Tick()
 					Stop();
 				}				
 			}	
-			else
-			{
-				// Calculate motor power with PID.
-				dMotorPower += m_pPIDController->Calculate(GetActual(false));
-				m_pMotor->Set(ControlMode::PercentOutput, dMotorPower);
-				SmartDashboard::PutNumber("PID Output", m_pPIDController->Calculate(GetActual(false)));
-				SmartDashboard::PutNumber("Error", m_pPIDController->GetPositionError());
-			}
 			break;
 
 		case eManualForward :
@@ -290,11 +276,11 @@ void CFalconMotion::SetSetpoint(double dSetpoint, bool bUsePosition)
 		// Set the motor to the desired position.
 		if (m_bMotionMagic)
 		{
-			m_pMotor->Set(ControlMode::MotionMagic, dSetpoint);
+			m_pMotor->Set(ControlMode::MotionMagic, dSetpoint * m_dRevsPerUnit * m_nPulsesPerRev);
 		}
 		else
 		{
-			m_pMotor->Set(ControlMode::Position, dSetpoint);
+			m_pMotor->Set(ControlMode::Position, dSetpoint * m_dRevsPerUnit * m_nPulsesPerRev);
 		}
 	}
 	else
@@ -316,12 +302,21 @@ void CFalconMotion::SetSetpoint(double dSetpoint, bool bUsePosition)
 		m_dSetpoint = dSetpoint;
 
 		// Set the motor to the desired position.
-		m_pPIDController->SetSetpoint(m_dSetpoint);
-		SmartDashboard::PutNumber("Setpoint", m_dSetpoint);
+		m_pMotor->Set(ControlMode::Velocity, (dSetpoint * m_dRevsPerUnit * m_nPulsesPerRev) / m_dTimeUnitInterval);
 	}
 
 	// Set the state to eFinding.
 	m_nCurrentState = eFinding;
+}
+
+/******************************************************************************
+	Description:	SetMotorVoltage - Set the desired motor voltage.
+	Arguments:	 	dVoltage - The motor voltage.
+	Returns: 		Nothing
+******************************************************************************/
+void CFalconMotion::SetMotorVoltage(double dVoltage)
+{
+	m_pMotor->SetVoltage(volt_t(dVoltage));
 }
 
 /******************************************************************************
@@ -375,23 +370,13 @@ void CFalconMotion::Stop()
 	Arguments:	 	dValue - Tolerance in the desired units.
 	Returns: 		Nothing
 ******************************************************************************/
-void CFalconMotion::SetTolerance(double dValue, bool bUsePosition)
+void CFalconMotion::SetTolerance(double dValue)
 {
 	// Set the allowed error for the PID. This is in quadrature pulses.
-	if (bUsePosition)
-	{
-		m_pMotor->ConfigAllowableClosedloopError(0, m_dPositionTolerance * m_dRevsPerUnit * m_nPulsesPerRev);
+	m_pMotor->ConfigAllowableClosedloopError(0, m_dPositionTolerance * m_dRevsPerUnit * m_nPulsesPerRev);
 
-		// Set the member variable.
-		m_dPositionTolerance = dValue;
-	}
-	else
-	{
-		m_pPIDController->SetTolerance(m_dPositionTolerance);
-		
-		// Set the member variable.
-		m_dPositionTolerance = dValue;
-	}
+	// Set the member variable.
+	m_dPositionTolerance = dValue;
 }
 
 /******************************************************************************
@@ -661,22 +646,13 @@ void CFalconMotion::SetRevsPerUnit(double dRPU)
 					double dFeedForward		- Feed Forward Gain
 	Returns: 		Nothing
 ******************************************************************************/
-void CFalconMotion::SetPIDValues(double dProportional, double dIntegral, double dDerivative, bool bUsePosition, double dFeedForward)
+void CFalconMotion::SetPIDValues(double dProportional, double dIntegral, double dDerivative, double dFeedForward)
 {
 	// Set PID values for either position or velocity.
-	if (bUsePosition)
-	{
-		m_pMotor->Config_kP(0, dProportional);
-		m_pMotor->Config_kI(0, dIntegral);
-		m_pMotor->Config_kD(0, dDerivative);
-		m_pMotor->Config_kF(0, dFeedForward);
-	}
-	else
-	{
-		m_pPIDController->SetP(dProportional);
-		m_pPIDController->SetI(dIntegral);
-		m_pPIDController->SetD(dDerivative);
-	}
+	m_pMotor->Config_kP(0, dProportional);
+	m_pMotor->Config_kI(0, dIntegral);
+	m_pMotor->Config_kD(0, dDerivative);
+	m_pMotor->Config_kF(0, dFeedForward);
 }
 
 /******************************************************************************
