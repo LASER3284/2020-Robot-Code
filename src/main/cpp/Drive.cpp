@@ -135,9 +135,7 @@ void CDrive::Tick()
 	// Drive the robot.
 	if (!m_pDriveController->GetRawButton(1))
 	{
-		// Set drivetrain powers.
-		//m_pLeftMotor1->SetSetpoint(30, true);
-		//m_pRightMotor1->SetSetpoint(30, true);
+		// Set drivetrain powers to joystick controls.
 		m_pRobotDrive->ArcadeDrive(YAxis, XAxis, false);
 
 		// Stop motors if we were previously following a path and reset trajectory.
@@ -256,6 +254,7 @@ DifferentialDriveWheelSpeeds CDrive::GetWheelSpeeds()
 	SmartDashboard::PutNumber("LeftWheelSpeed", m_pLeftMotor1->GetActual(false) / 39.3701);
 	SmartDashboard::PutNumber("RightWheelSpeed", m_pRightMotor1->GetActual(false) / 39.3701);
 	
+	// Return wheel speeds.
 	return {meters_per_second_t(m_pLeftMotor1->GetActual(false) / 39.3701), meters_per_second_t(m_pRightMotor1->GetActual(false) / 39.3701)};
 }
 
