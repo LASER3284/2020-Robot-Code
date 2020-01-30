@@ -9,6 +9,7 @@
 
 #include <rev/CANSparkMax.h>
 #include <frc/Timer.h>
+#include "IOMap.h"
 
 using namespace rev;
 using namespace frc;
@@ -34,7 +35,6 @@ const double 	dDefaultSparkMotionMaxHomingTime	    		=    0.000;		// Default Max
 const double 	dDefaultSparkMotionMaxFindingTime	    		=    0.000;		// Default Maximum allowable time to move to position. Zero to disable timeout. This is in seconds.
 const double	dDefualtSparkMotionManualFwdSpeed 	    		=	 0.500;
 const double	dDefualtSparkMotionManualRevSpeed	    		=	-0.500;
-enum State {eIdle, eHomingReverse, eHomingForward, eFinding, eManualForward, eManualReverse};
 ///////////////////////////////////////////////////////////////////////////////
 
 

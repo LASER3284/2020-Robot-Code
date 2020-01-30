@@ -4,10 +4,14 @@
 	Project:		2020 Infinite Recharge Robot Code.
 	Copyright 2020 First Team 3284 - Camdenton LASER Robotics.
 ******************************************************************************/
+#include <frc/smartdashboard/SmartDashboard.h>
 #include "RobotMain.h"
-#include "Drive.h"
+#include "Intake.h"
+#include "Turret.h"
 
 using namespace frc;
+///////////////////////////////////////////////////////////////////////////////
+
 
 /******************************************************************************
 	Description:	CRobotMain Constructor.
@@ -17,25 +21,11 @@ using namespace frc;
 CRobotMain::CRobotMain()
 {
     // Create object pointers.
-    m_pDriveController  = new frc::Joystick(0);
-    m_pAuxController    = new frc::Joystick(1);
-    m_pDrive            = new CDrive(m_pDriveController);
+    m_pDriveController  = new Joystick(0);
     m_pTimer            = new Timer();
-    m_pLiveWindow       = LiveWindow::GetInstance();
-
-    // Assign variables.
-    m_nTeleopState                      = eTeleopIdle;
-    m_nAutoState                        = eAutoIdle;
-    m_bDriveControllerPOVUpPressed 		= false;
-	m_bDriveControllerPOVDownPressed	= false;
-	m_bDriveControllerPOVLeftPressed	= false;
-	m_bDriveControllerPOVRightPressed	= false;
-	m_bDriveControllerButtonAPressed	= false;
-	m_bDriveControllerButtonBPressed	= false;
-	m_bDriveControllerButtonXPressed	= false;
-	m_bDriveControllerButtonYPressed	= false;
-	m_bDriveControllerButtonLSPressed	= false;
-	m_bDriveControllerButtonRSPressed	= false;
+    m_pDrive            = new CDrive(m_pDriveController);
+	m_pIntake			= new CIntake();
+	m_pTurret			= new CTurret();
 }
 
 /******************************************************************************
@@ -45,58 +35,153 @@ CRobotMain::CRobotMain()
 ******************************************************************************/
 CRobotMain::~CRobotMain()
 {
+    // Delete objects.
     delete m_pDriveController;
-    delete m_pAuxController;
-    delete m_pDrive;
     delete m_pTimer;
+	delete m_pDrive;
+	delete m_pIntake;
+	delete m_pTurret;
 
+    // Set pointers to nullptrs.
     m_pDriveController  = nullptr;
-    m_pAuxController    = nullptr;
-    m_pDrive            = nullptr;
     m_pTimer            = nullptr;
+	m_pDrive 			= nullptr;
+	m_pIntake			= nullptr;
+	m_pTurret			= nullptr;
 }
 
+/****************************************************************************
+	Description:	Ran on initial startup of the robot.
+	Arguments: 		None
+	Returns: 		Nothing
+****************************************************************************/
 void CRobotMain::RobotInit()
 {
 	m_pDrive->Init();
-	m_pDrive->GenerateTragectory();
+	m_pIntake->Init();
+	m_pTurret->Init();
 }
 
+/******************************************************************************
+	Description:	Runs every 20ms in a loop after the robot has started.
+	Arguments:	 	None
+	Returns: 		Nothing
+******************************************************************************/
 void CRobotMain::RobotPeriodic()
 {
 
 }
 
-void CRobotMain::AutonomousInit()
+/****************************************************************************
+	Description:	Ran only once, when robot enters Disabled mode.
+	Arguments: 		None
+	Returns: 		Nothing
+****************************************************************************/
+void CRobotMain::DisabledInit()
+{
+	
+}
+
+/******************************************************************************
+	Description:	Runs every 20ms in a loop after the robot has entered
+					Disabled mode.
+	Arguments:	 	None
+	Returns: 		Nothing
+******************************************************************************/
+void CRobotMain::DisabledPeriodic()
 {
 
 }
 
+/******************************************************************************
+	Description:	Ran only once, after the robot has entered Autonomous mode.
+	Arguments:	 	None
+	Returns: 		Nothing
+******************************************************************************/
+void CRobotMain::AutonomousInit()
+{
+    // Disable joystick control to prevent issues during Autonomous.
+    m_pDrive->SetJoystickControl(false);
+}
+
+/******************************************************************************
+	Description:	Runs every 20ms in a loop after the robot has entered
+                    Autonomous mode.
+	Arguments:	 	None
+	Returns: 		Nothing
+******************************************************************************/
 void CRobotMain::AutonomousPeriodic()
 {
 
 }
 
+/******************************************************************************
+	Description:	Ran only once, after robot has entered Teleop mode.
+	Arguments:	 	None
+	Returns: 		Nothing
+******************************************************************************/
 void CRobotMain::TeleopInit()
 {
-
+    // Enable joystick control for Teleop use.
+    m_pDrive->SetJoystickControl(true);
 }
 
+/******************************************************************************
+	Description:	Runs every 20ms in a loop after the robot has entered 
+                    Teleop mode.
+	Arguments:	 	None
+	Returns: 		Nothing
+******************************************************************************/
 void CRobotMain::TeleopPeriodic()
 {
-	m_pDrive->Tick();
+	if (m_pDriveController->GetRawButtonPressed(eButtonB))
+	{
+		m_pTurret->SetSetpoint(210.0);
+	}
+
+	if (m_pDriveController->GetRawButtonPressed(eButtonA))
+	{
+		m_pTurret->SetSetpoint(-90.0);
+	}
+
+	if (m_pDriveController->GetRawButtonPressed(eButtonX))
+	{
+		m_pTurret->SetSetpoint(0.0);
+	}
+
+	if (m_pDriveController->GetRawButtonPressed(eButtonY))
+	{
+		m_pTurret->SetState(eTurretIdle);
+	}
+
+	// Update Drive.
+    m_pDrive->Tick();
+	m_pTurret->Tick();
+
+	SmartDashboard::PutNumber("State", (int)m_pTurret->GetState());
 }
 
+/******************************************************************************
+	Description:	Ran only once, after the robot has entered Test mode.
+	Arguments:	 	None
+	Returns: 		Nothing
+******************************************************************************/
 void CRobotMain::TestInit() 
 {
 
 }
 
+/******************************************************************************
+	Description:	Runs every 20ms in a loop after the robot has entered
+                    Test mode.
+	Arguments:	 	None
+	Returns: 		Nothing
+******************************************************************************/
 void CRobotMain::TestPeriodic()
 {
 	
 }
-
+///////////////////////////////////////////////////////////////////////////////
 #ifndef RUNNING_FRC_TESTS
 int main() { return frc::StartRobot<CRobotMain>(); }
 #endif

@@ -40,6 +40,13 @@ const double	m_dDefaultIntegral						= 0.000;	// Left drive integral value.
 const double 	m_dDefaultDerivative					= 0.000;	// Left drive derivative value.
 const auto    	m_dDefaultDrivebaseWidth               	= 24.777;
 /////////////////////////////////////////////////////////////////////////////
+
+
+/******************************************************************************
+	Description:	CDrive class definition.
+	Arguments:		Joystick pDriveController
+	Derived From:	Nothing
+******************************************************************************/
 class CDrive
 {
 public:
@@ -54,6 +61,9 @@ public:
     void ResetOdometry();
 	void ResetEncoders();
     void Stop();
+    void SetJoystickControl(bool bJoystickControl);
+    void SetMotorExpiration(double dTimeout);
+    void SetMotorSafety(bool bEnabled);
 
 private:
     // Object Pointers.

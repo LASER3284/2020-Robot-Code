@@ -51,6 +51,7 @@ CDrive::CDrive(Joystick* pDriveController)
 ****************************************************************************/
 CDrive::~CDrive()
 {
+	// Delete objects.
 	delete m_pLeftMotor1;
 	delete m_pLeftMotor2;
 	delete m_pRightMotor1;
@@ -115,70 +116,85 @@ void CDrive::Init()
 ****************************************************************************/
 void CDrive::Tick()
 {
-	// Set variables to joysticks.
-	double XAxis = m_pDriveController->GetRawAxis(4);
-	double YAxis = -m_pDriveController->GetRawAxis(1);
-
-	// Check if joystick is in deadzone.
-	if (fabs(XAxis) < 0.1)
+  if (m_bJoystickControl)
 	{
-		XAxis = 0;
-	}
-	if (fabs(YAxis) < 0.1)
-	{
-		YAxis = 0;
-	}
+		// Set variables to joystick values.
+		double XAxis = m_pDriveController->GetRawAxis(eRightAxisX);
+		double YAxis = -m_pDriveController->GetRawAxis(eLeftAxisY);
 
-	// Update odometry. (Position on field.)
-	m_pOdometry->Update(Rotation2d(degree_t(-m_pGyro->GetYaw())), inch_t(m_pLeftMotor1->GetActual(true)), inch_t(m_pRightMotor1->GetActual(true)));
+		// Check if joystick is in deadzone.
+		if (fabs(XAxis) < 0.1)
+		{
+			XAxis = 0.0;
+		}
+		if (fabs(YAxis) < 0.1)
+		{
+			YAxis = 0.0;
+		}
 
-	// Drive the robot.
-	if (!m_pDriveController->GetRawButton(1))
-	{
-		// Set drivetrain powers to joystick controls.
+    	// Update odometry. (Position on field.)
+    m_pOdometry->Update(Rotation2d(degree_t(-m_pGyro->GetYaw())), inch_t(m_pLeftMotor1->GetActual(true)), inch_t(m_pRightMotor1->GetActual(true)));
+
+    // Drive the robot.
+    if (!m_pDriveController->GetRawButton(1))
+    {
+      // Set drivetrain powers to joystick controls.
+      m_pRobotDrive->ArcadeDrive(YAxis, XAxis, false);
+
+      // Stop motors if we were previously following a path and reset trajectory.
+      if (m_bMotionProfile)
+      {
+        Stop();
+        m_pRamseteCommand->Cancel();
+        m_pRobotDrive->SetSafetyEnabled(true);
+        m_bMotionProfile = false;
+      }
+    }
+    else
+    {
+      // If X is pressed regenerate path.
+      if (m_pDriveController->GetRawButton(3))
+      {
+        GenerateTragectory();
+      }
+
+      // Reset robot values.
+      if (!m_bMotionProfile)
+      {
+        // Reset robot field position and encoders.
+        ResetOdometry();
+      }
+
+      // Set that we are currently following a path.
+      m_bMotionProfile = true;
+
+      // Follow the pre-generated path.
+      FollowTragectory();
+    }
+
+    // Update Smartdashboard values.
+    SmartDashboard::PutNumber("Left Actual Velocity", (m_pLeftMotor1->GetActual(false)));
+    SmartDashboard::PutNumber("Right Actual Velocity", (m_pRightMotor1->GetActual(false)));
+    SmartDashboard::PutNumber("Left Actual Position", m_pLeftMotor1->GetActual(true));
+    SmartDashboard::PutNumber("Right Actual Position", m_pRightMotor1->GetActual(true));
+    SmartDashboard::PutNumber("Odometry Field Position X", double(inch_t(m_pOdometry->GetPose().Translation().X())));
+    SmartDashboard::PutNumber("Odometry Field Position Y", double(inch_t(m_pOdometry->GetPose().Translation().Y())));
+    SmartDashboard::PutNumber("Odometry Field Position Rotation", double(m_pOdometry->GetPose().Rotation().Degrees()));	
+
+		// Drive the robot.
 		m_pRobotDrive->ArcadeDrive(YAxis, XAxis, false);
-
-		// Stop motors if we were previously following a path and reset trajectory.
-		if (m_bMotionProfile)
-		{
-			Stop();
-			m_pRamseteCommand->Cancel();
-			m_pRobotDrive->SetSafetyEnabled(true);
-			m_bMotionProfile = false;
-		}
 	}
-	else
-	{
-		// If X is pressed regenerate path.
-		if (m_pDriveController->GetRawButton(3))
-		{
-			GenerateTragectory();
-		}
+}
 
-		// Reset robot values.
-		if (!m_bMotionProfile)
-		{
-			// Reset robot field position and encoders.
-			ResetOdometry();
-
-			
-		}
-
-		// Set that we are currently following a path.
-		m_bMotionProfile = true;
-
-		// Follow the pre-generated path.
-		FollowTragectory();
-	}
-
-	// Update Smartdashboard values.
-	SmartDashboard::PutNumber("Left Actual Velocity", (m_pLeftMotor1->GetActual(false)));
-	SmartDashboard::PutNumber("Right Actual Velocity", (m_pRightMotor1->GetActual(false)));
-	SmartDashboard::PutNumber("Left Actual Position", m_pLeftMotor1->GetActual(true));
-	SmartDashboard::PutNumber("Right Actual Position", m_pRightMotor1->GetActual(true));
-	SmartDashboard::PutNumber("Odometry Field Position X", double(inch_t(m_pOdometry->GetPose().Translation().X())));
-	SmartDashboard::PutNumber("Odometry Field Position Y", double(inch_t(m_pOdometry->GetPose().Translation().Y())));
-	SmartDashboard::PutNumber("Odometry Field Position Rotation", double(m_pOdometry->GetPose().Rotation().Degrees()));	
+/****************************************************************************
+	Description:	SetJoystickControl - Sets the desired joystick control.
+	Arguments: 		bool bJoystickControl - True if joystick control enabled,
+					false otherwise.
+	Returns: 		Nothing
+****************************************************************************/
+void CDrive::SetJoystickControl(bool bJoystickControl)
+{
+	m_bJoystickControl = bJoystickControl;
 }
 
 /****************************************************************************
@@ -192,8 +208,8 @@ void CDrive::GenerateTragectory(Pose2d pStartPoint, Pose2d pEndPoint, vector<Tra
 	m_Trajectory = TrajectoryGenerator::GenerateTrajectory(pStartPoint, pInteriorWaypoints, pEndPoint, pConfig);
 	
 
-	// Setup the RamseteCommand with new trajectory.
-	m_pRamseteCommand = new frc2::RamseteCommand(
+	  // Setup the RamseteCommand with new trajectory.
+	  m_pRamseteCommand = new frc2::RamseteCommand(
 		m_Trajectory, 
 		[this]() { return m_pOdometry->GetPose(); }, 
 		RamseteController(m_dBeta, m_dZeta), 
@@ -296,3 +312,26 @@ void CDrive::Stop()
 	m_pLeftMotor1->Stop();
 	m_pRightMotor1->Stop();
 }
+
+/****************************************************************************
+	Description:	SetMotorExpiration - Sets the motor safety expiration
+					timeout.
+	Arguments: 		double dTimeout - Expiration timeout
+	Returns: 		Nothing
+****************************************************************************/
+void CDrive::SetMotorExpiration(double dTimeout)
+{
+	m_pRobotDrive->SetExpiration(dTimeout);
+}
+
+/****************************************************************************
+	Description:	SetMotorSafety - Sets the motor safety enabled for the
+					drive motors.
+	Arguments: 		bool bEnabled - True to set MotorSafetyEnabled
+	Returns: 		Nothing
+****************************************************************************/
+void CDrive::SetMotorSafety(bool bEnabled)
+{
+	m_pRobotDrive->SetSafetyEnabled(bEnabled);
+}
+///////////////////////////////////////////////////////////////////////////////

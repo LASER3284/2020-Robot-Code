@@ -4,19 +4,26 @@
 	Project:		2020 Infinite Recharge Robot Code.
 	Copyright 2020 First Team 3284 - Camdenton LASER Robotics.
 ******************************************************************************/
-#ifndef RobotMain_H
-#define RobotMain_H
+#ifndef RobotMain_h
+#define RobotMain_h
 
 #include <frc/TimedRobot.h>
 #include <frc/Timer.h>
 #include <frc/Joystick.h>
 #include <frc/LiveWindow/LiveWindow.h>
-
-class CDrive;
+#include "Drive.h"
+#include "Intake.h"
+#include "Turret.h"
 
 using namespace frc;
 ///////////////////////////////////////////////////////////////////////////////
 
+
+/******************************************************************************
+	Description:	CRobotMain class definition.
+	Arguments:		None
+	Derived From:	TimedRobot
+******************************************************************************/
 class CRobotMain : public TimedRobot
 {
 public:
@@ -27,6 +34,9 @@ private:
     // Override methods.
     void RobotInit() override;
     void RobotPeriodic() override;
+
+    void DisabledInit() override;
+    void DisabledPeriodic() override;
 
     void AutonomousInit() override;
     void AutonomousPeriodic() override;
@@ -49,13 +59,13 @@ private:
     };
 
     // Object pointers.
-    frc::Joystick*      m_pDriveController;
-    frc::Joystick*      m_pAuxController;
-    CDrive*             m_pDrive;
+    Joystick*           m_pDriveController;
     Timer*              m_pTimer;
-    LiveWindow*         m_pLiveWindow;
+    CDrive*             m_pDrive;
+    CIntake*            m_pIntake;
+    CTurret*            m_pTurret;
 
-    // Initialize variables.
+    // Declare variables.
     int         m_nTeleopState;
     int         m_nAutoState;
     bool        m_bDriveControllerPOVUpPressed;
