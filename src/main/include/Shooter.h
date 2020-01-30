@@ -71,6 +71,7 @@ public:
 	// Hood methods.
 	void			SetHoodPID(double dProportional, double dIntegral, double dDerivative);
 	void 			SetHoodSetpoint(double dSetpoint);
+	void			SetHoodSpeed(double dSpeed);
 	void 			SetHoodState(HoodState nState)										{	m_nHoodState = nState;								};
 	void 			SetHoodTolerance(double dTolerance);
 	bool			IsHoodAtSetpoint();

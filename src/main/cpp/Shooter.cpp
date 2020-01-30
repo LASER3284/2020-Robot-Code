@@ -122,7 +122,7 @@ void CShooter::Tick()
 {
 	// Update Actual variables.
 	m_dShooterActual = m_pLeftShooter->GetEncoder().GetVelocity();
-	m_dHoodActual	 = m_pHoodPID->GetPositionError();
+	m_dHoodActual	 = m_pHoodEncoder->GetDistance();
 
 	// Shooter state machine.
 	switch(m_nShooterState)
@@ -162,15 +162,37 @@ void CShooter::Tick()
 	switch(m_nHoodState)
 	{
 		case eHoodIdle :
+			// Idle - Servo is off and ready to move again.
+			// Stop the servo.
+			m_pHoodServo->Set(0.0);
+			// Set servo to ready.
+			m_bHoodIsReady = true;
 			break;
 
 		case eHoodFinding :
+			// Finding - Use PID Controller to drive to a given
+			// Setpoint, and check if we are within the given
+			// tolerance.
+			if (m_dHoodSetpoint - m_dHoodActual < m_dHoodTolerance)
+			{
+				// At our setpoint, return to idle.
+				SetHoodState(eHoodIdle);
+			}
+			else
+			{
+				// Not at the setpoint, continue.
+				SetHoodSpeed(m_pHoodPID->Calculate(m_dHoodActual));
+			}
 			break;
 		
 		case eHoodManualFwd :
+			// ManualForward - Move the Hood forward at a constant speed.
+			SetHoodSpeed(dHoodManualFwdSpeed);
 			break;
 
 		case eHoodManualRev :
+			// ManualReverse - Move the Hood backwards at a constant speed.
+			SetHoodSpeed(dHoodManualRevSpeed);
 			break;
 	}
 }
@@ -242,6 +264,20 @@ void CShooter::SetShooterSetpoint(double dSetpoint)
 
 	// Set Shooter state to finding.
 	SetShooterState(eShooterFinding);
+}
+
+/****************************************************************************
+	Description:	Set and convert speed to the Hood angle in percent output.
+	Arguments: 		double dSpeed - Speed in percent output
+	Returns: 		Nothing
+****************************************************************************/
+void CShooter::SetHoodSpeed(double dSpeed)
+{
+	// Convert a -1 -> 1 value to a 0 -> 1 value.
+	dSpeed += 1.0;
+	dSpeed /= 2.0;
+	// Set the "Speed" of the continuous rotation servo.
+	m_pHoodServo->Set(dSpeed);
 }
 
 /****************************************************************************

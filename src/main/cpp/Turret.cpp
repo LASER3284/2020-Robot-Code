@@ -22,7 +22,7 @@ CTurret::CTurret()
     // Create Object Pointers.
 	m_pTurretMotor	= new WPI_TalonSRX(nTurretMotor);
 	m_pTimer		= new Timer();
-	m_pPIDController= new frc2::PIDController(1.0, 0.0, 0.0);
+	m_pPIDController= new frc2::PIDController(dTurretProportional, dTurretIntegral, dTurretIntegral);
 }
 
 /****************************************************************************
@@ -53,14 +53,14 @@ void CTurret::Init()
 	m_nState						= eTurretIdle;
 	m_bIsReady						= true;
 	m_bMotionMagic					= false;
-	m_dActual						= (m_pTurretMotor->GetSensorCollection().GetPulseWidthRiseToFallUs() - 1024) / 8.0;
+	m_dActual						= m_pTurretMotor->GetSelectedSensorPosition();
 	m_dSetpoint						= 0.00;
 	m_dTolerance					= 5.00;
 	m_dMaxFindingTime				= 3.50;
 	m_dFindingStartTime				= 0.00;
 
 	// Set up the feedback device for an analog encoder.
-	m_pTurretMotor->ConfigSelectedFeedbackSensor(FeedbackDevice::PulseWidthEncodedPosition);
+	m_pTurretMotor->ConfigSelectedFeedbackSensor(FeedbackDevice::CTRE_MagEncoder_Absolute);
 	// Set encoder to not wrap around.
 	m_pPIDController->DisableContinuousInput();
 	// Set the encoder and motor as both positive.
@@ -72,7 +72,7 @@ void CTurret::Init()
 	// Set the tolerance.
 	SetTolerance(m_dTolerance);
 	// Set the PID and feed forward values.
-	SetPID(0.0001, 0.0, 0.0);
+	SetPID(dTurretProportional, dTurretIntegral, dTurretDerivative);
 	// Stop the motor.
 	Stop();
 	// Set the neutral mode to brake.
@@ -95,7 +95,7 @@ void CTurret::Init()
 void CTurret::Tick()
 {
 	// Update Actual variable.
-	m_dActual = (m_pTurretMotor->GetSensorCollection().GetPulseWidthRiseToFallUs() - 1024) / 8.0;
+	m_dActual = (m_pTurretMotor->GetSelectedSensorPosition());
 
 	switch(m_nState)
 	{
