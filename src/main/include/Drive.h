@@ -24,6 +24,8 @@
 #include <frc/geometry/Pose2d.h>
 #include <AHRS.h>
 #include "FalconMotion.h"
+#include "TrajectoryConstants.h"
+
 
 using namespace frc;
 using namespace std;
@@ -54,8 +56,8 @@ public:
     ~CDrive();
     void Init();
     void Tick();
-    void GenerateTragectory(Pose2d pStartPoint, Pose2d pEndPoint, vector<Translation2d> pInteriorWaypoints, TrajectoryConfig pConfig);
-    void FollowTragectory();
+    void GenerateTrajectory(vector<Pose2d> pWaypoints, TrajectoryConfig pConfig);
+    void FollowTrajectory();
 	void SetDrivePowers(volt_t dLeftVoltage, volt_t dRightVoltage);
 	DifferentialDriveWheelSpeeds GetWheelSpeeds();
     void ResetOdometry();
@@ -68,6 +70,7 @@ public:
 private:
     // Object Pointers.
     Joystick*                       m_pDriveController;
+	CTrajectoryConstants			m_pTrajectoryConstants;
     CFalconMotion*                  m_pLeftMotor1;
     WPI_TalonFX*                    m_pLeftMotor2;
     CFalconMotion*                  m_pRightMotor1;
@@ -80,6 +83,7 @@ private:
 	Trajectory              		m_Trajectory;
 
     // Member variables.
+	bool					m_bJoystickControl;
     bool                    m_bMotionProfile;
     double                  m_dBeta;
     double                  m_dZeta;
@@ -87,42 +91,6 @@ private:
 	double					m_dIntegral;
 	double					m_dDerivative;
 	double					m_dDriveBaseWidth;
-
-    // Start and End poses for robot field position.
-	const Pose2d m_StartPoint
-	{
-		0.0_ft,					// X starting position on field in feet.
-		0.0_ft,					// Y starting position on field in feet.
-		Rotation2d(0_deg)		// Starting rotation on field in degrees.
-	};
-	const Pose2d m_EndPoint
-	{
-		14.0_ft,				// X ending position on field in feet.
-		7.0_ft,					// Y ending position on field in feet.
-		Rotation2d(105_deg)		// Ending rotation on field in degrees.
-	};
-
-    // Interior waypoints for trajectory. (The current waypoints make the robot follow a 2 curve snake path.)
-	vector<Translation2d> m_InteriorWaypoints
-	{
-		Translation2d
-		{
-			6.0_ft,					// X of point 1 on field in feet.
-			7.5_ft					// Y of point 1 on field in feet.
-		},
-		Translation2d
-		{
-			11.0_ft,				// X of point 2 on field in feet.
-			2.5_ft					// Y of point 2 on field in feet.
-		},
-	};
-
-	// Configure trajectory properties.
-	TrajectoryConfig m_Config
-	{
-		3_fps,					// Max desirable velocity.
-		1_fps_sq				// Max desirable acceleration.
-	};
 };
 /////////////////////////////////////////////////////////////////////////////
 #endif

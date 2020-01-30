@@ -24,6 +24,7 @@ using namespace units;
 CDrive::CDrive(Joystick* pDriveController)
 {
 	// Initialize member variables.
+	m_bJoystickControl		= false;
 	m_bMotionProfile		= false;
 	m_dBeta					= m_dDefaultBeta;
 	m_dZeta					= m_dDefaultZeta;
@@ -41,7 +42,7 @@ CDrive::CDrive(Joystick* pDriveController)
 	m_pRobotDrive			= new DifferentialDrive(*m_pLeftMotor1->GetMotorPointer(), *m_pRightMotor1->GetMotorPointer());
 	m_pGyro 				= new AHRS(SPI::Port::kMXP);
 	m_pTimer				= new Timer();
-	m_pOdometry 			= new DifferentialDriveOdometry(Rotation2d(degree_t(-m_pGyro->GetYaw())), m_StartPoint);	
+	m_pOdometry 			= new DifferentialDriveOdometry(Rotation2d(degree_t(-m_pGyro->GetYaw())), m_pTrajectoryConstants.m_StartPoint);	
 }
 
 /****************************************************************************
@@ -116,7 +117,7 @@ void CDrive::Init()
 ****************************************************************************/
 void CDrive::Tick()
 {
-  if (m_bJoystickControl)
+  	if (m_bJoystickControl)
 	{
 		// Set variables to joystick values.
 		double XAxis = m_pDriveController->GetRawAxis(eRightAxisX);
@@ -155,7 +156,7 @@ void CDrive::Tick()
       // If X is pressed regenerate path.
       if (m_pDriveController->GetRawButton(3))
       {
-        GenerateTragectory();
+        GenerateTrajectory(m_pTrajectoryConstants.m_InteriorWaypoints, m_pTrajectoryConstants.m_Config);
       }
 
       // Reset robot values.
@@ -169,7 +170,7 @@ void CDrive::Tick()
       m_bMotionProfile = true;
 
       // Follow the pre-generated path.
-      FollowTragectory();
+      FollowTrajectory();
     }
 
     // Update Smartdashboard values.
@@ -202,10 +203,10 @@ void CDrive::SetJoystickControl(bool bJoystickControl)
 	Arguments: 		None
 	Returns: 		Nothing
 ****************************************************************************/
-void CDrive::GenerateTragectory(Pose2d pStartPoint, Pose2d pEndPoint, vector<Translation2d> pInteriorWaypoints, TrajectoryConfig pConfig)
+void CDrive::GenerateTrajectory(vector<Pose2d> pWaypoints, TrajectoryConfig pConfig)
 {
 	// Generate the trajectory.
-	m_Trajectory = TrajectoryGenerator::GenerateTrajectory(pStartPoint, pInteriorWaypoints, pEndPoint, pConfig);
+	m_Trajectory = TrajectoryGenerator::GenerateTrajectory(pWaypoints, pConfig);
 	
 
 	  // Setup the RamseteCommand with new trajectory.
@@ -231,7 +232,7 @@ void CDrive::GenerateTragectory(Pose2d pStartPoint, Pose2d pEndPoint, vector<Tra
 	Arguments: 		None
 	Returns: 		Nothing
 ****************************************************************************/
-void CDrive::FollowTragectory()
+void CDrive::FollowTrajectory()
 {
 	// Disable motor safety.
 	m_pRobotDrive->SetSafetyEnabled(false);
@@ -286,7 +287,7 @@ void CDrive::ResetOdometry()
 	ResetEncoders();
 
 	// Reset field position.
-	m_pOdometry->ResetPosition(m_StartPoint, Rotation2d(degree_t(-m_pGyro->GetYaw())));
+	m_pOdometry->ResetPosition(m_pTrajectoryConstants.m_StartPoint, Rotation2d(degree_t(-m_pGyro->GetYaw())));
 }
 
 /****************************************************************************
