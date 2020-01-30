@@ -47,7 +47,7 @@ public:
     ~CDrive();
     void Init();
     void Tick();
-    void GenerateTragectory();
+    void GenerateTragectory(Pose2d pStartPoint, Pose2d pEndPoint, vector<Translation2d> pInteriorWaypoints, TrajectoryConfig pConfig);
     void FollowTragectory();
 	void SetDrivePowers(volt_t dLeftVoltage, volt_t dRightVoltage);
 	DifferentialDriveWheelSpeeds GetWheelSpeeds();

@@ -161,8 +161,7 @@ void CDrive::Tick()
 			// Reset robot field position and encoders.
 			ResetOdometry();
 
-			// Go RamseteCommand!
-			m_pRamseteCommand->Schedule();
+			
 		}
 
 		// Set that we are currently following a path.
@@ -187,10 +186,10 @@ void CDrive::Tick()
 	Arguments: 		None
 	Returns: 		Nothing
 ****************************************************************************/
-void CDrive::GenerateTragectory()
+void CDrive::GenerateTragectory(Pose2d pStartPoint, Pose2d pEndPoint, vector<Translation2d> pInteriorWaypoints, TrajectoryConfig pConfig)
 {
 	// Generate the trajectory.
-	m_Trajectory = TrajectoryGenerator::GenerateTrajectory(m_StartPoint, m_InteriorWaypoints, m_EndPoint, m_Config);
+	m_Trajectory = TrajectoryGenerator::GenerateTrajectory(pStartPoint, pInteriorWaypoints, pEndPoint, pConfig);
 	
 
 	// Setup the RamseteCommand with new trajectory.
@@ -206,7 +205,9 @@ void CDrive::GenerateTragectory()
 		[this](auto left, auto right) { SetDrivePowers(left, right); }
 	);
 
+	// Go RamseteCommand!
 	m_pRamseteCommand->Initialize();
+	m_pRamseteCommand->Schedule();
 }
 
 /****************************************************************************
