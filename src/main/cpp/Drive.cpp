@@ -156,7 +156,7 @@ void CDrive::Tick()
       // If X is pressed regenerate path.
       if (m_pDriveController->GetRawButton(3))
       {
-        GenerateTrajectory(m_pTrajectoryConstants.m_InteriorWaypoints, m_pTrajectoryConstants.m_Config);
+        GenerateTrajectory(m_pTrajectoryConstants.m_InteriorWaypoints, std::move(m_pTrajectoryConstants.m_Config));
       }
 
       // Reset robot values.
