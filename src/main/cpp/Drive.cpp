@@ -133,54 +133,53 @@ void CDrive::Tick()
 			YAxis = 0.0;
 		}
 
-    	// Update odometry. (Position on field.)
-    m_pOdometry->Update(Rotation2d(degree_t(-m_pGyro->GetYaw())), inch_t(m_pLeftMotor1->GetActual(true)), inch_t(m_pRightMotor1->GetActual(true)));
+        // Update odometry. (Position on field.)
+        m_pOdometry->Update(Rotation2d(degree_t(-m_pGyro->GetYaw())), inch_t(m_pLeftMotor1->GetActual(true)), inch_t(m_pRightMotor1->GetActual(true)));
 
-    // Drive the robot.
-    if (!m_pDriveController->GetRawButton(1))
-    {
-      // Set drivetrain powers to joystick controls.
-      m_pRobotDrive->ArcadeDrive(YAxis, XAxis, false);
+        // Drive the robot.
+        if (!m_pDriveController->GetRawButton(1))
+        {
+            // Set drivetrain powers to joystick controls.
+            m_pRobotDrive->ArcadeDrive(YAxis, XAxis, false);
 
-      // Stop motors if we were previously following a path and reset trajectory.
-      if (m_bMotionProfile)
-      {
-        Stop();
-        m_pRamseteCommand->Cancel();
-        m_pRobotDrive->SetSafetyEnabled(true);
-        m_bMotionProfile = false;
-      }
-    }
-    else
-    {
-      // If X is pressed regenerate path.
-      if (m_pDriveController->GetRawButton(3))
-      {
-        GenerateTrajectory(m_pTrajectoryConstants.m_InteriorWaypoints, std::move(m_pTrajectoryConstants.m_Config));
-      }
+            // Stop motors if we were previously following a path and reset trajectory.
+            if (m_bMotionProfile)
+            {
+                Stop();
+                m_pRamseteCommand->Cancel();
+                m_pRobotDrive->SetSafetyEnabled(true);
+                m_bMotionProfile = false;
+            }
+        }
+        else
+        {
+            // If X is pressed regenerate path.
+            if (m_pDriveController->GetRawButton(3))
+            {
+                GenerateTrajectory(m_pTrajectoryConstants.m_InteriorWaypoints, std::move(m_pTrajectoryConstants.m_Config));
+            }
 
-      // Reset robot values.
-      if (!m_bMotionProfile)
-      {
-        // Reset robot field position and encoders.
-        ResetOdometry();
-      }
+            // Reset robot values.
+            if (!m_bMotionProfile)
+            {
+                // Reset robot field position and encoders.
+                ResetOdometry();
+            }
 
-      // Set that we are currently following a path.
-      m_bMotionProfile = true;
+            // Set that we are currently following a path.
+            m_bMotionProfile = true;
+            // Follow the pre-generated path.
+            FollowTrajectory();
+        }
 
-      // Follow the pre-generated path.
-      FollowTrajectory();
-    }
-
-    // Update Smartdashboard values.
-    SmartDashboard::PutNumber("Left Actual Velocity", (m_pLeftMotor1->GetActual(false)));
-    SmartDashboard::PutNumber("Right Actual Velocity", (m_pRightMotor1->GetActual(false)));
-    SmartDashboard::PutNumber("Left Actual Position", m_pLeftMotor1->GetActual(true));
-    SmartDashboard::PutNumber("Right Actual Position", m_pRightMotor1->GetActual(true));
-    SmartDashboard::PutNumber("Odometry Field Position X", double(inch_t(m_pOdometry->GetPose().Translation().X())));
-    SmartDashboard::PutNumber("Odometry Field Position Y", double(inch_t(m_pOdometry->GetPose().Translation().Y())));
-    SmartDashboard::PutNumber("Odometry Field Position Rotation", double(m_pOdometry->GetPose().Rotation().Degrees()));	
+        // Update Smartdashboard values.
+        SmartDashboard::PutNumber("Left Actual Velocity", (m_pLeftMotor1->GetActual(false)));
+        SmartDashboard::PutNumber("Right Actual Velocity", (m_pRightMotor1->GetActual(false)));
+        SmartDashboard::PutNumber("Left Actual Position", m_pLeftMotor1->GetActual(true));
+        SmartDashboard::PutNumber("Right Actual Position", m_pRightMotor1->GetActual(true));
+        SmartDashboard::PutNumber("Odometry Field Position X", double(inch_t(m_pOdometry->GetPose().Translation().X())));
+        SmartDashboard::PutNumber("Odometry Field Position Y", double(inch_t(m_pOdometry->GetPose().Translation().Y())));
+        SmartDashboard::PutNumber("Odometry Field Position Rotation", double(m_pOdometry->GetPose().Rotation().Degrees()));	
 
 		// Drive the robot.
 		m_pRobotDrive->ArcadeDrive(YAxis, XAxis, false);
@@ -208,9 +207,8 @@ void CDrive::GenerateTrajectory(vector<Pose2d> pWaypoints, TrajectoryConfig pCon
 	// Generate the trajectory.
 	m_Trajectory = TrajectoryGenerator::GenerateTrajectory(pWaypoints, pConfig);
 	
-
-	  // Setup the RamseteCommand with new trajectory.
-	  m_pRamseteCommand = new frc2::RamseteCommand(
+	// Setup the RamseteCommand with new trajectory.
+	m_pRamseteCommand = new frc2::RamseteCommand(
 		m_Trajectory, 
 		[this]() { return m_pOdometry->GetPose(); }, 
 		RamseteController(m_dBeta, m_dZeta), 
