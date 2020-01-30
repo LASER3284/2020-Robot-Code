@@ -241,8 +241,6 @@ void CSparkMotion::SetSetpoint(double dSetpoint, bool bUsePosition)
 {
 	// Set the bUsePosition member variable.
 	m_bUsePosition = bUsePosition;
-	// Set the dSetpoint member variable.
-	m_dSetpoint = dSetpoint;
 
 	// Use either position or velocity setpoints.
 	if (bUsePosition)
@@ -259,6 +257,9 @@ void CSparkMotion::SetSetpoint(double dSetpoint, bool bUsePosition)
 				dSetpoint = m_dLowerPositionSoftLimit;
 			}
 		}
+
+		// Set the dSetpoint member variable so other methods can access it.
+		m_dSetpoint = dSetpoint;
 
 		// Set the motor to the desired position.
 		if (m_bMotionMagic)
@@ -284,6 +285,9 @@ void CSparkMotion::SetSetpoint(double dSetpoint, bool bUsePosition)
 				dSetpoint = m_dLowerVelocitySoftLimit;
 			}
 		}
+
+		// Set the dSetpoint member variable so other methods can access it.
+		m_dSetpoint = dSetpoint;
 
 		// Set the motor to the desired position.
 		if (m_bMotionMagic)
