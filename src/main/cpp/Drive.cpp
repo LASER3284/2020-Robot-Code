@@ -108,6 +108,9 @@ void CDrive::Init()
 
 	// Reset gyro.
 	m_pGyro->Reset();
+
+	// Generate the Trajectory.
+	GenerateTrajectory(m_pTrajectoryConstants.m_InteriorWaypoints, m_pTrajectoryConstants.kMaxSpeed, m_pTrajectoryConstants.kMaxAcceleration);
 }
 
 /****************************************************************************
@@ -159,7 +162,7 @@ void CDrive::Tick()
                 // Reset robot field position and encoders.
                 ResetOdometry();
 				// Generate the Trajectory.
-				GenerateTrajectory(m_pTrajectoryConstants.m_InteriorWaypoints, TrajectoryConfig(5_fps, 3_fps_sq));
+				GenerateTrajectory(m_pTrajectoryConstants.m_InteriorWaypoints, m_pTrajectoryConstants.kMaxSpeed, m_pTrajectoryConstants.kMaxAcceleration);
             }
 
             // Set that we are currently following a path.
@@ -176,9 +179,6 @@ void CDrive::Tick()
         SmartDashboard::PutNumber("Odometry Field Position X", double(inch_t(m_pOdometry->GetPose().Translation().X())));
         SmartDashboard::PutNumber("Odometry Field Position Y", double(inch_t(m_pOdometry->GetPose().Translation().Y())));
         SmartDashboard::PutNumber("Odometry Field Position Rotation", double(m_pOdometry->GetPose().Rotation().Degrees()));	
-
-		// Drive the robot.
-		m_pRobotDrive->ArcadeDrive(YAxis, XAxis, false);
 	}
 }
 
@@ -194,14 +194,15 @@ void CDrive::SetJoystickControl(bool bJoystickControl)
 }
 
 /****************************************************************************
-	Description:	MotionProfiling method that generates a new trajectory.
+	Description:	GenerateTrajectory - MotionProfiling method that 
+					generates a new trajectory.
 	Arguments: 		None
 	Returns: 		Nothing
 ****************************************************************************/
-void CDrive::GenerateTrajectory(vector<Pose2d> pWaypoints, TrajectoryConfig pConfig)
+void CDrive::GenerateTrajectory(vector<Pose2d> pWaypoints, meters_per_second_t MaxSpeed, meters_per_second_squared_t MaxAcceleration)
 {
 	// Generate the trajectory.
-	m_Trajectory = TrajectoryGenerator::GenerateTrajectory(pWaypoints, pConfig);
+	m_Trajectory = TrajectoryGenerator::GenerateTrajectory(pWaypoints, TrajectoryConfig(MaxSpeed, MaxAcceleration));
 	
 	// Setup the RamseteCommand with new trajectory.
 	m_pRamseteCommand = new frc2::RamseteCommand(
@@ -217,12 +218,12 @@ void CDrive::GenerateTrajectory(vector<Pose2d> pWaypoints, TrajectoryConfig pCon
 	);
 
 	// Go RamseteCommand!
-	m_pRamseteCommand->Initialize();
 	m_pRamseteCommand->Schedule();
 }
 
 /****************************************************************************
-	Description:	MotionProfiling method that follows a pre-generated trajectory.
+	Description:	FollowTrajectory - MotionProfiling method that follows
+					a pre-generated trajectory.
 	Arguments: 		None
 	Returns: 		Nothing
 ****************************************************************************/
@@ -239,7 +240,8 @@ void CDrive::FollowTrajectory()
 }
 
 /****************************************************************************
-	Description:	Method that sets the left and right drivetrain voltages.
+	Description:	SetDrivePowers - Method that sets the left and 
+					right drivetrain voltages.
 	Arguments: 		dLeftVoltage - Left motor voltage.
 					dRightVoltage - Right motor voltage.
 	Returns: 		Nothing
@@ -256,7 +258,8 @@ void CDrive::SetDrivePowers(volt_t dLeftVoltage, volt_t dRightVoltage)
 }
 
 /****************************************************************************
-	Description:	Method that gets the wheel velocity in meters per second.
+	Description:	GetWheelSpeeds - Method that gets the wheel velocity 
+					in meters per second.
 	Arguments: 		None
 	Returns: 		DifferentialDriveWheelSpeeds - Drivetrain speeds.
 ****************************************************************************/
@@ -271,7 +274,7 @@ DifferentialDriveWheelSpeeds CDrive::GetWheelSpeeds()
 }
 
 /****************************************************************************
-	Description:	Method that resets encoders and odometry.
+	Description:	ResetOdometry - Method that resets encoders and odometry.
 	Arguments: 		None
 	Returns: 		Nothing
 ****************************************************************************/
@@ -285,7 +288,8 @@ void CDrive::ResetOdometry()
 }
 
 /****************************************************************************
-	Description:	Method that reset encoder values back to zero.
+	Description:	ResetEncoders - Method that reset encoder values back 
+					to zero.
 	Arguments: 		None
 	Returns: 		Nothing
 ****************************************************************************/
@@ -297,7 +301,7 @@ void CDrive::ResetEncoders()
 }
 
 /****************************************************************************
-	Description:	Method that stops drive motors.
+	Description:	Stop - Method that stops drive motors.
 	Arguments: 		None
 	Returns: 		Nothing
 ****************************************************************************/
@@ -306,6 +310,17 @@ void CDrive::Stop()
 	// Stop both drive motors.
 	m_pLeftMotor1->Stop();
 	m_pRightMotor1->Stop();
+}
+
+/****************************************************************************
+	Description:	GetIsTrajectoryFinished - Returns of the generated
+					trajectory has successfully reached its last point.
+	Arguments: 		None
+	Returns: 		bool bTrajectoryIsFinished
+****************************************************************************/
+bool CDrive::GetIsTrajectoryFinished()
+{
+	return m_pRamseteCommand->IsFinished();
 }
 
 /****************************************************************************

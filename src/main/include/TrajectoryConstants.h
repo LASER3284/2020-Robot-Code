@@ -20,21 +20,20 @@ using namespace std;
 class CTrajectoryConstants
 {
 public:
-
     // Start pose for robot field position.
     Pose2d m_StartPoint
     {
-        0.0_ft,					// X starting position on field in feet.
-        0.0_ft,					// Y starting position on field in feet.
+        1.0_ft,					// X starting position on field in feet.
+        1.0_ft,					// Y starting position on field in feet.
         Rotation2d(0_deg)		// Starting rotation on field in degrees.
     };
 
     // End pose.
     Pose2d m_EndPoint
     {
-        14.0_ft,				// X ending position on field in feet.
-        7.0_ft,					// Y ending position on field in feet.
-        Rotation2d(105_deg)		// Ending rotation on field in degrees.
+        1.0_ft,				// X ending position on field in feet.
+        1.0_ft,					// Y ending position on field in feet.
+        Rotation2d(-180_deg)		// Ending rotation on field in degrees.
     };
     
     // Vector including all poses and waypoints.
@@ -43,25 +42,28 @@ public:
         m_StartPoint,
         Pose2d
         {
-            6.0_ft,					// X of point 1 on field in feet.
-            7.5_ft,					// Y of point 1 on field in feet.
+            7.5_ft,					// X of point 1 on field in feet.
+            7.0_ft,					// Y of point 1 on field in feet.
             Rotation2d(0_deg)
         },
         Pose2d
         {
             11.0_ft,				// X of point 2 on field in feet.
-            2.5_ft,					// Y of point 2 on field in feet.
-            Rotation2d(0_deg)
+            4.5_ft,					// Y of point 2 on field in feet.
+            Rotation2d(-90_deg)
+        },
+        Pose2d
+        {
+            8.0_ft,				// X of point 2 on field in feet.
+            2.0_ft,					// Y of point 2 on field in feet.
+            Rotation2d(-180_deg)
         },
         m_EndPoint
     };
 
     // Configure trajectory properties.
-    TrajectoryConfig m_Config
-    {
-        3_fps,					// Max desirable velocity.
-        1_fps_sq				// Max desirable acceleration.
-    };
+    const meters_per_second_t kMaxSpeed = 1.5_mps;
+    const meters_per_second_squared_t kMaxAcceleration = 1_mps_sq;
 };
 /////////////////////////////////////////////////////////////////////////////
 #endif
