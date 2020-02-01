@@ -742,7 +742,7 @@ namespace
 							}
 							else
 							{
-
+								// Code for a second tracking mode will go here.
 							}
 						}
 
