@@ -153,17 +153,13 @@ void CDrive::Tick()
         }
         else
         {
-            // If X is pressed regenerate path.
-            if (m_pDriveController->GetRawButton(3))
-            {
-                GenerateTrajectory(m_pTrajectoryConstants.m_InteriorWaypoints, std::move(m_pTrajectoryConstants.m_Config));
-            }
-
             // Reset robot values.
             if (!m_bMotionProfile)
             {
                 // Reset robot field position and encoders.
                 ResetOdometry();
+				// Generate the Trajectory.
+				GenerateTrajectory(m_pTrajectoryConstants.m_InteriorWaypoints, TrajectoryConfig(5_fps, 3_fps_sq));
             }
 
             // Set that we are currently following a path.

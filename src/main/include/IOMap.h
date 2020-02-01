@@ -12,14 +12,14 @@
 const int nIntakeSolenoid				=	0;		// Intake Solenoid Channel Number
 
 // CAN Device IDs.
-const int nLeftDriveMotor1		  		=  	1;		// Falcon ID for left drive motor 1
-const int nLeftDriveMotor2		  		=  	2;		// Falcon ID for left drive motor 2 						
-const int nRightDriveMotor1		  		=   3;		// Falcon ID for right drive motor 1
-const int nRightDriveMotor2		  		=   4;		// Falcon ID for right drive motor 2						
+const int nLeftDriveMotor1		  		=  	10;		// Falcon ID for left drive motor 1
+const int nLeftDriveMotor2		  		=  	11;		// Falcon ID for left drive motor 2 						
+const int nRightDriveMotor1		  		=   8;		// Falcon ID for right drive motor 1
+const int nRightDriveMotor2		  		=   9;		// Falcon ID for right drive motor 2						
 const int nIntakeMotor					=	5;		// Spark MAX ID for intake motor
 const int nTurretMotor					=	6;		// Talon SRX ID for turret motor
 const int nShooterLeft					=	7;		// Spark MAX ID for left shooter motor
-const int nShooterRight					= 	8;		// Spark MAX ID for right shooter motor
+const int nShooterRight					= 	15;		// Spark MAX ID for right shooter motor
 
 // PWM Channels.
 const int nHoodServo					= 	0;		// PWM channel for Hood actuation servo
@@ -35,7 +35,7 @@ const int nHoodEncoderChannelB			=	1;		// Encoder clock B signal for hood servo.
 // Xbox Controller Button Assignments.
 enum XboxButtons 		{eButtonA = 1, eButtonB, eButtonX, eButtonY, eButtonLB, eButtonRB, eBack, eStart, eButtonLS, eButtonRS};
 // Xbox Controller Axis Assignments.
-enum XboxAxis			{eLeftAxisX = 1, eLeftAxisY, eLeftTrigger, eRightTrigger, eRightAxisX, eRightAxisY};
+enum XboxAxis			{eLeftAxisX = 0, eLeftAxisY, eLeftTrigger, eRightTrigger, eRightAxisX, eRightAxisY};
 // Logitech Flight Stick Button Assignments.
 enum LogButtons	 		{eButtonTrigger = 1, eButton2, eButton3, eButton4, eButton5, eButton6, eButton7, eButton8, eButton9, eButton10, eButton11, eButton12};
 // Shared Robot states for Motion.
