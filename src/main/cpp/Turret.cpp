@@ -20,9 +20,9 @@ using namespace ctre;
 CTurret::CTurret()
 {
     // Create Object Pointers.
-	m_pTurretMotor	= new WPI_TalonSRX(nTurretMotor);
-	m_pTimer		= new Timer();
-	m_pPIDController= new frc2::PIDController(dTurretProportional, dTurretIntegral, dTurretIntegral);
+	m_pTurretMotor			= new WPI_TalonSRX(nTurretMotor);
+	m_pTimer				= new Timer();
+	m_pPIDController		= new frc2::PIDController(dTurretProportional, dTurretIntegral, dTurretIntegral);
 }
 
 /****************************************************************************
@@ -56,7 +56,7 @@ void CTurret::Init()
 	m_dActual						= m_pTurretMotor->GetSelectedSensorPosition();
 	m_dSetpoint						= 0.00;
 	m_dTolerance					= 5.00;
-	m_dMaxFindingTime				= 3.50;
+	m_dMaxFindingTime				= 4.50;
 	m_dFindingStartTime				= 0.00;
 
 	// Set up the feedback device for an analog encoder.
@@ -79,10 +79,8 @@ void CTurret::Init()
 	m_pTurretMotor->SetNeutralMode(NeutralMode::Brake);
 	// Set acceleration (seconds from neutral to full output).
 	m_pTurretMotor->ConfigOpenloopRamp(dTurretOpenLoopRamp);
-
 	// Clear the sticky faults in memory.
 	m_pTurretMotor->ClearStickyFaults();
-
 	// Start the timer.
 	m_pTimer->Start();
 }
@@ -95,7 +93,7 @@ void CTurret::Init()
 void CTurret::Tick()
 {
 	// Update Actual variable.
-	m_dActual = (m_pTurretMotor->GetSelectedSensorPosition());
+	m_dActual = (m_pTurretMotor->GetSelectedSensorPosition() + nTurretZeroOffset);
 
 	switch(m_nState)
 	{
@@ -110,15 +108,35 @@ void CTurret::Tick()
 			// Finding - Motor uses built-in PID controller to seek the
 			// given Setpoint, and performs checks to ensure we are within
 			// the given tolerance.
-			std::cout << "FINDING" << std::endl;
 			// Move the motor to a given point.
 			m_pTurretMotor->Set(ControlMode::PercentOutput, m_pPIDController->Calculate(m_dActual));
 			// Check to make sure it is or is not at setpoint.
-			if (IsAtSetpoint() /*|| ((m_pTimer->Get() - m_dFindingStartTime) > m_dMaxFindingTime)*/)
+			if (IsAtSetpoint() || ((m_pTimer->Get() - m_dFindingStartTime) > m_dMaxFindingTime))
 			{
 				// Stop the motor, return to Idle.
 				Stop();
 			}
+			break;
+
+		case eTurretTracking :
+			// Tracking - Utilizes Vision with a setpoint of zero to get
+			// to the center of the tracked object.
+			// Set the setpoint to zero to track the center of the target.
+			SetSetpoint(0.0);
+			// Check if at setpoint.
+			if (IsAtSetpoint())
+			{
+				// Set to ready to signify that we're ready for shooting.
+				m_bIsReady = true;
+			}
+			else
+			{
+				// Not locked on yet, keep trying.
+				m_bIsReady = false;
+			}
+			
+			// Always, while tracking, set the speed because the robot's orientation could always change.
+			m_pTurretMotor->Set(ControlMode::PercentOutput, m_pPIDController->Calculate(SmartDashboard::GetNumber("Target Center X", 45)));
 			break;
 
 		case eTurretManualFwd :
@@ -137,11 +155,11 @@ void CTurret::Tick()
 	}
 
 	SmartDashboard::PutNumber("PID Output", m_pPIDController->Calculate(m_dActual));
-	SmartDashboard::PutNumber("Turret Position", m_dActual / dTurretRevsPerUnit / dTurretPulsesPerRev);
+	SmartDashboard::PutNumber("Turret Position", m_dActual / dTurretRevsPerUnit / nTurretPulsesPerRev);
 	SmartDashboard::PutNumber("Turret User Setpoint", m_dSetpoint);
 	SmartDashboard::PutNumber("Turret Internal Setpoint", m_pPIDController->GetSetpoint());
-	SmartDashboard::PutNumber("Turret Error", m_pPIDController->GetPositionError() / dTurretRevsPerUnit / dTurretPulsesPerRev);
-	SmartDashboard::PutNumber("Turret Tolerance", m_dTolerance * dTurretPulsesPerRev * dTurretRevsPerUnit);
+	SmartDashboard::PutNumber("Turret Error", m_pPIDController->GetPositionError() / dTurretRevsPerUnit / nTurretPulsesPerRev);
+	SmartDashboard::PutNumber("Turret Tolerance", m_dTolerance * nTurretPulsesPerRev * dTurretRevsPerUnit);
 }
 
 /****************************************************************************
@@ -180,7 +198,7 @@ void CTurret::SetSetpoint(double dSetpoint)
 	m_dSetpoint = dSetpoint;
 
 	// Give the PID controller a setpoint.
-	m_pPIDController->SetSetpoint(m_dSetpoint * dTurretPulsesPerRev * dTurretRevsPerUnit);
+	m_pPIDController->SetSetpoint(m_dSetpoint * nTurretPulsesPerRev * dTurretRevsPerUnit);
 
 	// Start the timer for beginning finding.
 	m_dFindingStartTime = m_pTimer->Get();
@@ -211,7 +229,7 @@ void CTurret::SetTolerance(double dTolerance)
 {
 	// Set member variable.
 	m_dTolerance = dTolerance;
-	m_pPIDController->SetTolerance(dTolerance * dTurretPulsesPerRev * dTurretRevsPerUnit);
+	m_pPIDController->SetTolerance(dTolerance * nTurretPulsesPerRev * dTurretRevsPerUnit);
 }
 
 /****************************************************************************

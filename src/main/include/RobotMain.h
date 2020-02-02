@@ -14,6 +14,8 @@
 #include "Drive.h"
 #include "Intake.h"
 #include "Turret.h"
+#include "Shooter.h"
+#include "Blinkin.h"
 
 using namespace frc;
 ///////////////////////////////////////////////////////////////////////////////
@@ -50,7 +52,11 @@ private:
     // State machines.
     enum TeleopStates
 	{
-        eTeleopIdle
+        eTeleopIdle,
+        eTeleopIntake,
+        eTeleopAiming,
+        eTeleopFiring,
+        eTeleopFollowing
     };
 
     enum AutoStates
@@ -64,6 +70,8 @@ private:
     CDrive*             m_pDrive;
     CIntake*            m_pIntake;
     CTurret*            m_pTurret;
+    CShooter*           m_pShooter;
+    Blinkin*            m_pBlinkin;
 
     // Declare variables.
     int         m_nTeleopState;

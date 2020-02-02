@@ -6,8 +6,6 @@
 ******************************************************************************/
 #include <frc/smartdashboard/SmartDashboard.h>
 #include "RobotMain.h"
-#include "Intake.h"
-#include "Turret.h"
 
 using namespace frc;
 ///////////////////////////////////////////////////////////////////////////////
@@ -24,8 +22,10 @@ CRobotMain::CRobotMain()
     m_pDriveController  = new Joystick(0);
     m_pTimer            = new Timer();
     m_pDrive            = new CDrive(m_pDriveController);
-	//m_pIntake			= new CIntake();
-	//m_pTurret			= new CTurret();
+	m_pIntake			= new CIntake();
+	m_pTurret			= new CTurret();
+	m_pShooter			= new CShooter();
+	m_pBlinkin			= new Blinkin(nBlinkinID);
 }
 
 /******************************************************************************
@@ -39,15 +39,19 @@ CRobotMain::~CRobotMain()
     delete m_pDriveController;
     delete m_pTimer;
 	delete m_pDrive;
-	//delete m_pIntake;
-	//delete m_pTurret;
+	delete m_pIntake;
+	delete m_pTurret;
+	delete m_pShooter;
+	delete m_pBlinkin;
 
     // Set pointers to nullptrs.
     m_pDriveController  = nullptr;
     m_pTimer            = nullptr;
 	m_pDrive 			= nullptr;
-	//m_pIntake			= nullptr;
-	//m_pTurret			= nullptr;
+	m_pIntake			= nullptr;
+	m_pTurret			= nullptr;
+	m_pShooter			= nullptr;
+	m_pBlinkin			= nullptr;
 }
 
 /****************************************************************************
@@ -58,8 +62,9 @@ CRobotMain::~CRobotMain()
 void CRobotMain::RobotInit()
 {
 	m_pDrive->Init();
-	//m_pIntake->Init();
-	//m_pTurret->Init();
+	m_pIntake->Init();
+	m_pTurret->Init();
+	SmartDashboard::PutNumber("Idle Color", 78);
 }
 
 /******************************************************************************
@@ -112,7 +117,14 @@ void CRobotMain::AutonomousInit()
 ******************************************************************************/
 void CRobotMain::AutonomousPeriodic()
 {
+	switch(m_nAutoState)
+	{
+		case eAutoIdle :
+			break;
 
+		default :
+			break;
+	}
 }
 
 /******************************************************************************
@@ -134,11 +146,75 @@ void CRobotMain::TeleopInit()
 ******************************************************************************/
 void CRobotMain::TeleopPeriodic()
 {
-	// Update Drive.
-    m_pDrive->Tick();
-	//m_pTurret->Tick();
+	switch(m_nTeleopState)
+	{
+		case eTeleopIdle :
+			//////////////////////////////////////////////////////////////
+			// Idle - Robot is not currently doing anything. May or	  	//
+			// may not be driving as well.							  	//
+			//////////////////////////////////////////////////////////////
+			// Return intake to it's retracted state.
+			m_pIntake->Extend(false);
+			m_pIntake->MotorSetPoint(eMotorStopped);
+			// Idle Shooter, stop Turret, and stop Hood.
+			m_pShooter->Stop();
+			m_pTurret->Stop();
+			// Set robot color.
+			m_pBlinkin->SetState(m_pBlinkin->eTwinkle);
+			break;
 
-	//SmartDashboard::PutNumber("State", (int)m_pTurret->GetState());
+		case eTeleopIntake :
+			//////////////////////////////////////////////////////////////
+			// Intake - Robot is intaking Energy, and only that.		//
+			//////////////////////////////////////////////////////////////
+			// Extend intake.
+			m_pIntake->Extend(true);
+			m_pIntake->MotorSetPoint(eMotorForward);
+			// Idle Shooter, stop Turret, and stop Hood.
+			m_pShooter->Stop();
+			m_pTurret->Stop();
+			// Set robot color.
+			m_pBlinkin->SetState(m_pBlinkin->eBeatsPerMin);
+			break;
+
+		case eTeleopAiming :
+			//////////////////////////////////////////////////////////////
+			// Aiming - Turret is tracking the position of the high		//
+			// goal using the Vision points determined.					//
+			//////////////////////////////////////////////////////////////
+			// Set the Turret to tracking mode.
+			m_pTurret->SetState(eTurretTracking);
+			// Set the Hood to tracking mode.
+			m_pShooter->SetHoodState(eHoodTracking);
+			// Set robot color.
+			m_pBlinkin->SetState(m_pBlinkin->eLarsonScanner1);
+			break;
+		
+		case eTeleopFiring :
+			//////////////////////////////////////////////////////////////
+			// Firing - Robot is firing the Energy into the high goal,	//
+			// while tracking the goal actively.						//
+			//////////////////////////////////////////////////////////////
+			break;
+
+		case eTeleopFollowing :
+			//////////////////////////////////////////////////////////////
+			// Following - Robot is following a pre-determined path.	//
+			//////////////////////////////////////////////////////////////
+			break;
+
+		default :
+			// Return to idle.
+			m_nTeleopState = eTeleopIdle;
+			break;
+	}
+
+	// Update Subsystems.
+    m_pDrive->Tick();
+	m_pTurret->Tick();
+	m_pShooter->Tick();
+
+	SmartDashboard::PutNumber("State", m_nTeleopState);
 }
 
 /******************************************************************************

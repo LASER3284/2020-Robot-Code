@@ -22,7 +22,8 @@ const int nShooterLeft					=	7;		// Spark MAX ID for left shooter motor
 const int nShooterRight					= 	15;		// Spark MAX ID for right shooter motor
 
 // PWM Channels.
-const int nHoodServo					= 	0;		// PWM channel for Hood actuation servo
+const int nBlinkinID					=	0;		// PWM channel for Blinkin LED driver
+const int nHoodServo					= 	1;		// PWM channel for Hood actuation servo
 
 // Relay Channels.
 

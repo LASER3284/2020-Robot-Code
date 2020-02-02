@@ -12,6 +12,7 @@
 #include <frc/Encoder.h>
 #include <rev/CANSparkMax.h>
 #include <frc/controller/PIDController.h>
+#include <frc/smartdashboard/SmartDashboard.h>
 #include "IOMap.h"
 
 using namespace frc;
@@ -22,6 +23,7 @@ const double dShooterClosedLoopRamp		=     0.250;
 const double dShooterManualFwdSpeed		=	  0.500;
 const double dShooterManualRevSpeed		=	 -0.500;
 const double dShooterMaxVelocity		= 	5700.00;
+const double dShooterIdleVelocity		=	2700.00;
 const double dShooterMinVelocity		=	 200.00;
 // Hood Constants.
 const double dHoodMaxPosition			=      35.0;
@@ -34,9 +36,9 @@ const int	 dHoodPulsesPerRev			=      1024;
 const double dHoodRevsPerUnit			= 	1.0/360;
 
 // Shooter enum.
-enum ShooterState	{eShooterIdle, eShooterFinding, eShooterManualFwd, eShooterManualRev};
+enum ShooterState	{eShooterStopped, eShooterIdle, eShooterFinding, eShooterManualFwd, eShooterManualRev};
 // Hood enum.
-enum HoodState 		{eHoodIdle, eHoodFinding, eHoodManualFwd, eHoodManualRev};
+enum HoodState 		{eHoodIdle, eHoodFinding, eHoodTracking, eHoodManualFwd, eHoodManualRev};
 /////////////////////////////////////////////////////////////////////////////
 
 
@@ -92,6 +94,7 @@ private:
 
     // Declare variables.
 	bool			m_bIsReady;
+	bool			m_bVisionTracking;
 	bool			m_bMotionMagic;
 
 	// Shooter variables.
@@ -109,6 +112,7 @@ private:
 
 	// Hood variables.
 	double 			m_dHoodProportional;
+	double 			m_dHoodTrackingP;
 	double 			m_dHoodIntegral;
 	double 			m_dHoodDerivative;
 	double 			m_dHoodTolerance;

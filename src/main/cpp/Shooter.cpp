@@ -74,6 +74,7 @@ void CShooter::Init()
 	m_bShooterIsReady			=			   false;
 
 	m_dHoodProportional			=		         1.0;
+	m_dHoodTrackingP			=				 0.5;
 	m_dHoodIntegral				=		         0.0;
 	m_dHoodDerivative			=		         0.0;
 	m_dHoodTolerance			= 		         2.0;
@@ -127,11 +128,17 @@ void CShooter::Tick()
 	// Shooter state machine.
 	switch(m_nShooterState)
 	{
-		case eShooterIdle :
-			// Idle - Motor is off, and ready to move again.
+		case eShooterStopped :
+			// Stopped - Motor is off, and ready to move again.
 			m_pLeftShooter->Set(0.00);
 			m_bIsReady = true;
 			break;
+
+		case eShooterIdle :
+			// Idle - Motor is free spinning at a constant velocity to
+			// reduce current draw.
+			m_pShooterPID->SetReference(dShooterIdleVelocity, ControlType::kVelocity);
+			m_bIsReady = true;
 
 		case eShooterFinding :
 			// Finding - Motor uses built-in PID controller to seek the
@@ -173,6 +180,8 @@ void CShooter::Tick()
 			// Finding - Use PID Controller to drive to a given
 			// Setpoint, and check if we are within the given
 			// tolerance.
+			// Set the new Proportional term.
+			m_pHoodPID->SetP(m_dHoodProportional);
 			if (m_dHoodSetpoint - m_dHoodActual < m_dHoodTolerance)
 			{
 				// At our setpoint, return to idle.
@@ -184,6 +193,28 @@ void CShooter::Tick()
 				SetHoodSpeed(m_pHoodPID->Calculate(m_dHoodActual));
 			}
 			break;
+
+		case eHoodTracking :
+			// Tracking - Utilizes Vision with a setpoint of zero
+			// to track an object's center.
+			// Set the setpoint to zero to track the center of the target.
+			SetHoodSetpoint(0.0);
+			// Set the new Proportional term.
+			m_pHoodPID->SetP(m_dHoodTrackingP);
+			// Check if at setpoint.
+			if (IsHoodAtSetpoint())
+			{
+				// Set to ready to signify that we're ready for shooting.
+				m_bIsReady = true;
+			}
+			else
+			{
+				// Not locked on yet, keep trying.
+				m_bIsReady = false;
+			}
+			
+			// Always, while tracking, set the speed because the robot's orientation could always change.
+			SetHoodSpeed(m_pHoodPID->Calculate(SmartDashboard::GetNumber("Target Center Y", 5)));
 		
 		case eHoodManualFwd :
 			// ManualForward - Move the Hood forward at a constant speed.
@@ -342,10 +373,12 @@ void CShooter::SetHoodTolerance(double dTolerance)
 ****************************************************************************/
 void CShooter::Stop()
 {
+	/*
 	// Disable the PID controller to stop any movement.
 	m_pHoodPID->Reset();
 	// Stop the motor.
 	m_pShooterPID->SetReference(0.0, ControlType::kDutyCycle);
+	*/
 	// Set the state to idle.
 	SetShooterState(eShooterIdle);
 	SetHoodState(eHoodIdle);
