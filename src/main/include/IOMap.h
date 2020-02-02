@@ -12,14 +12,14 @@
 const int nIntakeSolenoid				=	0;		// Intake Solenoid Channel Number
 
 // CAN Device IDs.
-const int nLeftDriveMotor1		  		=  	10;		// Falcon ID for left drive motor 1
-const int nLeftDriveMotor2		  		=  	11;		// Falcon ID for left drive motor 2 						
-const int nRightDriveMotor1		  		=   8;		// Falcon ID for right drive motor 1
-const int nRightDriveMotor2		  		=   9;		// Falcon ID for right drive motor 2						
+const int nLeftDriveMotor1		  		=  	1;		// Falcon ID for left drive motor 1
+const int nLeftDriveMotor2		  		=  	2;		// Falcon ID for left drive motor 2 						
+const int nRightDriveMotor1		  		=   3;		// Falcon ID for right drive motor 1
+const int nRightDriveMotor2		  		=   4;		// Falcon ID for right drive motor 2						
 const int nIntakeMotor					=	5;		// Spark MAX ID for intake motor
 const int nTurretMotor					=	6;		// Talon SRX ID for turret motor
 const int nShooterLeft					=	7;		// Spark MAX ID for left shooter motor
-const int nShooterRight					= 	15;		// Spark MAX ID for right shooter motor
+const int nShooterRight					= 	8;		// Spark MAX ID for right shooter motor
 
 // PWM Channels.
 const int nBlinkinID					=	0;		// PWM channel for Blinkin LED driver
