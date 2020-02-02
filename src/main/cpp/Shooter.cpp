@@ -213,9 +213,19 @@ void CShooter::Tick()
 				m_bIsReady = false;
 			}
 			
-			// Always, while tracking, set the speed because the robot's orientation could always change.
-			SetHoodSpeed(m_pHoodPID->Calculate(SmartDashboard::GetNumber("Target Center Y", 5)));
-		
+			// As long as we're in bounds...
+			if ((m_dHoodActual < dHoodMaxPosition) && (m_dHoodActual >= dHoodMinPosition))
+			{
+				// Set the speed because the robot's orientation could always change.
+				SetHoodSpeed(m_pHoodPID->Calculate(SmartDashboard::GetNumber("Target Center Y", 5)));
+			}
+			else
+			{
+				// Change to idle, we're out of bounds.
+				SetHoodState(eHoodIdle);
+			}
+			
+
 		case eHoodManualFwd :
 			// ManualForward - Move the Hood forward at a constant speed.
 			SetHoodSpeed(dHoodManualFwdSpeed);
