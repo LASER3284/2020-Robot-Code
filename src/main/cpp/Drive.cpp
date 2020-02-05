@@ -42,7 +42,7 @@ CDrive::CDrive(Joystick* pDriveController)
 	m_pRobotDrive			= new DifferentialDrive(*m_pLeftMotor1->GetMotorPointer(), *m_pRightMotor1->GetMotorPointer());
 	m_pGyro 				= new AHRS(SPI::Port::kMXP);
 	m_pTimer				= new Timer();
-	m_pOdometry 			= new DifferentialDriveOdometry(Rotation2d(degree_t(-m_pGyro->GetYaw())), m_pTrajectoryConstants.m_StartPoint);	
+	m_pOdometry 			= new DifferentialDriveOdometry(Rotation2d(degree_t(-m_pGyro->GetYaw())), m_pTrajectoryConstants.GetSelectedTrajectoryStartPoint());	
 }
 
 /****************************************************************************
@@ -110,7 +110,7 @@ void CDrive::Init()
 	m_pGyro->Reset();
 
 	// Generate the Trajectory.
-	GenerateTrajectory(m_pTrajectoryConstants.m_InteriorWaypoints, m_pTrajectoryConstants.kMaxSpeed, m_pTrajectoryConstants.kMaxAcceleration);
+	GenerateTrajectory(m_pTrajectoryConstants.GetSelectedTrajectory(), m_pTrajectoryConstants.kMaxSpeed, m_pTrajectoryConstants.kMaxAcceleration);
 }
 
 /****************************************************************************
@@ -162,7 +162,7 @@ void CDrive::Tick()
                 // Reset robot field position and encoders.
                 ResetOdometry();
 				// Generate the Trajectory.
-				GenerateTrajectory(m_pTrajectoryConstants.m_InteriorWaypoints, m_pTrajectoryConstants.kMaxSpeed, m_pTrajectoryConstants.kMaxAcceleration);
+				GenerateTrajectory(m_pTrajectoryConstants.GetSelectedTrajectory(), m_pTrajectoryConstants.kMaxSpeed, m_pTrajectoryConstants.kMaxAcceleration);
             }
 
             // Set that we are currently following a path.
@@ -284,7 +284,7 @@ void CDrive::ResetOdometry()
 	ResetEncoders();
 
 	// Reset field position.
-	m_pOdometry->ResetPosition(m_pTrajectoryConstants.m_StartPoint, Rotation2d(degree_t(-m_pGyro->GetYaw())));
+	m_pOdometry->ResetPosition(m_pTrajectoryConstants.GetSelectedTrajectoryStartPoint(), Rotation2d(degree_t(-m_pGyro->GetYaw())));
 }
 
 /****************************************************************************
