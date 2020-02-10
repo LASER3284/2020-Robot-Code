@@ -25,6 +25,7 @@ CRobotMain::CRobotMain()
 	m_pIntake			= new CIntake();
 	m_pTurret			= new CTurret();
 	m_pShooter			= new CShooter();
+	m_pHopper			= new CHopper();
 	m_pBlinkin			= new Blinkin(nBlinkinID);
 }
 
@@ -64,7 +65,7 @@ void CRobotMain::RobotInit()
 	m_pDrive->Init();
 	m_pIntake->Init();
 	m_pTurret->Init();
-	SmartDashboard::PutNumber("Idle Color", 78);
+	SmartDashboard::PutNumber("Idle Color", m_pBlinkin->eTwinkle);
 }
 
 /******************************************************************************

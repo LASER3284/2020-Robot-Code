@@ -15,6 +15,7 @@
 #include "Intake.h"
 #include "Turret.h"
 #include "Shooter.h"
+#include "Hopper.h"
 #include "Blinkin.h"
 
 using namespace frc;
@@ -71,6 +72,7 @@ private:
     CIntake*            m_pIntake;
     CTurret*            m_pTurret;
     CShooter*           m_pShooter;
+    CHopper*            m_pHopper;
     Blinkin*            m_pBlinkin;
 
     // Declare variables.

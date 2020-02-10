@@ -34,7 +34,7 @@ CIntake::~CIntake()
 	delete m_pIntakeMotor;
 	delete m_pIntakeActuator;
 
-	// Set objects to nullptrscom.
+	// Set objects to nullptrs.
 	m_pIntakeMotor		= nullptr;
 	m_pIntakeActuator	= nullptr;
 }
