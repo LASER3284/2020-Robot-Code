@@ -1,8 +1,8 @@
 /****************************************************************************
-	Description:	Implements the CDrive control class.
-	Classes:		CDrive
-	Project:		2020 Infinite Recharge Robot Code.
-	Copyright 2020 First Team 3284 - Camdenton LASER Robotics.
+    Description:	Implements the CDrive control class.
+    Classes:		CDrive
+    Project:		2020 Infinite Recharge Robot Code.
+    Copyright 2020 First Team 3284 - Camdenton LASER Robotics.
 ****************************************************************************/
 #include <frc/Timer.h>
 #include <frc/kinematics/DifferentialDriveWheelSpeeds.h>
@@ -17,124 +17,124 @@ using namespace units;
 
 
 /****************************************************************************
-	Description:	CDrive Constructor.
-	Arguments:		Joystick* pDriveController
-	Derived From:	Nothing
+    Description:	CDrive Constructor.
+    Arguments:		Joystick* pDriveController
+    Derived From:	Nothing
 ****************************************************************************/
 CDrive::CDrive(Joystick* pDriveController)
 {
-	// Initialize member variables.
-	m_bJoystickControl		= false;
-	m_bMotionProfile		= false;
-	m_dBeta					= m_dDefaultBeta;
-	m_dZeta					= m_dDefaultZeta;
-	m_dProportional			= m_dDefaultProportional;
-	m_dIntegral				= m_dDefaultIntegral;
-	m_dDerivative			= m_dDefaultDerivative;
-	m_dDriveBaseWidth		= m_dDefaultDrivebaseWidth;
+    // Initialize member variables.
+    m_bJoystickControl		= false;
+    m_bMotionProfile		= false;
+    m_dBeta					= m_dDefaultBeta;
+    m_dZeta					= m_dDefaultZeta;
+    m_dProportional			= m_dDefaultProportional;
+    m_dIntegral				= m_dDefaultIntegral;
+    m_dDerivative			= m_dDefaultDerivative;
+    m_dDriveBaseWidth		= m_dDefaultDrivebaseWidth;
 
-	// Create object pointers.
-	m_pDriveController 		= pDriveController;
-	m_pLeftMotor1			= new CFalconMotion(10);
-	m_pLeftMotor2			= new WPI_TalonFX(11);
-	m_pRightMotor1			= new CFalconMotion(8);
-	m_pRightMotor2			= new WPI_TalonFX(9);
-	m_pRobotDrive			= new DifferentialDrive(*m_pLeftMotor1->GetMotorPointer(), *m_pRightMotor1->GetMotorPointer());
-	m_pGyro 				= new AHRS(SPI::Port::kMXP);
-	m_pTimer				= new Timer();
-	m_pOdometry 			= new DifferentialDriveOdometry(Rotation2d(degree_t(-m_pGyro->GetYaw())), m_pTrajectoryConstants.GetSelectedTrajectoryStartPoint());	
+    // Create object pointers.
+    m_pDriveController 		= pDriveController;
+    m_pLeftMotor1			= new CFalconMotion(10);
+    m_pLeftMotor2			= new WPI_TalonFX(11);
+    m_pRightMotor1			= new CFalconMotion(8);
+    m_pRightMotor2			= new WPI_TalonFX(9);
+    m_pRobotDrive			= new DifferentialDrive(*m_pLeftMotor1->GetMotorPointer(), *m_pRightMotor1->GetMotorPointer());
+    m_pGyro 				= new AHRS(SPI::Port::kMXP);
+    m_pTimer				= new Timer();
+    m_pOdometry 			= new DifferentialDriveOdometry(Rotation2d(degree_t(-m_pGyro->GetYaw())), m_pTrajectoryConstants.GetSelectedTrajectoryStartPoint());	
 }
 
 /****************************************************************************
-	Description:	CDrive Destructor.
-	Arguments:		None
-	Derived From:	Nothing
+    Description:	CDrive Destructor.
+    Arguments:		None
+    Derived From:	Nothing
 ****************************************************************************/
 CDrive::~CDrive()
 {
-	// Delete objects.
-	delete m_pLeftMotor1;
-	delete m_pLeftMotor2;
-	delete m_pRightMotor1;
-	delete m_pRightMotor2;
-	delete m_pRobotDrive;
-	delete m_pGyro;
-	delete m_pTimer;
+    // Delete objects.
+    delete m_pLeftMotor1;
+    delete m_pLeftMotor2;
+    delete m_pRightMotor1;
+    delete m_pRightMotor2;
+    delete m_pRobotDrive;
+    delete m_pGyro;
+    delete m_pTimer;
 
-	m_pLeftMotor1			= nullptr;
-	m_pLeftMotor2			= nullptr;
-	m_pRightMotor1			= nullptr;
-	m_pRightMotor2			= nullptr;
-	m_pRobotDrive			= nullptr;
-	m_pGyro					= nullptr;
-	m_pTimer				= nullptr;
+    m_pLeftMotor1			= nullptr;
+    m_pLeftMotor2			= nullptr;
+    m_pRightMotor1			= nullptr;
+    m_pRightMotor2			= nullptr;
+    m_pRobotDrive			= nullptr;
+    m_pGyro					= nullptr;
+    m_pTimer				= nullptr;
 }
 
 /****************************************************************************
-	Description:	Initialize drive parameters.
-	Arguments: 		None
-	Returns: 		Nothing
+    Description:	Initialize drive parameters.
+    Arguments: 		None
+    Returns: 		Nothing
 ****************************************************************************/
 void CDrive::Init()
 {
-	// Make motor 2 follow motor 1 on both sides.
-	m_pLeftMotor2->Follow(*m_pLeftMotor1->GetMotorPointer());
-	m_pRightMotor2->Follow(*m_pRightMotor1->GetMotorPointer());
+    // Make motor 2 follow motor 1 on both sides.
+    m_pLeftMotor2->Follow(*m_pLeftMotor1->GetMotorPointer());
+    m_pRightMotor2->Follow(*m_pRightMotor1->GetMotorPointer());
 
-	// Set max acceleration to .65 seconds.
-	m_pLeftMotor1->SetOpenLoopRampRate(.65);
-	m_pRightMotor1->SetOpenLoopRampRate(.65);
+    // Set max acceleration to .65 seconds.
+    m_pLeftMotor1->SetOpenLoopRampRate(.65);
+    m_pRightMotor1->SetOpenLoopRampRate(.65);
 
-	// Clear persistant motor controller faults.
-	m_pLeftMotor1->ClearStickyFaults();
-	m_pRightMotor1->ClearStickyFaults();
+    // Clear persistant motor controller faults.
+    m_pLeftMotor1->ClearStickyFaults();
+    m_pRightMotor1->ClearStickyFaults();
 
-	// Invert the left side.
-	m_pLeftMotor1->SetMotorInverted(true);
-	m_pLeftMotor2->SetInverted(true);
+    // Invert the left side.
+    m_pLeftMotor1->SetMotorInverted(true);
+    m_pLeftMotor2->SetInverted(true);
 
-	// Reset motor encoders.
-	m_pLeftMotor1->ResetEncoderPosition();
-	m_pRightMotor1->ResetEncoderPosition();
+    // Reset motor encoders.
+    m_pLeftMotor1->ResetEncoderPosition();
+    m_pRightMotor1->ResetEncoderPosition();
 
-	// Don't let the DifferentialDrive Invert anything.
-	m_pRobotDrive->SetRightSideInverted(false);
+    // Don't let the DifferentialDrive Invert anything.
+    m_pRobotDrive->SetRightSideInverted(false);
 
-	// Reset robot field odometry.
-	ResetOdometry();
+    // Reset robot field odometry.
+    ResetOdometry();
 
-	// Start the timer.
-	m_pTimer->Start();
+    // Start the timer.
+    m_pTimer->Start();
 
-	// Reset gyro.
-	m_pGyro->Reset();
+    // Reset gyro.
+    m_pGyro->Reset();
 
-	// Generate the Trajectory.
-	GenerateTrajectory(m_pTrajectoryConstants.GetSelectedTrajectory(), m_pTrajectoryConstants.kMaxSpeed, m_pTrajectoryConstants.kMaxAcceleration);
+    // Generate the Trajectory.
+    GenerateTrajectory(m_pTrajectoryConstants.GetSelectedTrajectory(), m_pTrajectoryConstants.kMaxSpeed, m_pTrajectoryConstants.kMaxAcceleration);
 }
 
 /****************************************************************************
-	Description:	Main method that calls functionality, to be used in a loop.
-	Arguments: 		None
-	Returns: 		Nothing
+    Description:	Main method that calls functionality, to be used in a loop.
+    Arguments: 		None
+    Returns: 		Nothing
 ****************************************************************************/
 void CDrive::Tick()
 {
-  	if (m_bJoystickControl)
-	{
-		// Set variables to joystick values.
-		double XAxis = m_pDriveController->GetRawAxis(eRightAxisX);
-		double YAxis = -m_pDriveController->GetRawAxis(eLeftAxisY);
+      if (m_bJoystickControl)
+    {
+        // Set variables to joystick values.
+        double XAxis = m_pDriveController->GetRawAxis(eRightAxisX);
+        double YAxis = -m_pDriveController->GetRawAxis(eLeftAxisY);
 
-		// Check if joystick is in deadzone.
-		if (fabs(XAxis) < 0.1)
-		{
-			XAxis = 0.0;
-		}
-		if (fabs(YAxis) < 0.1)
-		{
-			YAxis = 0.0;
-		}
+        // Check if joystick is in deadzone.
+        if (fabs(XAxis) < 0.1)
+        {
+            XAxis = 0.0;
+        }
+        if (fabs(YAxis) < 0.1)
+        {
+            YAxis = 0.0;
+        }
 
         // Update odometry. (Position on field.)
         m_pOdometry->Update(Rotation2d(degree_t(-m_pGyro->GetYaw())), inch_t(m_pLeftMotor1->GetActual(true)), inch_t(m_pRightMotor1->GetActual(true)));
@@ -161,8 +161,8 @@ void CDrive::Tick()
             {
                 // Reset robot field position and encoders.
                 ResetOdometry();
-				// Generate the Trajectory.
-				GenerateTrajectory(m_pTrajectoryConstants.GetSelectedTrajectory(), m_pTrajectoryConstants.kMaxSpeed, m_pTrajectoryConstants.kMaxAcceleration);
+                // Generate the Trajectory.
+                GenerateTrajectory(m_pTrajectoryConstants.GetSelectedTrajectory(), m_pTrajectoryConstants.kMaxSpeed, m_pTrajectoryConstants.kMaxAcceleration);
             }
 
             // Set that we are currently following a path.
@@ -179,169 +179,169 @@ void CDrive::Tick()
         SmartDashboard::PutNumber("Odometry Field Position X", double(inch_t(m_pOdometry->GetPose().Translation().X())));
         SmartDashboard::PutNumber("Odometry Field Position Y", double(inch_t(m_pOdometry->GetPose().Translation().Y())));
         SmartDashboard::PutNumber("Odometry Field Position Rotation", double(m_pOdometry->GetPose().Rotation().Degrees()));	
-	}
+    }
 }
 
 /****************************************************************************
-	Description:	SetJoystickControl - Sets the desired joystick control.
-	Arguments: 		bool bJoystickControl - True if joystick control enabled,
-					false otherwise.
-	Returns: 		Nothing
+    Description:	SetJoystickControl - Sets the desired joystick control.
+    Arguments: 		bool bJoystickControl - True if joystick control enabled,
+                    false otherwise.
+    Returns: 		Nothing
 ****************************************************************************/
 void CDrive::SetJoystickControl(bool bJoystickControl)
 {
-	m_bJoystickControl = bJoystickControl;
+    m_bJoystickControl = bJoystickControl;
 }
 
 /****************************************************************************
-	Description:	GenerateTrajectory - MotionProfiling method that 
-					generates a new trajectory.
-	Arguments: 		None
-	Returns: 		Nothing
+    Description:	GenerateTrajectory - MotionProfiling method that 
+                    generates a new trajectory.
+    Arguments: 		None
+    Returns: 		Nothing
 ****************************************************************************/
 void CDrive::GenerateTrajectory(vector<Pose2d> pWaypoints, meters_per_second_t MaxSpeed, meters_per_second_squared_t MaxAcceleration)
 {
-	// Generate the trajectory.
-	m_Trajectory = TrajectoryGenerator::GenerateTrajectory(pWaypoints, TrajectoryConfig(MaxSpeed, MaxAcceleration));
-	
-	// Setup the RamseteCommand with new trajectory.
-	m_pRamseteCommand = new frc2::RamseteCommand(
-		m_Trajectory, 
-		[this]() { return m_pOdometry->GetPose(); }, 
-		RamseteController(m_dBeta, m_dZeta), 
-		SimpleMotorFeedforward<units::meters>(m_dDefaultkS, m_dDefaultkV, m_dDefaultkA), 
-		DifferentialDriveKinematics(inch_t(m_dDriveBaseWidth)), 
-		[this]() { return GetWheelSpeeds(); }, 
-		frc2::PIDController(m_dProportional, m_dIntegral, m_dDerivative), 
-		frc2::PIDController(m_dProportional, m_dIntegral, m_dDerivative), 
-		[this](auto left, auto right) { SetDrivePowers(left, right); }
-	);
+    // Generate the trajectory.
+    m_Trajectory = TrajectoryGenerator::GenerateTrajectory(pWaypoints, TrajectoryConfig(MaxSpeed, MaxAcceleration));
+    
+    // Setup the RamseteCommand with new trajectory.
+    m_pRamseteCommand = new frc2::RamseteCommand(
+        m_Trajectory, 
+        [this]() { return m_pOdometry->GetPose(); }, 
+        RamseteController(m_dBeta, m_dZeta), 
+        SimpleMotorFeedforward<units::meters>(m_dDefaultkS, m_dDefaultkV, m_dDefaultkA), 
+        DifferentialDriveKinematics(inch_t(m_dDriveBaseWidth)), 
+        [this]() { return GetWheelSpeeds(); }, 
+        frc2::PIDController(m_dProportional, m_dIntegral, m_dDerivative), 
+        frc2::PIDController(m_dProportional, m_dIntegral, m_dDerivative), 
+        [this](auto left, auto right) { SetDrivePowers(left, right); }
+    );
 
-	// Go RamseteCommand!
-	m_pRamseteCommand->Schedule();
+    // Go RamseteCommand!
+    m_pRamseteCommand->Schedule();
 }
 
 /****************************************************************************
-	Description:	FollowTrajectory - MotionProfiling method that follows
-					a pre-generated trajectory.
-	Arguments: 		None
-	Returns: 		Nothing
+    Description:	FollowTrajectory - MotionProfiling method that follows
+                    a pre-generated trajectory.
+    Arguments: 		None
+    Returns: 		Nothing
 ****************************************************************************/
 void CDrive::FollowTrajectory()
 {
-	// Disable motor safety.
-	m_pRobotDrive->SetSafetyEnabled(false);
+    // Disable motor safety.
+    m_pRobotDrive->SetSafetyEnabled(false);
 
-	// Update RamseteCommand.
-	m_pRamseteCommand->Execute();
+    // Update RamseteCommand.
+    m_pRamseteCommand->Execute();
 
-	// Put trajectory info on SmartDashboard.
-	SmartDashboard::PutNumber("Total Trajectory Time", double(m_Trajectory.TotalTime()));
+    // Put trajectory info on SmartDashboard.
+    SmartDashboard::PutNumber("Total Trajectory Time", double(m_Trajectory.TotalTime()));
 }
 
 /****************************************************************************
-	Description:	SetDrivePowers - Method that sets the left and 
-					right drivetrain voltages.
-	Arguments: 		dLeftVoltage - Left motor voltage.
-					dRightVoltage - Right motor voltage.
-	Returns: 		Nothing
+    Description:	SetDrivePowers - Method that sets the left and 
+                    right drivetrain voltages.
+    Arguments: 		dLeftVoltage - Left motor voltage.
+                    dRightVoltage - Right motor voltage.
+    Returns: 		Nothing
 ****************************************************************************/
 void CDrive::SetDrivePowers(volt_t dLeftVoltage, volt_t dRightVoltage)
 {
-	// Set drivetrain powers.
-	m_pLeftMotor1->SetMotorVoltage(double(dLeftVoltage));
-	m_pRightMotor1->SetMotorVoltage(double(dRightVoltage));
+    // Set drivetrain powers.
+    m_pLeftMotor1->SetMotorVoltage(double(dLeftVoltage));
+    m_pRightMotor1->SetMotorVoltage(double(dRightVoltage));
 
-	// Put drive powers on SmartDashboard.
-	SmartDashboard::PutNumber("LeftMotorPower", m_pLeftMotor1->GetMotorVoltage());
-	SmartDashboard::PutNumber("RightMotorPower", m_pRightMotor1->GetMotorVoltage());
+    // Put drive powers on SmartDashboard.
+    SmartDashboard::PutNumber("LeftMotorPower", m_pLeftMotor1->GetMotorVoltage());
+    SmartDashboard::PutNumber("RightMotorPower", m_pRightMotor1->GetMotorVoltage());
 }
 
 /****************************************************************************
-	Description:	GetWheelSpeeds - Method that gets the wheel velocity 
-					in meters per second.
-	Arguments: 		None
-	Returns: 		DifferentialDriveWheelSpeeds - Drivetrain speeds.
+    Description:	GetWheelSpeeds - Method that gets the wheel velocity 
+                    in meters per second.
+    Arguments: 		None
+    Returns: 		DifferentialDriveWheelSpeeds - Drivetrain speeds.
 ****************************************************************************/
 DifferentialDriveWheelSpeeds CDrive::GetWheelSpeeds()
 {
-	// Put wheel speeds on SmartDashboard.
-	SmartDashboard::PutNumber("LeftWheelSpeed", m_pLeftMotor1->GetActual(false) / 39.3701);
-	SmartDashboard::PutNumber("RightWheelSpeed", m_pRightMotor1->GetActual(false) / 39.3701);
-	
-	// Return wheel speeds.
-	return {meters_per_second_t(m_pLeftMotor1->GetActual(false) / 39.3701), meters_per_second_t(m_pRightMotor1->GetActual(false) / 39.3701)};
+    // Put wheel speeds on SmartDashboard.
+    SmartDashboard::PutNumber("LeftWheelSpeed", m_pLeftMotor1->GetActual(false) / 39.3701);
+    SmartDashboard::PutNumber("RightWheelSpeed", m_pRightMotor1->GetActual(false) / 39.3701);
+    
+    // Return wheel speeds.
+    return {meters_per_second_t(m_pLeftMotor1->GetActual(false) / 39.3701), meters_per_second_t(m_pRightMotor1->GetActual(false) / 39.3701)};
 }
 
 /****************************************************************************
-	Description:	ResetOdometry - Method that resets encoders and odometry.
-	Arguments: 		None
-	Returns: 		Nothing
+    Description:	ResetOdometry - Method that resets encoders and odometry.
+    Arguments: 		None
+    Returns: 		Nothing
 ****************************************************************************/
 void CDrive::ResetOdometry()
 {
-	// Reset drive encoders.
-	ResetEncoders();
+    // Reset drive encoders.
+    ResetEncoders();
 
-	// Reset field position.
-	m_pOdometry->ResetPosition(m_pTrajectoryConstants.GetSelectedTrajectoryStartPoint(), Rotation2d(degree_t(-m_pGyro->GetYaw())));
+    // Reset field position.
+    m_pOdometry->ResetPosition(m_pTrajectoryConstants.GetSelectedTrajectoryStartPoint(), Rotation2d(degree_t(-m_pGyro->GetYaw())));
 }
 
 /****************************************************************************
-	Description:	ResetEncoders - Method that reset encoder values back 
-					to zero.
-	Arguments: 		None
-	Returns: 		Nothing
+    Description:	ResetEncoders - Method that reset encoder values back 
+                    to zero.
+    Arguments: 		None
+    Returns: 		Nothing
 ****************************************************************************/
 void CDrive::ResetEncoders()
 {
-	// Reset drive encoders.
-	m_pLeftMotor1->ResetEncoderPosition();
-	m_pRightMotor1->ResetEncoderPosition();
+    // Reset drive encoders.
+    m_pLeftMotor1->ResetEncoderPosition();
+    m_pRightMotor1->ResetEncoderPosition();
 }
 
 /****************************************************************************
-	Description:	Stop - Method that stops drive motors.
-	Arguments: 		None
-	Returns: 		Nothing
+    Description:	Stop - Method that stops drive motors.
+    Arguments: 		None
+    Returns: 		Nothing
 ****************************************************************************/
 void CDrive::Stop()
 {
-	// Stop both drive motors.
-	m_pLeftMotor1->Stop();
-	m_pRightMotor1->Stop();
+    // Stop both drive motors.
+    m_pLeftMotor1->Stop();
+    m_pRightMotor1->Stop();
 }
 
 /****************************************************************************
-	Description:	GetIsTrajectoryFinished - Returns of the generated
-					trajectory has successfully reached its last point.
-	Arguments: 		None
-	Returns: 		bool bTrajectoryIsFinished
+    Description:	GetIsTrajectoryFinished - Returns of the generated
+                    trajectory has successfully reached its last point.
+    Arguments: 		None
+    Returns: 		bool bTrajectoryIsFinished
 ****************************************************************************/
 bool CDrive::GetIsTrajectoryFinished()
 {
-	return m_pRamseteCommand->IsFinished();
+    return m_pRamseteCommand->IsFinished();
 }
 
 /****************************************************************************
-	Description:	SetMotorExpiration - Sets the motor safety expiration
-					timeout.
-	Arguments: 		double dTimeout - Expiration timeout
-	Returns: 		Nothing
+    Description:	SetMotorExpiration - Sets the motor safety expiration
+                    timeout.
+    Arguments: 		double dTimeout - Expiration timeout
+    Returns: 		Nothing
 ****************************************************************************/
 void CDrive::SetMotorExpiration(double dTimeout)
 {
-	m_pRobotDrive->SetExpiration(dTimeout);
+    m_pRobotDrive->SetExpiration(dTimeout);
 }
 
 /****************************************************************************
-	Description:	SetMotorSafety - Sets the motor safety enabled for the
-					drive motors.
-	Arguments: 		bool bEnabled - True to set MotorSafetyEnabled
-	Returns: 		Nothing
+    Description:	SetMotorSafety - Sets the motor safety enabled for the
+                    drive motors.
+    Arguments: 		bool bEnabled - True to set MotorSafetyEnabled
+    Returns: 		Nothing
 ****************************************************************************/
 void CDrive::SetMotorSafety(bool bEnabled)
 {
-	m_pRobotDrive->SetSafetyEnabled(bEnabled);
+    m_pRobotDrive->SetSafetyEnabled(bEnabled);
 }
 ///////////////////////////////////////////////////////////////////////////////

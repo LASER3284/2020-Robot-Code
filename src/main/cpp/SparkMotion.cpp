@@ -1,8 +1,8 @@
 /******************************************************************************
-	Description:	Implements the CSparkMotion control class.
-	Classes:		CSparkMotion
-	Project:		2020 Infinite Recharge Robot Code.
-	Copyright 2020 FIRST Team 3284 - Camdenton LASER Robotics.
+    Description:	Implements the CSparkMotion control class.
+    Classes:		CSparkMotion
+    Project:		2020 Infinite Recharge Robot Code.
+    Copyright 2020 FIRST Team 3284 - Camdenton LASER Robotics.
 ******************************************************************************/
 #include "SparkMotion.h"
 
@@ -11,510 +11,510 @@ using namespace rev;
 ///////////////////////////////////////////////////////////////////////////////
 
 /******************************************************************************
-	Description:	CSparkMotion Constructor.
-	Arguments:		int nDeviceID - CAN Bus Device ID
-	Derived From:	Nothing
+    Description:	CSparkMotion Constructor.
+    Arguments:		int nDeviceID - CAN Bus Device ID
+    Derived From:	Nothing
 ******************************************************************************/
 CSparkMotion::CSparkMotion(int nDeviceID)
 {
-	m_nDeviceID = nDeviceID;
-	// Create the object pointers.
-	m_pMotor						= new CANSparkMax(nDeviceID, CANSparkMax::MotorType::kBrushless);
-	m_pTimer						= new Timer();
+    m_nDeviceID = nDeviceID;
+    // Create the object pointers.
+    m_pMotor						= new CANSparkMax(nDeviceID, CANSparkMax::MotorType::kBrushless);
+    m_pTimer						= new Timer();
 
-	// Initialize member variables.
-	m_nCurrentState					= eIdle;
-	m_bReady						= true;
-	m_bFwdLimitSwitchNormallyOpen	= true;
-	m_bRevLimitSwitchNormallyOpen	= true;
-	m_bHomingComplete				= false;
-	m_bBackOffHome					= true;
-	m_bMotionMagic					= false;
-	m_bUsePosition					= true;
-	m_dSetpoint						= 0.000;
-	m_nPulsesPerRev					= nDefaultSparkMotionPulsesPerRev;
-	m_dTimeUnitInterval				= dDefaultSparkMotionTimeUnitInterval;
-	m_dRevsPerUnit					= dDefaultSparkMotionRevsPerUnit;
-	m_dFwdMoveSpeed					= dDefualtSparkMotionManualFwdSpeed;
-	m_dRevMoveSpeed					= dDefualtSparkMotionManualRevSpeed;
-	m_dFwdHomeSpeed					= dDefaultSparkMotionFwdHomeSpeed;
-	m_dRevHomeSpeed					= dDefaultSparkMotionRevHomeSpeed;
-	m_dTolerance					= dDefaultSparkMotionTolerance;
-	m_dLowerPositionSoftLimit		= dDefaultSparkMotionLowerPositionSoftLimit;
-	m_dUpperPositionSoftLimit		= dDefaultSparkMotionUpperPositionSoftLimit;
-	m_dLowerVelocitySoftLimit		= dDefaultSparkMotionLowerVelocitySoftLimit;
-	m_dUpperVelocitySoftLimit		= dDefaultSparkMotionUpperVelocitySoftLimit;
-	m_dIZone						= dDefaultSparkMotionIZone;
-	m_dMaxHomingTime				= dDefaultSparkMotionMaxHomingTime;
-	m_dMaxFindingTime				= dDefaultSparkMotionMaxFindingTime;
-	m_dHomingStartTime				= 0.000;
-	m_dFindingStartTime				= 0.000;
+    // Initialize member variables.
+    m_nCurrentState					= eIdle;
+    m_bReady						= true;
+    m_bFwdLimitSwitchNormallyOpen	= true;
+    m_bRevLimitSwitchNormallyOpen	= true;
+    m_bHomingComplete				= false;
+    m_bBackOffHome					= true;
+    m_bMotionMagic					= false;
+    m_bUsePosition					= true;
+    m_dSetpoint						= 0.000;
+    m_nPulsesPerRev					= nDefaultSparkMotionPulsesPerRev;
+    m_dTimeUnitInterval				= dDefaultSparkMotionTimeUnitInterval;
+    m_dRevsPerUnit					= dDefaultSparkMotionRevsPerUnit;
+    m_dFwdMoveSpeed					= dDefualtSparkMotionManualFwdSpeed;
+    m_dRevMoveSpeed					= dDefualtSparkMotionManualRevSpeed;
+    m_dFwdHomeSpeed					= dDefaultSparkMotionFwdHomeSpeed;
+    m_dRevHomeSpeed					= dDefaultSparkMotionRevHomeSpeed;
+    m_dTolerance					= dDefaultSparkMotionTolerance;
+    m_dLowerPositionSoftLimit		= dDefaultSparkMotionLowerPositionSoftLimit;
+    m_dUpperPositionSoftLimit		= dDefaultSparkMotionUpperPositionSoftLimit;
+    m_dLowerVelocitySoftLimit		= dDefaultSparkMotionLowerVelocitySoftLimit;
+    m_dUpperVelocitySoftLimit		= dDefaultSparkMotionUpperVelocitySoftLimit;
+    m_dIZone						= dDefaultSparkMotionIZone;
+    m_dMaxHomingTime				= dDefaultSparkMotionMaxHomingTime;
+    m_dMaxFindingTime				= dDefaultSparkMotionMaxFindingTime;
+    m_dHomingStartTime				= 0.000;
+    m_dFindingStartTime				= 0.000;
 
-	// Reset the encoder count to zero.
-	ResetEncoderPosition();
-	// Set the motor as positive.
-	SetMotorInverted(false);
-	// Set up the nominal motor output for both directions.
-	SetNominalOutputVoltage(0.000, 0.000);
-	// Set the peak (maximum) motor output for both directions.
-	SetPeakOutputPercent(1.000, -1.000);
-	// Set the tolerance.
-	SetTolerance(m_dTolerance);
-	// Set the PID and feed forward values.
-	SetPIDValues(dDefaultSparkMotionProportional, dDefaultSparkMotionIntegral, dDefaultSparkMotionDerivative, dDefaultSparkMotionFeedForward);
-	// Stop the motor.
-	Stop();
-	// Set the neutral mode to brake.
-	m_pMotor->SetIdleMode(CANSparkMax::IdleMode::kBrake);
-	// Disable both forward and reverse limit switches.
-	m_pMotor->GetForwardLimitSwitch(CANDigitalInput::LimitSwitchPolarity::kNormallyOpen).EnableLimitSwitch(false);	
-	m_pMotor->GetReverseLimitSwitch(CANDigitalInput::LimitSwitchPolarity::kNormallyOpen).EnableLimitSwitch(false);	
-	// Set acceleration (seconds from neutral to full output).
-	SetOpenLoopRampRate(dDefaultSparkMotionVoltageRampRate);
-	SetClosedLoopRampRate(dDefaultSparkMotionVoltageRampRate);
-	// Clear the sticky faults in memory.
-	ClearStickyFaults();
-	// Set the Integral Zone. Accumulated integral is reset to zero when the error exceeds this value.
-	SetAccumIZone(m_dIZone);
-	// Clear the sticky faults in memory.
-	ClearStickyFaults();
+    // Reset the encoder count to zero.
+    ResetEncoderPosition();
+    // Set the motor as positive.
+    SetMotorInverted(false);
+    // Set up the nominal motor output for both directions.
+    SetNominalOutputVoltage(0.000, 0.000);
+    // Set the peak (maximum) motor output for both directions.
+    SetPeakOutputPercent(1.000, -1.000);
+    // Set the tolerance.
+    SetTolerance(m_dTolerance);
+    // Set the PID and feed forward values.
+    SetPIDValues(dDefaultSparkMotionProportional, dDefaultSparkMotionIntegral, dDefaultSparkMotionDerivative, dDefaultSparkMotionFeedForward);
+    // Stop the motor.
+    Stop();
+    // Set the neutral mode to brake.
+    m_pMotor->SetIdleMode(CANSparkMax::IdleMode::kBrake);
+    // Disable both forward and reverse limit switches.
+    m_pMotor->GetForwardLimitSwitch(CANDigitalInput::LimitSwitchPolarity::kNormallyOpen).EnableLimitSwitch(false);	
+    m_pMotor->GetReverseLimitSwitch(CANDigitalInput::LimitSwitchPolarity::kNormallyOpen).EnableLimitSwitch(false);	
+    // Set acceleration (seconds from neutral to full output).
+    SetOpenLoopRampRate(dDefaultSparkMotionVoltageRampRate);
+    SetClosedLoopRampRate(dDefaultSparkMotionVoltageRampRate);
+    // Clear the sticky faults in memory.
+    ClearStickyFaults();
+    // Set the Integral Zone. Accumulated integral is reset to zero when the error exceeds this value.
+    SetAccumIZone(m_dIZone);
+    // Clear the sticky faults in memory.
+    ClearStickyFaults();
 
-	// Start the timer.
-	m_pTimer->Start();
+    // Start the timer.
+    m_pTimer->Start();
 }
 
 /******************************************************************************
-	Description:	CSparkMotion Destructor.
-	Arguments:		None
-	Derived From:	Nothing
+    Description:	CSparkMotion Destructor.
+    Arguments:		None
+    Derived From:	Nothing
 ******************************************************************************/
 CSparkMotion::~CSparkMotion()
 {
-	// Delete our object pointers.
-	delete	m_pMotor;
-	delete	m_pTimer;
+    // Delete our object pointers.
+    delete	m_pMotor;
+    delete	m_pTimer;
 
-	// Set the objects to NULL.
-	m_pMotor	= nullptr;
-	m_pTimer	= nullptr;
+    // Set the objects to NULL.
+    m_pMotor	= nullptr;
+    m_pTimer	= nullptr;
 }
 
 /******************************************************************************
-	Description:	Tick - main method that does functionality.
-					Called each time through robot main loop to update state.
-	Arguments:	 	None
-	Returns: 		Nothing
+    Description:	Tick - main method that does functionality.
+                    Called each time through robot main loop to update state.
+    Arguments:	 	None
+    Returns: 		Nothing
 ******************************************************************************/
 void CSparkMotion::Tick()
 {
-	// State machine
-	switch(m_nCurrentState)
-	{
-		case eIdle :
-			// Stop the motor.
-			m_pMotor->GetPIDController().SetReference(0, ControlType::kVoltage);
-			m_bReady = true;
-			break;
+    // State machine
+    switch(m_nCurrentState)
+    {
+        case eIdle :
+            // Stop the motor.
+            m_pMotor->GetPIDController().SetReference(0, ControlType::kVoltage);
+            m_bReady = true;
+            break;
 
-		case eHomingReverse :
-			// If the state is eHomingReverse, the motor will move toward
-			// the home switch, and then turn off and go to eHomingForward.
-			m_bReady = false;
+        case eHomingReverse :
+            // If the state is eHomingReverse, the motor will move toward
+            // the home switch, and then turn off and go to eHomingForward.
+            m_bReady = false;
 
-			// Check to see if the home limit is pressed or if we have exceeded the maximum homing time.
-			if ((IsRevLimitSwitchPressed()) ||
-				((m_dMaxHomingTime > 0.000) && (m_pTimer->Get() > (m_dHomingStartTime + m_dMaxHomingTime))))
-			{
-				// At the home limit switch, turn off the motor.
-				m_pMotor->GetPIDController().SetReference(0, ControlType::kVoltage);
-				if (m_bBackOffHome)
-				{
-					// Set the state to eHomingForward.
-					m_nCurrentState = eHomingForward;
-				}
-				else
-				{
-					// Reset the encoder to zero.
+            // Check to see if the home limit is pressed or if we have exceeded the maximum homing time.
+            if ((IsRevLimitSwitchPressed()) ||
+                ((m_dMaxHomingTime > 0.000) && (m_pTimer->Get() > (m_dHomingStartTime + m_dMaxHomingTime))))
+            {
+                // At the home limit switch, turn off the motor.
+                m_pMotor->GetPIDController().SetReference(0, ControlType::kVoltage);
+                if (m_bBackOffHome)
+                {
+                    // Set the state to eHomingForward.
+                    m_nCurrentState = eHomingForward;
+                }
+                else
+                {
+                    // Reset the encoder to zero.
 //TODO: Find equivalent of this! Very Important!
 //					m_pMotor->SetSelectedSensorPosition(0);
-					// Stop the motor and change the control mode to position.
-					m_pMotor->GetPIDController().SetReference(0, ControlType::kVoltage);
-					// Set flag that homing is complete.
-					m_bHomingComplete = true;
-					// Move to idle.
-					m_nCurrentState = eIdle;
-				}
-			}
-			else
-			{
-				// Not yet at the home limit switch, keep moving.
-				m_pMotor->GetPIDController().SetReference(m_dRevHomeSpeed, ControlType::kDutyCycle);
-			}
-			break;
+                    // Stop the motor and change the control mode to position.
+                    m_pMotor->GetPIDController().SetReference(0, ControlType::kVoltage);
+                    // Set flag that homing is complete.
+                    m_bHomingComplete = true;
+                    // Move to idle.
+                    m_nCurrentState = eIdle;
+                }
+            }
+            else
+            {
+                // Not yet at the home limit switch, keep moving.
+                m_pMotor->GetPIDController().SetReference(m_dRevHomeSpeed, ControlType::kDutyCycle);
+            }
+            break;
 
-		case eHomingForward :
-			// If the state is eHomingForward, the motor will slowly
-			// move (forward) off the limit switch. Once the switch releases,
-			// the motor will stop and the encoder will be reset.
-			m_bReady = false;
+        case eHomingForward :
+            // If the state is eHomingForward, the motor will slowly
+            // move (forward) off the limit switch. Once the switch releases,
+            // the motor will stop and the encoder will be reset.
+            m_bReady = false;
 
-			// Check to see we are off the home limit switch or the homing timeout has been reached.
-			if ((!IsRevLimitSwitchPressed()) ||
-				((m_dMaxHomingTime > 0.000) && (m_pTimer->Get() > (m_dHomingStartTime + m_dMaxHomingTime))))
-			{
-				// Reset the encoder to zero.
+            // Check to see we are off the home limit switch or the homing timeout has been reached.
+            if ((!IsRevLimitSwitchPressed()) ||
+                ((m_dMaxHomingTime > 0.000) && (m_pTimer->Get() > (m_dHomingStartTime + m_dMaxHomingTime))))
+            {
+                // Reset the encoder to zero.
 //TODO: Find equivalent of this! Very Important!
 //				m_pMotor->SetSelectedSensorPosition(0);
-				// Stop the motor and change the control mode to position.
-				m_pMotor->GetPIDController().SetReference(0, ControlType::kPosition);
-				// Set flag that homing is complete.
-				m_bHomingComplete = true;
-				// Set the state to eIdle.
-				m_nCurrentState = eIdle;
-			}
-			else
-			{
-				// Still on the home limit switch, keep moving.
-				m_pMotor->GetPIDController().SetReference(m_dFwdHomeSpeed, ControlType::kDutyCycle);
-			}
-			break;
+                // Stop the motor and change the control mode to position.
+                m_pMotor->GetPIDController().SetReference(0, ControlType::kPosition);
+                // Set flag that homing is complete.
+                m_bHomingComplete = true;
+                // Set the state to eIdle.
+                m_nCurrentState = eIdle;
+            }
+            else
+            {
+                // Still on the home limit switch, keep moving.
+                m_pMotor->GetPIDController().SetReference(m_dFwdHomeSpeed, ControlType::kDutyCycle);
+            }
+            break;
 
-		case eFinding :
-			// If the state is eFinding, the motor will continue until
-			// the PID reaches the target or until the limit switch in
-			// the direction of travel is pressed. The state then becomes idle.
-			m_bReady = false;
-			// Check to see if position is within tolerance or limit switch
-			// is activated in direction of travel.
-			if (IsAtSetpoint() ||
-			   (((GetSetpoint() > GetActual()) && IsFwdLimitSwitchPressed()) ||
-			    ((GetSetpoint() < GetActual()) && IsRevLimitSwitchPressed()) ||
-				((m_dMaxFindingTime > 0.000) && (m_pTimer->Get() > (m_dFindingStartTime + m_dMaxFindingTime)))))
-			{
-				// Stop the motor and set the current state to eIdle.
-				Stop();
-			}
-			break;
+        case eFinding :
+            // If the state is eFinding, the motor will continue until
+            // the PID reaches the target or until the limit switch in
+            // the direction of travel is pressed. The state then becomes idle.
+            m_bReady = false;
+            // Check to see if position is within tolerance or limit switch
+            // is activated in direction of travel.
+            if (IsAtSetpoint() ||
+               (((GetSetpoint() > GetActual()) && IsFwdLimitSwitchPressed()) ||
+                ((GetSetpoint() < GetActual()) && IsRevLimitSwitchPressed()) ||
+                ((m_dMaxFindingTime > 0.000) && (m_pTimer->Get() > (m_dFindingStartTime + m_dMaxFindingTime)))))
+            {
+                // Stop the motor and set the current state to eIdle.
+                Stop();
+            }
+            break;
 
-		case eManualForward :
-			if (!IsFwdLimitSwitchPressed())
-			{
-				// Manually move position forward.
-				m_pMotor->GetPIDController().SetReference(m_dFwdMoveSpeed, ControlType::kDutyCycle);
-				m_bReady = false;
-			}
-			else
-			{
-				// Change the state to eIdle.
-				SetState(eIdle);
-				m_bReady = true;
-			}
-			break;
+        case eManualForward :
+            if (!IsFwdLimitSwitchPressed())
+            {
+                // Manually move position forward.
+                m_pMotor->GetPIDController().SetReference(m_dFwdMoveSpeed, ControlType::kDutyCycle);
+                m_bReady = false;
+            }
+            else
+            {
+                // Change the state to eIdle.
+                SetState(eIdle);
+                m_bReady = true;
+            }
+            break;
 
-		case eManualReverse :
-			if (!IsRevLimitSwitchPressed())
-			{
-				// Manually move position backwards.
-				m_pMotor->GetPIDController().SetReference(m_dRevMoveSpeed, ControlType::kDutyCycle);
-				m_bReady = false;
-			}
-			else
-			{
-				// Change the state to eIdle.
-				SetState(eIdle);
-				m_bReady = true;
-			}
-			break;
+        case eManualReverse :
+            if (!IsRevLimitSwitchPressed())
+            {
+                // Manually move position backwards.
+                m_pMotor->GetPIDController().SetReference(m_dRevMoveSpeed, ControlType::kDutyCycle);
+                m_bReady = false;
+            }
+            else
+            {
+                // Change the state to eIdle.
+                SetState(eIdle);
+                m_bReady = true;
+            }
+            break;
 
-		default :
-			break;
-	}
+        default :
+            break;
+    }
 }
 
 /******************************************************************************
-	Description:	SetSetpoint - Sets the setpoint for the motor.
-	Arguments:	 	dSetpoint - The position to move to in desired units.
-					dUsePosition - Select position or velocity setpoint.
-	Returns: 		Nothing
+    Description:	SetSetpoint - Sets the setpoint for the motor.
+    Arguments:	 	dSetpoint - The position to move to in desired units.
+                    dUsePosition - Select position or velocity setpoint.
+    Returns: 		Nothing
 ******************************************************************************/
 void CSparkMotion::SetSetpoint(double dSetpoint, bool bUsePosition)
 {
-	// Set the bUsePosition member variable.
-	m_bUsePosition = bUsePosition;
+    // Set the bUsePosition member variable.
+    m_bUsePosition = bUsePosition;
 
-	// Use either position or velocity setpoints.
-	if (bUsePosition)
-	{
-		// Clamp the new setpoint within soft limits.
-		if (dSetpoint > m_dUpperPositionSoftLimit)
-		{
-			dSetpoint = m_dUpperPositionSoftLimit;
-		}
-		else
-		{
-			if (dSetpoint < m_dLowerPositionSoftLimit)
-			{
-				dSetpoint = m_dLowerPositionSoftLimit;
-			}
-		}
+    // Use either position or velocity setpoints.
+    if (bUsePosition)
+    {
+        // Clamp the new setpoint within soft limits.
+        if (dSetpoint > m_dUpperPositionSoftLimit)
+        {
+            dSetpoint = m_dUpperPositionSoftLimit;
+        }
+        else
+        {
+            if (dSetpoint < m_dLowerPositionSoftLimit)
+            {
+                dSetpoint = m_dLowerPositionSoftLimit;
+            }
+        }
 
-		// Set the dSetpoint member variable so other methods can access it.
-		m_dSetpoint = dSetpoint;
+        // Set the dSetpoint member variable so other methods can access it.
+        m_dSetpoint = dSetpoint;
 
-		// Set the motor to the desired position.
-		if (m_bMotionMagic)
-		{
-			m_pMotor->GetPIDController().SetReference(dSetpoint * m_dRevsPerUnit * m_nPulsesPerRev, ControlType::kSmartMotion);
-		}
-		else
-		{
-			m_pMotor->GetPIDController().SetReference(dSetpoint * m_dRevsPerUnit * m_nPulsesPerRev, ControlType::kPosition);
-		}
-	}
-	else
-	{
-		// Clamp the new setpoint within soft limits.
-		if (dSetpoint > m_dUpperVelocitySoftLimit)
-		{
-			dSetpoint = m_dUpperVelocitySoftLimit;
-		}
-		else
-		{
-			if (dSetpoint < m_dLowerVelocitySoftLimit)
-			{
-				dSetpoint = m_dLowerVelocitySoftLimit;
-			}
-		}
+        // Set the motor to the desired position.
+        if (m_bMotionMagic)
+        {
+            m_pMotor->GetPIDController().SetReference(dSetpoint * m_dRevsPerUnit * m_nPulsesPerRev, ControlType::kSmartMotion);
+        }
+        else
+        {
+            m_pMotor->GetPIDController().SetReference(dSetpoint * m_dRevsPerUnit * m_nPulsesPerRev, ControlType::kPosition);
+        }
+    }
+    else
+    {
+        // Clamp the new setpoint within soft limits.
+        if (dSetpoint > m_dUpperVelocitySoftLimit)
+        {
+            dSetpoint = m_dUpperVelocitySoftLimit;
+        }
+        else
+        {
+            if (dSetpoint < m_dLowerVelocitySoftLimit)
+            {
+                dSetpoint = m_dLowerVelocitySoftLimit;
+            }
+        }
 
-		// Set the dSetpoint member variable so other methods can access it.
-		m_dSetpoint = dSetpoint;
+        // Set the dSetpoint member variable so other methods can access it.
+        m_dSetpoint = dSetpoint;
 
-		// Set the motor to the desired position.
-		if (m_bMotionMagic)
-		{
-			m_pMotor->GetPIDController().SetReference(dSetpoint * (84 /8 * m_nPulsesPerRev), ControlType::kSmartVelocity);
-		}
-		else
-		{
-			m_pMotor->GetPIDController().SetReference(dSetpoint * (84 /8 * m_nPulsesPerRev), ControlType::kVelocity);
-		}
-	}
+        // Set the motor to the desired position.
+        if (m_bMotionMagic)
+        {
+            m_pMotor->GetPIDController().SetReference(dSetpoint * (84 /8 * m_nPulsesPerRev), ControlType::kSmartVelocity);
+        }
+        else
+        {
+            m_pMotor->GetPIDController().SetReference(dSetpoint * (84 /8 * m_nPulsesPerRev), ControlType::kVelocity);
+        }
+    }
 
     // Prints can slow down the processing time of the RoboRIO, so these are for debugging.
 //	printf("CSparkMotion::SetSetpoint - Setpoint = %7.3f\n", dSetpoint);
 //	printf("CSparkMotion::SetSetpoint - Revs Per Unit = %7.3f\n", m_dRevsPerUnit);
 
-	// Set the state to eFinding.
-	m_nCurrentState = eFinding;
+    // Set the state to eFinding.
+    m_nCurrentState = eFinding;
 }
 
 /******************************************************************************
-	Description:	GetSetpoint - Returns the current setpoint of the motor's
-					PID in desired units of measure.
-	Arguments:	 	None
-	Returns: 		The setpoint of the motor's PID in desired units of measure.
+    Description:	GetSetpoint - Returns the current setpoint of the motor's
+                    PID in desired units of measure.
+    Arguments:	 	None
+    Returns: 		The setpoint of the motor's PID in desired units of measure.
 ******************************************************************************/
 double CSparkMotion::GetSetpoint()
 {
-	return m_dSetpoint;
+    return m_dSetpoint;
 }
 
 /******************************************************************************
-	Description:	StartHoming - Initializes the homing sequence.
-	Arguments:	 	None
-	Returns: 		Nothing
+    Description:	StartHoming - Initializes the homing sequence.
+    Arguments:	 	None
+    Returns: 		Nothing
 ******************************************************************************/
 void CSparkMotion::StartHoming()
 {
-	// Stop the motor and set the control mode for percent output.
-	m_pMotor->GetPIDController().SetReference(0, ControlType::kDutyCycle);
+    // Stop the motor and set the control mode for percent output.
+    m_pMotor->GetPIDController().SetReference(0, ControlType::kDutyCycle);
 
-	// Get the homing start time.
-	m_dHomingStartTime = m_pTimer->Get();
+    // Get the homing start time.
+    m_dHomingStartTime = m_pTimer->Get();
 
-	// Set flag that homing is not complete.
-	m_bHomingComplete = false;
+    // Set flag that homing is not complete.
+    m_bHomingComplete = false;
 
-	// Set the current state to eHomingReverse.
-	m_nCurrentState = eHomingReverse;
+    // Set the current state to eHomingReverse.
+    m_nCurrentState = eHomingReverse;
 }
 
 /******************************************************************************
-	Description:	Stop - Stop the motor.
-	Arguments:	 	None
-	Returns: 		Nothing
+    Description:	Stop - Stop the motor.
+    Arguments:	 	None
+    Returns: 		Nothing
 ******************************************************************************/
 void CSparkMotion::Stop()
 {
-	// Stop the motor.
-	m_pMotor->GetPIDController().SetReference(0, ControlType::kDutyCycle);
+    // Stop the motor.
+    m_pMotor->GetPIDController().SetReference(0, ControlType::kDutyCycle);
 
-	// Set the current state to eIdle.
-	m_nCurrentState = eIdle;
+    // Set the current state to eIdle.
+    m_nCurrentState = eIdle;
 }
 
 /******************************************************************************
-	Description:	SetTolerance - Sets the tolerance of the PID in desired
-					units of measure.
-	Arguments:	 	dValue - Tolerance in the desired units.
-	Returns: 		Nothing
+    Description:	SetTolerance - Sets the tolerance of the PID in desired
+                    units of measure.
+    Arguments:	 	dValue - Tolerance in the desired units.
+    Returns: 		Nothing
 ******************************************************************************/
 void CSparkMotion::SetTolerance(double dValue)
 {
-	// Set the member variable.
-	m_dTolerance = dValue;
+    // Set the member variable.
+    m_dTolerance = dValue;
 
-	// Set the allowed error for the PID. This is in quadrature pulses.
+    // Set the allowed error for the PID. This is in quadrature pulses.
 //TODO: Find equivalent for "non-Motion Magic" closed loop error.
-	m_pMotor->GetPIDController().SetSmartMotionAllowedClosedLoopError(m_dTolerance * m_dRevsPerUnit * m_nPulsesPerRev);
+    m_pMotor->GetPIDController().SetSmartMotionAllowedClosedLoopError(m_dTolerance * m_dRevsPerUnit * m_nPulsesPerRev);
 }
 
 /******************************************************************************
-	Description:	GetTolerance - Returns the tolerance in the desired units.
-	Arguments:	 	None
-	Returns: 		dValue - Tolerance in the desired units.
+    Description:	GetTolerance - Returns the tolerance in the desired units.
+    Arguments:	 	None
+    Returns: 		dValue - Tolerance in the desired units.
 ******************************************************************************/
 double CSparkMotion::GetTolerance()
 {
-	return m_dTolerance;
+    return m_dTolerance;
 }
 
 /******************************************************************************
-	Description:	SetSoftLimits - Sets soft limits for minimum and maximum travel.
-	Arguments:	 	dMinValue - Minimum travel distance.
-					dMaxValue - Maximum travel distance.
-	Returns: 		Nothing
+    Description:	SetSoftLimits - Sets soft limits for minimum and maximum travel.
+    Arguments:	 	dMinValue - Minimum travel distance.
+                    dMaxValue - Maximum travel distance.
+    Returns: 		Nothing
 ******************************************************************************/
 void CSparkMotion::SetPositionSoftLimits(double dMinValue, double dMaxValue)
 {
-	// Set the member variables.
-	m_dLowerPositionSoftLimit	= dMinValue;
-	m_dUpperPositionSoftLimit	= dMaxValue;
+    // Set the member variables.
+    m_dLowerPositionSoftLimit	= dMinValue;
+    m_dUpperPositionSoftLimit	= dMaxValue;
 }
 
 /******************************************************************************
-	Description:	SetVelocitySoftLimits - Sets soft limits for minimum and maximum speed.
-	Arguments:	 	dMinValue - Minimum travel distance.
-					dMaxValue - Maximum travel distance.
-	Returns: 		Nothing
+    Description:	SetVelocitySoftLimits - Sets soft limits for minimum and maximum speed.
+    Arguments:	 	dMinValue - Minimum travel distance.
+                    dMaxValue - Maximum travel distance.
+    Returns: 		Nothing
 ******************************************************************************/
 void CSparkMotion::SetVelocitySoftLimits(double dMinValue, double dMaxValue)
 {
-	// Set the member variables.
-	m_dLowerVelocitySoftLimit	= dMinValue;
-	m_dUpperVelocitySoftLimit	= dMaxValue;
+    // Set the member variables.
+    m_dLowerVelocitySoftLimit	= dMinValue;
+    m_dUpperVelocitySoftLimit	= dMaxValue;
 }
 
 /******************************************************************************
-	Description:	ConfigLimitSwitches - Sets up the limit switches as
-					normally open or normally closed.
-	Arguments:	 	bool bFwdLimit - True if normally open, false if normally closed.
-					bool bRevLimit - True if normally open, false if normally closed.
-	Returns: 		Nothing
+    Description:	ConfigLimitSwitches - Sets up the limit switches as
+                    normally open or normally closed.
+    Arguments:	 	bool bFwdLimit - True if normally open, false if normally closed.
+                    bool bRevLimit - True if normally open, false if normally closed.
+    Returns: 		Nothing
 ******************************************************************************/
 void CSparkMotion::ConfigLimitSwitches(bool bFwdLimit, bool bRevLimit)
 {
-	// Set the member variables.
-	m_bFwdLimitSwitchNormallyOpen = bFwdLimit;
-	m_bRevLimitSwitchNormallyOpen = bRevLimit;
+    // Set the member variables.
+    m_bFwdLimitSwitchNormallyOpen = bFwdLimit;
+    m_bRevLimitSwitchNormallyOpen = bRevLimit;
 
-	m_pMotor->GetForwardLimitSwitch(bFwdLimit ?
-									CANDigitalInput::LimitSwitchPolarity::kNormallyOpen : 
-									CANDigitalInput::LimitSwitchPolarity::kNormallyClosed).EnableLimitSwitch(true);	
-	m_pMotor->GetReverseLimitSwitch(bRevLimit ?
-									CANDigitalInput::LimitSwitchPolarity::kNormallyOpen : 
-									CANDigitalInput::LimitSwitchPolarity::kNormallyClosed).EnableLimitSwitch(true);	
+    m_pMotor->GetForwardLimitSwitch(bFwdLimit ?
+                                    CANDigitalInput::LimitSwitchPolarity::kNormallyOpen : 
+                                    CANDigitalInput::LimitSwitchPolarity::kNormallyClosed).EnableLimitSwitch(true);	
+    m_pMotor->GetReverseLimitSwitch(bRevLimit ?
+                                    CANDigitalInput::LimitSwitchPolarity::kNormallyOpen : 
+                                    CANDigitalInput::LimitSwitchPolarity::kNormallyClosed).EnableLimitSwitch(true);	
 }
 
 /******************************************************************************
-	Description:	SetAccumIZone - sets the IZone for the accumulated integral.
-	Arguments:	 	double dIZone - The accumulated integral is reset to zero
-					when the error exceeds this value. This value is in the
-					units of measure.
-	Returns: 		Nothing
+    Description:	SetAccumIZone - sets the IZone for the accumulated integral.
+    Arguments:	 	double dIZone - The accumulated integral is reset to zero
+                    when the error exceeds this value. This value is in the
+                    units of measure.
+    Returns: 		Nothing
 ******************************************************************************/
 void CSparkMotion::SetAccumIZone(double dIZone)
 {
-	// Set the member variable.
-	m_dIZone = dIZone;
+    // Set the member variable.
+    m_dIZone = dIZone;
 
-	// Set the Integral Zone. Accumulated integral is reset to zero when the error exceeds this value.
-	m_pMotor->GetPIDController().SetIZone(m_dIZone * m_dRevsPerUnit * m_nPulsesPerRev);
+    // Set the Integral Zone. Accumulated integral is reset to zero when the error exceeds this value.
+    m_pMotor->GetPIDController().SetIZone(m_dIZone * m_dRevsPerUnit * m_nPulsesPerRev);
 }
 
 /******************************************************************************
-	Description:	IsFwdLimitSwitchPressed - Returns true if forward limit
-					switch is pressed, false otherwise.
-	Arguments:	 	None
-	Returns: 		bool - True if pressed, false otherwise
+    Description:	IsFwdLimitSwitchPressed - Returns true if forward limit
+                    switch is pressed, false otherwise.
+    Arguments:	 	None
+    Returns: 		bool - True if pressed, false otherwise
 ******************************************************************************/
 bool CSparkMotion::IsFwdLimitSwitchPressed()
 {
-	return ((m_bFwdLimitSwitchNormallyOpen && m_pMotor->GetForwardLimitSwitch(m_bFwdLimitSwitchNormallyOpen ?
-										      CANDigitalInput::LimitSwitchPolarity::kNormallyOpen : 
-											  CANDigitalInput::LimitSwitchPolarity::kNormallyClosed).Get()) ||
-		   (!m_bFwdLimitSwitchNormallyOpen && !m_pMotor->GetForwardLimitSwitch(m_bFwdLimitSwitchNormallyOpen ?
-										      CANDigitalInput::LimitSwitchPolarity::kNormallyOpen : 
-											  CANDigitalInput::LimitSwitchPolarity::kNormallyClosed).Get()));
+    return ((m_bFwdLimitSwitchNormallyOpen && m_pMotor->GetForwardLimitSwitch(m_bFwdLimitSwitchNormallyOpen ?
+                                              CANDigitalInput::LimitSwitchPolarity::kNormallyOpen : 
+                                              CANDigitalInput::LimitSwitchPolarity::kNormallyClosed).Get()) ||
+           (!m_bFwdLimitSwitchNormallyOpen && !m_pMotor->GetForwardLimitSwitch(m_bFwdLimitSwitchNormallyOpen ?
+                                              CANDigitalInput::LimitSwitchPolarity::kNormallyOpen : 
+                                              CANDigitalInput::LimitSwitchPolarity::kNormallyClosed).Get()));
 }
 
 /******************************************************************************
-	Description:	IsRevLimitSwitchPressed - Returns true if reverse limit
-					switch is pressed, false otherwise.
-	Arguments:	 	None
-	Returns: 		bool - True if pressed, false otherwise
+    Description:	IsRevLimitSwitchPressed - Returns true if reverse limit
+                    switch is pressed, false otherwise.
+    Arguments:	 	None
+    Returns: 		bool - True if pressed, false otherwise
 ******************************************************************************/
 bool CSparkMotion::IsRevLimitSwitchPressed()
 {
-		return ((m_bRevLimitSwitchNormallyOpen && m_pMotor->GetReverseLimitSwitch(m_bRevLimitSwitchNormallyOpen ?
-										      CANDigitalInput::LimitSwitchPolarity::kNormallyOpen : 
-											  CANDigitalInput::LimitSwitchPolarity::kNormallyClosed).Get()) ||
-		   (!m_bRevLimitSwitchNormallyOpen && !m_pMotor->GetReverseLimitSwitch(m_bRevLimitSwitchNormallyOpen ?
-										      CANDigitalInput::LimitSwitchPolarity::kNormallyOpen : 
-											  CANDigitalInput::LimitSwitchPolarity::kNormallyClosed).Get()));
+        return ((m_bRevLimitSwitchNormallyOpen && m_pMotor->GetReverseLimitSwitch(m_bRevLimitSwitchNormallyOpen ?
+                                              CANDigitalInput::LimitSwitchPolarity::kNormallyOpen : 
+                                              CANDigitalInput::LimitSwitchPolarity::kNormallyClosed).Get()) ||
+           (!m_bRevLimitSwitchNormallyOpen && !m_pMotor->GetReverseLimitSwitch(m_bRevLimitSwitchNormallyOpen ?
+                                              CANDigitalInput::LimitSwitchPolarity::kNormallyOpen : 
+                                              CANDigitalInput::LimitSwitchPolarity::kNormallyClosed).Get()));
 }
 
 /******************************************************************************
-	Description:	IsAtSetpoint - Returns whether or not the motor has reached
-					the desired setpoint.
-	Arguments:	 	None
-	Returns: 		bool - True if at setpoint, false otherwise.
+    Description:	IsAtSetpoint - Returns whether or not the motor has reached
+                    the desired setpoint.
+    Arguments:	 	None
+    Returns: 		bool - True if at setpoint, false otherwise.
 ******************************************************************************/
 bool CSparkMotion::IsAtSetpoint()
 {
-	return (((fabs(GetSetpoint() - GetActual())) < m_dTolerance) && (fabs(m_pMotor->GetBusVoltage()) < 1.000));
+    return (((fabs(GetSetpoint() - GetActual())) < m_dTolerance) && (fabs(m_pMotor->GetBusVoltage()) < 1.000));
 }
 
 /******************************************************************************
-	Description:	ResetEncoderPosition - Sets the encoder position to zero.
-	Arguments:	 	None
-	Returns: 		Nothing
+    Description:	ResetEncoderPosition - Sets the encoder position to zero.
+    Arguments:	 	None
+    Returns: 		Nothing
 ******************************************************************************/
 void CSparkMotion::ResetEncoderPosition()
 {
-	// Reset the encoder count to zero.
+    // Reset the encoder count to zero.
 //TODO: Figure this out!
 //	m_pMotor->SetSelectedSensorPosition(0);
 }
 
 /******************************************************************************
-	Description:	SetPeakOutputPercent - Sets the maximum output for the
-					motors. This is in PercentOutput (-1, to 1).
-	Arguments:	 	double dMaxFwdOutput - The maximum forward output.
-					double dMaxRevOutput - The maximum reverse output.
-	Returns: 		Nothing
+    Description:	SetPeakOutputPercent - Sets the maximum output for the
+                    motors. This is in PercentOutput (-1, to 1).
+    Arguments:	 	double dMaxFwdOutput - The maximum forward output.
+                    double dMaxRevOutput - The maximum reverse output.
+    Returns: 		Nothing
 ******************************************************************************/
 void CSparkMotion::SetPeakOutputPercent(double dMaxFwdOutput, double dMaxRevOutput)
 {
-	m_pMotor->GetPIDController().SetOutputRange(dMaxFwdOutput, dMaxRevOutput);
+    m_pMotor->GetPIDController().SetOutputRange(dMaxFwdOutput, dMaxRevOutput);
 }
 
 /******************************************************************************
-	Description:	SetNominalOutputVoltage - Sets the nominal output for the
-					motors. This is in PercentOutput (-1, to 1).
-	Arguments:	 	double dNominalFwdOutput - The nominal forward output.
-					double dNominalRevOutput - The nominal reverse output.
-	Returns: 		Nothing
+    Description:	SetNominalOutputVoltage - Sets the nominal output for the
+                    motors. This is in PercentOutput (-1, to 1).
+    Arguments:	 	double dNominalFwdOutput - The nominal forward output.
+                    double dNominalRevOutput - The nominal reverse output.
+    Returns: 		Nothing
 ******************************************************************************/
 void CSparkMotion::SetNominalOutputVoltage(double dNominalFwdOutput, double dNominalRevOutput)
 {
@@ -523,158 +523,158 @@ void CSparkMotion::SetNominalOutputVoltage(double dNominalFwdOutput, double dNom
 }
 
 /******************************************************************************
-	Description:	SetOpenLoopRampRate - Sets the acceleration for open loop.
-	Arguments:	 	double dOpenLoopRampRate - Acceleration in seconds from
-					off to full output.
-	Returns: 		Nothing
+    Description:	SetOpenLoopRampRate - Sets the acceleration for open loop.
+    Arguments:	 	double dOpenLoopRampRate - Acceleration in seconds from
+                    off to full output.
+    Returns: 		Nothing
 ******************************************************************************/
 void CSparkMotion::SetOpenLoopRampRate(double dOpenLoopRampRate)
 {
-	m_pMotor->SetOpenLoopRampRate(dOpenLoopRampRate);
+    m_pMotor->SetOpenLoopRampRate(dOpenLoopRampRate);
 }
 
 /******************************************************************************
-	Description:	SetClosedLoopRampRate - Sets the acceleration for closed loop.
-	Arguments:	 	double dClosedLoopRampRate - Acceleration in seconds from
-					off to full output.
-	Returns: 		Nothing
+    Description:	SetClosedLoopRampRate - Sets the acceleration for closed loop.
+    Arguments:	 	double dClosedLoopRampRate - Acceleration in seconds from
+                    off to full output.
+    Returns: 		Nothing
 ******************************************************************************/
 void CSparkMotion::SetClosedLoopRampRate(double dClosedLoopRampRate)
 {
-	m_pMotor->SetClosedLoopRampRate(dClosedLoopRampRate);
+    m_pMotor->SetClosedLoopRampRate(dClosedLoopRampRate);
 }
 
 /******************************************************************************
-	Description:	SetMotorNeutralMode - Sets the stop mode to brake or coast.
-	Arguments:	 	int nMode - Mode, 1 is coast, 2 is brake.
-	Returns: 		Nothing
+    Description:	SetMotorNeutralMode - Sets the stop mode to brake or coast.
+    Arguments:	 	int nMode - Mode, 1 is coast, 2 is brake.
+    Returns: 		Nothing
 ******************************************************************************/
 void CSparkMotion::SetMotorNeutralMode(int nMode)
 {
-	m_pMotor->SetIdleMode((nMode == 1) ? CANSparkMax::IdleMode::kCoast : CANSparkMax::IdleMode::kBrake);
+    m_pMotor->SetIdleMode((nMode == 1) ? CANSparkMax::IdleMode::kCoast : CANSparkMax::IdleMode::kBrake);
 }
 
 /******************************************************************************
-	Description:	GetCurrentPositionInUnits - Returns the current position in units.
-	Arguments:	 	None
-	Returns: 		double - Position of the motor.
+    Description:	GetCurrentPositionInUnits - Returns the current position in units.
+    Arguments:	 	None
+    Returns: 		double - Position of the motor.
 ******************************************************************************/
 double CSparkMotion::GetActual()
 {
-	// Create instance variables.
-	double dActual = 0.000;
+    // Create instance variables.
+    double dActual = 0.000;
 
-	if (m_bUsePosition)
-	{
-		dActual = (m_pMotor->GetEncoder().GetPosition() / m_dRevsPerUnit / m_nPulsesPerRev);
-	}
-	else
-	{
-		dActual = (m_pMotor->GetEncoder().GetVelocity() / (84 / 8 * m_nPulsesPerRev) /** m_dTimeUnitInterval*/);
-	}
+    if (m_bUsePosition)
+    {
+        dActual = (m_pMotor->GetEncoder().GetPosition() / m_dRevsPerUnit / m_nPulsesPerRev);
+    }
+    else
+    {
+        dActual = (m_pMotor->GetEncoder().GetVelocity() / (84 / 8 * m_nPulsesPerRev) /** m_dTimeUnitInterval*/);
+    }
 
-	return dActual;}
+    return dActual;}
 
 /******************************************************************************
-	Description:	SetHomeSpeeds - Sets the home speeds for the state machine.
-	Arguments:	 	double dFwdSpeed - Speed for homing forward, coming off of
-					home switch.
-					double dRevSpeed - Speed for homing backward, moving towards
-					home switch.
-	Returns: 		Nothing
+    Description:	SetHomeSpeeds - Sets the home speeds for the state machine.
+    Arguments:	 	double dFwdSpeed - Speed for homing forward, coming off of
+                    home switch.
+                    double dRevSpeed - Speed for homing backward, moving towards
+                    home switch.
+    Returns: 		Nothing
 ******************************************************************************/
 void CSparkMotion::SetHomeSpeeds(double dFwdSpeed, double dRevSpeed)
 {
-	m_dFwdHomeSpeed = dFwdSpeed;
-	m_dRevHomeSpeed = dRevSpeed;
+    m_dFwdHomeSpeed = dFwdSpeed;
+    m_dRevHomeSpeed = dRevSpeed;
 }
 
 /******************************************************************************
-	Description:	SetPulsesPerRev - Sets the pulses per revolution for the PID
-					controller.
-	Arguments:	 	int nPPR - Encoder pulses per revolution.
-	Returns: 		Nothing
+    Description:	SetPulsesPerRev - Sets the pulses per revolution for the PID
+                    controller.
+    Arguments:	 	int nPPR - Encoder pulses per revolution.
+    Returns: 		Nothing
 ******************************************************************************/
 void CSparkMotion::SetPulsesPerRev(int nPPR)
 {
-	m_nPulsesPerRev = nPPR;
+    m_nPulsesPerRev = nPPR;
 }
 
 /******************************************************************************
-	Description:	SetRevsPerUnit - Sets the revolutions per unit of measure.
-	Arguments:	 	double dRPU - Revolutions per unit of measure.
-	Returns: 		Nothing
+    Description:	SetRevsPerUnit - Sets the revolutions per unit of measure.
+    Arguments:	 	double dRPU - Revolutions per unit of measure.
+    Returns: 		Nothing
 ******************************************************************************/
 void CSparkMotion::SetRevsPerUnit(double dRPU)
 {
-	m_dRevsPerUnit = dRPU;
+    m_dRevsPerUnit = dRPU;
 }
 
 /******************************************************************************
-	Description:	SetPIDValues - Sets the PID and Feed Forward gain values.
-	Arguments:	 	double dProportional 	- Proportion Gain
-					double dIntegral		- Integral Gain
-					double dDerivative		- Derivative Gain
-					double dFeedForward		- Feed Forward Gain
-	Returns: 		Nothing
+    Description:	SetPIDValues - Sets the PID and Feed Forward gain values.
+    Arguments:	 	double dProportional 	- Proportion Gain
+                    double dIntegral		- Integral Gain
+                    double dDerivative		- Derivative Gain
+                    double dFeedForward		- Feed Forward Gain
+    Returns: 		Nothing
 ******************************************************************************/
 void CSparkMotion::SetPIDValues(double dProportional, double dIntegral, double dDerivative, double dFeedForward)
 {
-	m_pMotor->GetPIDController().SetP(dProportional);
-	m_pMotor->GetPIDController().SetI(dIntegral);
-	m_pMotor->GetPIDController().SetD(dDerivative);
-	m_pMotor->GetPIDController().SetFF(dFeedForward);
+    m_pMotor->GetPIDController().SetP(dProportional);
+    m_pMotor->GetPIDController().SetI(dIntegral);
+    m_pMotor->GetPIDController().SetD(dDerivative);
+    m_pMotor->GetPIDController().SetFF(dFeedForward);
 }
 
 /******************************************************************************
-	Description:	SetMotorInverted - Inverts the motor output.
-	Arguments:	 	bool bInverted - True to invert motor output.
-	Returns: 		Nothing
+    Description:	SetMotorInverted - Inverts the motor output.
+    Arguments:	 	bool bInverted - True to invert motor output.
+    Returns: 		Nothing
 ******************************************************************************/
 void CSparkMotion::SetMotorInverted(bool bInverted)
 {
-	m_pMotor->SetInverted(bInverted);
+    m_pMotor->SetInverted(bInverted);
 }
 
 /******************************************************************************
-	Description:	ClearStickyFaults - Clears the controller's sticky faults.
-	Arguments:	 	None
-	Returns: 		Nothing
+    Description:	ClearStickyFaults - Clears the controller's sticky faults.
+    Arguments:	 	None
+    Returns: 		Nothing
 ******************************************************************************/
 void CSparkMotion::ClearStickyFaults()
 {
-	m_pMotor->ClearFaults();
-	m_pMotor->ClearError();
+    m_pMotor->ClearFaults();
+    m_pMotor->ClearError();
 }
 
 /******************************************************************************
-	Description:	SetManualSpeed - Set the Manual Move Speed.
-	Arguments:	 	double dForward, double dReverse
-	Returns: 		Nothing
+    Description:	SetManualSpeed - Set the Manual Move Speed.
+    Arguments:	 	double dForward, double dReverse
+    Returns: 		Nothing
 ******************************************************************************/
 void CSparkMotion::SetManualSpeed(double dForward, double dReverse)
 {
-	m_dFwdMoveSpeed = dForward;
-	m_dRevMoveSpeed = dReverse;
+    m_dFwdMoveSpeed = dForward;
+    m_dRevMoveSpeed = dReverse;
 }
 
 /******************************************************************************
-	Description:	SetAcceleration - Set the Motion Magic Acceleration.
-	Arguments:	 	double dRPS
-	Returns: 		Nothing
+    Description:	SetAcceleration - Set the Motion Magic Acceleration.
+    Arguments:	 	double dRPS
+    Returns: 		Nothing
 ******************************************************************************/
 void CSparkMotion::SetAcceleration(double dRPS)
 {
-	m_pMotor->GetPIDController().SetSmartMotionMaxAccel(dRPS);
+    m_pMotor->GetPIDController().SetSmartMotionMaxAccel(dRPS);
 }
 
 /******************************************************************************
-	Description:	SetCruiseRPM - Set the Motion Magic Cruise RPM.
-	Arguments:	 	double dRPM
-	Returns: 		Nothing
+    Description:	SetCruiseRPM - Set the Motion Magic Cruise RPM.
+    Arguments:	 	double dRPM
+    Returns: 		Nothing
 ******************************************************************************/
 void CSparkMotion::SetCruiseRPM(double dRPM)
 {
-	m_pMotor->GetPIDController().SetSmartMotionMaxVelocity(dRPM);
+    m_pMotor->GetPIDController().SetSmartMotionMaxVelocity(dRPM);
 }
 ///////////////////////////////////////////////////////////////////////////////

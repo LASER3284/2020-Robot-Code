@@ -1,8 +1,8 @@
 /****************************************************************************
-	Description:	Defines the 2020 Infinite Recharge Robot I/O map.
-	Classes:		None
-	Project:		2020 Infinite Recharge Robot Code.
-	Copyright 2020 First Team 3284 - Camdenton LASER Robotics.
+    Description:	Defines the 2020 Infinite Recharge Robot I/O map.
+    Classes:		None
+    Project:		2020 Infinite Recharge Robot Code.
+    Copyright 2020 First Team 3284 - Camdenton LASER Robotics.
 ****************************************************************************/
 #ifndef IOMap_h
 #define IOMap_h

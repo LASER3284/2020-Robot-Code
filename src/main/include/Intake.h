@@ -1,8 +1,8 @@
 /****************************************************************************
-	Description:	Defines the CIntake control class.
-	Classes:		CIntake
-	Project:		2020 Infinite Recharge Robot Code.
-	Copyright 2020 First Team 3284 - Camdenton LASER Robotics.
+    Description:	Defines the CIntake control class.
+    Classes:		CIntake
+    Project:		2020 Infinite Recharge Robot Code.
+    Copyright 2020 First Team 3284 - Camdenton LASER Robotics.
 ****************************************************************************/
 #ifndef Intake_h
 #define Intake_h
@@ -24,9 +24,9 @@ enum MotorStates {eMotorReverse, eMotorStopped, eMotorForward};
 
 
 /******************************************************************************
-	Description:	CIntake class definition.
-	Arguments:		None
-	Derived From:	Nothing
+    Description:	CIntake class definition.
+    Arguments:		None
+    Derived From:	Nothing
 ******************************************************************************/
 class CIntake
 {
@@ -34,16 +34,16 @@ public:
     CIntake();
     ~CIntake();
 
-	// Public Methods.
+    // Public Methods.
     void Init();
     void Extend(bool bExtend);
-	bool GetExtended();
-	void MotorSetPoint(int nState);
+    bool GetExtended();
+    void MotorSetPoint(int nState);
 
 private:
-	// Object pointers.
+    // Object pointers.
     CANSparkMax*		m_pIntakeMotor;
-	Solenoid*			m_pIntakeActuator;
+    Solenoid*			m_pIntakeActuator;
 
     // Declare variables.
 };
