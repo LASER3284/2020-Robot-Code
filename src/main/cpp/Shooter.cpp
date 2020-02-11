@@ -139,6 +139,7 @@ void CShooter::Tick()
             // reduce current draw.
             m_pShooterPID->SetReference(dShooterIdleVelocity, ControlType::kVelocity);
             m_bIsReady = true;
+            break;
 
         case eShooterFinding :
             // Finding - Motor uses built-in PID controller to seek the
@@ -224,7 +225,7 @@ void CShooter::Tick()
                 // Change to idle, we're out of bounds.
                 SetHoodState(eHoodIdle);
             }
-            
+            break;
 
         case eHoodManualFwd :
             // ManualForward - Move the Hood forward at a constant speed.
