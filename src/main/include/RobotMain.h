@@ -11,6 +11,7 @@
 #include <frc/Timer.h>
 #include <frc/Joystick.h>
 #include <frc/LiveWindow/LiveWindow.h>
+#include <frc/smartdashboard/SendableChooser.h>
 #include "Drive.h"
 #include "Intake.h"
 #include "Turret.h"
@@ -18,6 +19,7 @@
 #include "Blinkin.h"
 
 using namespace frc;
+using namespace std;
 ///////////////////////////////////////////////////////////////////////////////
 
 
@@ -61,17 +63,26 @@ private:
 
     enum AutoStates
     {
-        eAutoIdle
+        eAllianceTrench = 1, 
+        eFrontShieldGenerator, 
+        eSideShieldGenerator, 
+        eOpposingTrench, 
+        ePowerPort, 
+        eTakePowerCells, 
+        eDoNothing, 
+        eTestPath
     };
 
     // Object pointers.
-    Joystick*           m_pDriveController;
-    Timer*              m_pTimer;
-    CDrive*             m_pDrive;
-    CIntake*            m_pIntake;
-    CTurret*            m_pTurret;
-    CShooter*           m_pShooter;
-    Blinkin*            m_pBlinkin;
+    Joystick*                   m_pDriveController;
+    Timer*                      m_pTimer;
+    CDrive*                     m_pDrive;
+    CIntake*                    m_pIntake;
+    CTurret*                    m_pTurret;
+    CShooter*                   m_pShooter;
+    Blinkin*                    m_pBlinkin;
+    CTrajectoryConstants*		m_pTrajectoryConstants;
+    SendableChooser<string>*    m_pAutonomousChooser;
 
     // Declare variables.
     int         m_nTeleopState;

@@ -108,9 +108,6 @@ void CDrive::Init()
 
 	// Reset gyro.
 	m_pGyro->Reset();
-
-	// Generate the Trajectory.
-	GenerateTrajectory(m_pTrajectoryConstants.GetSelectedTrajectory(), m_pTrajectoryConstants.kMaxSpeed, m_pTrajectoryConstants.kMaxAcceleration);
 }
 
 /****************************************************************************
@@ -321,6 +318,16 @@ void CDrive::Stop()
 bool CDrive::GetIsTrajectoryFinished()
 {
 	return m_pRamseteCommand->IsFinished();
+}
+
+/****************************************************************************
+	Description:	SetSelectedTrajectory - Select trajectory for auto.
+	Arguments: 		int nAutoState - The auto state.
+	Returns: 		Nothing
+****************************************************************************/
+void CDrive::SetSelectedTrajectory(int nAutoState)
+{
+	m_pTrajectoryConstants.SelectTrajectory(nAutoState);
 }
 
 /****************************************************************************

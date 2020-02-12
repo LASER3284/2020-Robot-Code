@@ -25,7 +25,7 @@ public:
         // Retrieve the correct trajectory.
         switch(nTrajectory)
         {
-            case eAllianceTrench:
+            case eAllianceTrench :
                 m_StartPoint =
                 {
                     10.0_ft,				// X starting position on field in feet.
@@ -63,7 +63,7 @@ public:
                 };
                 break;
 
-            case eFrontShieldGenerator:
+            case eFrontShieldGenerator :
                 m_StartPoint =
                 {
                     10.0_ft,				// X starting position on field in feet.
@@ -89,7 +89,7 @@ public:
                 };
                 break;
 
-            case eSideShieldGenerator:
+            case eSideShieldGenerator :
                 m_StartPoint =
                 {
                     10.0_ft,				// X starting position on field in feet.
@@ -127,7 +127,7 @@ public:
                 };
                 break;
 
-            case eOpposingTrench:
+            case eOpposingTrench :
                 m_StartPoint =
                 {
                     10.0_ft,				// X starting position on field in feet.
@@ -159,7 +159,7 @@ public:
                 };
                 break;
 
-            case ePowerPort:
+            case ePowerPort :
                 m_StartPoint =
                 {
                     10.0_ft,				// X starting position on field in feet.
@@ -185,7 +185,7 @@ public:
                 };
                 break;
 
-            case eTakePowerCells:
+            case eTakePowerCells :
                 m_StartPoint =
                 {
                     0.0_ft,					// X starting position on field in feet.
@@ -211,7 +211,7 @@ public:
                 };
                 break;
 
-            case eDoNothing:
+            case eDoNothing :
                 m_StartPoint =
                 {
                     10.0_ft,				// X starting position on field in feet.
@@ -231,7 +231,7 @@ public:
                 };
                 break;
 
-            case eTestPath:
+            case eTestPath :
                 m_StartPoint =
                 {
                     1.0_ft,					// X starting position on field in feet.
@@ -269,7 +269,7 @@ public:
                 };
                 break;
 
-            default:
+            default :
                 m_StartPoint =
                 {
                     0.0_ft,					// X starting position on field in feet.
@@ -282,8 +282,8 @@ public:
                     m_StartPoint,
                     Pose2d
                     {
-                        0.0_ft,				    // X ending position on field in feet.
-                        0.0_ft,					// Y ending position on field in feet.
+                        0.1_ft,				    // X ending position on field in feet.
+                        0.1_ft,					// Y ending position on field in feet.
                         Rotation2d(0_deg)		// Ending rotation on field in degrees.
                     }
                 };

@@ -65,6 +65,7 @@ public:
 	void ResetEncoders();
     void Stop();
     bool GetIsTrajectoryFinished();
+    void SetSelectedTrajectory(int nAutoState);
     void SetJoystickControl(bool bJoystickControl);
     void SetMotorExpiration(double dTimeout);
     void SetMotorSafety(bool bEnabled);
@@ -72,7 +73,6 @@ public:
 private:
     // Object Pointers.
     Joystick*                       m_pDriveController;
-	CTrajectoryConstants			m_pTrajectoryConstants;
     CFalconMotion*                  m_pLeftMotor1;
     WPI_TalonFX*                    m_pLeftMotor2;
     CFalconMotion*                  m_pRightMotor1;
@@ -82,6 +82,7 @@ private:
     Timer*                          m_pTimer;
     DifferentialDriveOdometry*      m_pOdometry;
 	frc2::RamseteCommand*			m_pRamseteCommand;
+    CTrajectoryConstants			m_pTrajectoryConstants;
 	Trajectory              		m_Trajectory;
 
     // Member variables.
