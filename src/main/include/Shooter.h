@@ -1,8 +1,8 @@
 /****************************************************************************
-	Description:	Defines the CShooter control class.
-	Classes:		CShooter
-	Project:		2020 Infinite Recharge Robot Code.
-	Copyright 2020 First Team 3284 - Camdenton LASER Robotics.
+    Description:	Defines the CShooter control class.
+    Classes:		CShooter
+    Project:		2020 Infinite Recharge Robot Code.
+    Copyright 2020 First Team 3284 - Camdenton LASER Robotics.
 ****************************************************************************/
 #ifndef Shooter_h
 #define Shooter_h
@@ -43,9 +43,9 @@ enum HoodState 		{eHoodIdle, eHoodFinding, eHoodTracking, eHoodManualFwd, eHoodM
 
 
 /******************************************************************************
-	Description:	CShooter class definition.
-	Arguments:		None
-	Derived From:	Nothing
+    Description:	CShooter class definition.
+    Arguments:		None
+    Derived From:	Nothing
 ******************************************************************************/
 class CShooter
 {
@@ -53,75 +53,75 @@ public:
     CShooter();
     ~CShooter();
 
-	// Public methods.
+    // Public methods.
     void 			Init();
-	void 			Tick();
-	bool			IsReady()															{	return (m_bHoodIsReady && m_bShooterIsReady);		};
-	void 			Stop();
+    void 			Tick();
+    bool			IsReady()															{	return (m_bHoodIsReady && m_bShooterIsReady);		};
+    void 			Stop();
 
-	// Shooter methods.
-	void			SetShooterPID(double dProportional, double dIntegral, double dDerivative, double dFeedForward);
-	void 			SetShooterSetpoint(double dSetpoint);
-	void 			SetShooterState(ShooterState nState)								{	m_nShooterState = nState;							};
-	void 			SetShooterTolerance(double dTolerance);
-	bool			IsShooterAtSetpoint();
-	double			GetShooterActual()													{	return m_pLeftShooter->GetEncoder().GetVelocity();	};
-	double 			GetShooterSetpoint()												{	return m_dShooterSetpoint;							};
-	double			GetShooterTolerance()												{	return m_dShooterTolerance;							};
-	ShooterState 	GetShooterState()													{	return m_nShooterState;								};		
-	
-	// Hood methods.
-	void			SetHoodPID(double dProportional, double dIntegral, double dDerivative);
-	void 			SetHoodSetpoint(double dSetpoint);
-	void			SetHoodSpeed(double dSpeed);
-	void 			SetHoodState(HoodState nState)										{	m_nHoodState = nState;								};
-	void 			SetHoodTolerance(double dTolerance);
-	bool			IsHoodAtSetpoint();
-	double			GetHoodActual()														{	return m_pHoodEncoder->GetDistance();				};
-	double 			GetHoodSetpoint()													{	return m_dHoodSetpoint;								};
-	double			GetHoodTolerance()													{	return m_dHoodTolerance;							};
-	HoodState		GetHoodState()														{	return m_nHoodState;								};
+    // Shooter methods.
+    void			SetShooterPID(double dProportional, double dIntegral, double dDerivative, double dFeedForward);
+    void 			SetShooterSetpoint(double dSetpoint);
+    void 			SetShooterState(ShooterState nState)								{	m_nShooterState = nState;							};
+    void 			SetShooterTolerance(double dTolerance);
+    bool			IsShooterAtSetpoint();
+    double			GetShooterActual()													{	return m_pLeftShooter->GetEncoder().GetVelocity();	};
+    double 			GetShooterSetpoint()												{	return m_dShooterSetpoint;							};
+    double			GetShooterTolerance()												{	return m_dShooterTolerance;							};
+    ShooterState 	GetShooterState()													{	return m_nShooterState;								};		
+    
+    // Hood methods.
+    void			SetHoodPID(double dProportional, double dIntegral, double dDerivative);
+    void 			SetHoodSetpoint(double dSetpoint);
+    void			SetHoodSpeed(double dSpeed);
+    void 			SetHoodState(HoodState nState)										{	m_nHoodState = nState;								};
+    void 			SetHoodTolerance(double dTolerance);
+    bool			IsHoodAtSetpoint();
+    double			GetHoodActual()														{	return m_pHoodEncoder->GetDistance();				};
+    double 			GetHoodSetpoint()													{	return m_dHoodSetpoint;								};
+    double			GetHoodTolerance()													{	return m_dHoodTolerance;							};
+    HoodState		GetHoodState()														{	return m_nHoodState;								};
 
 private:
-	// Object pointers.
+    // Object pointers.
     Servo*					m_pHoodServo;
-	rev::CANSparkMax*		m_pLeftShooter;
-	rev::CANSparkMax*		m_pRightShooter;
-	rev::CANPIDController*	m_pShooterPID;
-	Encoder*				m_pHoodEncoder;
-	frc2::PIDController*	m_pHoodPID;
-	Timer*					m_pTimer;
+    rev::CANSparkMax*		m_pLeftShooter;
+    rev::CANSparkMax*		m_pRightShooter;
+    rev::CANPIDController*	m_pShooterPID;
+    Encoder*				m_pHoodEncoder;
+    frc2::PIDController*	m_pHoodPID;
+    Timer*					m_pTimer;
 
     // Declare variables.
-	bool			m_bIsReady;
-	bool			m_bVisionTracking;
-	bool			m_bMotionMagic;
+    bool			m_bIsReady;
+    bool			m_bVisionTracking;
+    bool			m_bMotionMagic;
 
-	// Shooter variables.
-	double 			m_dShooterProportional;
-	double 			m_dShooterIntegral;
-	double 			m_dShooterDerivative;
-	double 			m_dShooterFeedForward;
-	double 			m_dShooterTolerance;
-	double 			m_dShooterSetpoint;
-	double			m_dShooterActual;
-	double			m_dShooterMaxFindingTime;
-	double			m_dShooterFindingStartTime;
-	ShooterState	m_nShooterState;
-	bool			m_bShooterIsReady;
+    // Shooter variables.
+    double 			m_dShooterProportional;
+    double 			m_dShooterIntegral;
+    double 			m_dShooterDerivative;
+    double 			m_dShooterFeedForward;
+    double 			m_dShooterTolerance;
+    double 			m_dShooterSetpoint;
+    double			m_dShooterActual;
+    double			m_dShooterMaxFindingTime;
+    double			m_dShooterFindingStartTime;
+    ShooterState	m_nShooterState;
+    bool			m_bShooterIsReady;
 
-	// Hood variables.
-	double 			m_dHoodProportional;
-	double 			m_dHoodTrackingP;
-	double 			m_dHoodIntegral;
-	double 			m_dHoodDerivative;
-	double 			m_dHoodTolerance;
-	double 			m_dHoodSetpoint;
-	double			m_dHoodActual;
-	double			m_dHoodMaxFindingTime;
-	double			m_dHoodFindingStartTime;
-	HoodState		m_nHoodState;
-	bool			m_bHoodIsReady;
+    // Hood variables.
+    double 			m_dHoodProportional;
+    double 			m_dHoodTrackingP;
+    double 			m_dHoodIntegral;
+    double 			m_dHoodDerivative;
+    double 			m_dHoodTolerance;
+    double 			m_dHoodSetpoint;
+    double			m_dHoodActual;
+    double			m_dHoodMaxFindingTime;
+    double			m_dHoodFindingStartTime;
+    HoodState		m_nHoodState;
+    bool			m_bHoodIsReady;
 };
 /////////////////////////////////////////////////////////////////////////////
 #endif

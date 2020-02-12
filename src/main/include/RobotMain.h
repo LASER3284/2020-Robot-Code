@@ -16,6 +16,7 @@
 #include "Intake.h"
 #include "Turret.h"
 #include "Shooter.h"
+#include "Hopper.h"
 #include "Blinkin.h"
 
 using namespace frc;
@@ -87,16 +88,6 @@ private:
     // Declare variables.
     int         m_nTeleopState;
     int         m_nAutoState;
-    bool        m_bDriveControllerPOVUpPressed;
-	bool        m_bDriveControllerPOVDownPressed;
-	bool        m_bDriveControllerPOVLeftPressed;
-	bool        m_bDriveControllerPOVRightPressed;
-	bool        m_bDriveControllerButtonAPressed;
-	bool        m_bDriveControllerButtonBPressed;
-	bool        m_bDriveControllerButtonXPressed;
-	bool        m_bDriveControllerButtonYPressed;
-	bool        m_bDriveControllerButtonLSPressed;
-	bool        m_bDriveControllerButtonRSPressed;
 };
 ////////////////////////////////////////////////////////////////////////////////
 #endif

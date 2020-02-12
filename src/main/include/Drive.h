@@ -1,8 +1,8 @@
 /****************************************************************************
-	Description:	Defines the CDrive control class.
-	Classes:		CDrive
-	Project:		2020 Infinite Recharge Robot Code.
-	Copyright 2020 First Team 3284 - Camdenton LASER Robotics.
+    Description:	Defines the CDrive control class.
+    Classes:		CDrive
+    Project:		2020 Infinite Recharge Robot Code.
+    Copyright 2020 First Team 3284 - Camdenton LASER Robotics.
 ****************************************************************************/
 #ifndef Drive_h
 #define Drive_h
@@ -46,9 +46,9 @@ const auto    	m_dDefaultDrivebaseWidth               	= 29.83;
 
 
 /******************************************************************************
-	Description:	CDrive class definition.
-	Arguments:		Joystick pDriveController
-	Derived From:	Nothing
+    Description:	CDrive class definition.
+    Arguments:		Joystick pDriveController
+    Derived From:	Nothing
 ******************************************************************************/
 class CDrive
 {
@@ -59,10 +59,10 @@ public:
     void Tick();
     void GenerateTrajectory(vector<Pose2d> pWaypoints, meters_per_second_t MaxSpeed, meters_per_second_squared_t MaxAcceleration);
     void FollowTrajectory();
-	void SetDrivePowers(volt_t dLeftVoltage, volt_t dRightVoltage);
-	DifferentialDriveWheelSpeeds GetWheelSpeeds();
+    void SetDrivePowers(volt_t dLeftVoltage, volt_t dRightVoltage);
+    DifferentialDriveWheelSpeeds GetWheelSpeeds();
     void ResetOdometry();
-	void ResetEncoders();
+    void ResetEncoders();
     void Stop();
     bool GetIsTrajectoryFinished();
     void SetSelectedTrajectory(int nAutoState);
@@ -77,8 +77,8 @@ private:
     WPI_TalonFX*                    m_pLeftMotor2;
     CFalconMotion*                  m_pRightMotor1;
     WPI_TalonFX*                    m_pRightMotor2;
-	DifferentialDrive*              m_pRobotDrive;
-	AHRS*                           m_pGyro;
+    DifferentialDrive*              m_pRobotDrive;
+    AHRS*                           m_pGyro;
     Timer*                          m_pTimer;
     DifferentialDriveOdometry*      m_pOdometry;
 	frc2::RamseteCommand*			m_pRamseteCommand;
@@ -86,14 +86,14 @@ private:
 	Trajectory              		m_Trajectory;
 
     // Member variables.
-	bool					m_bJoystickControl;
+    bool					m_bJoystickControl;
     bool                    m_bMotionProfile;
     double                  m_dBeta;
     double                  m_dZeta;
-	double					m_dProportional;
-	double					m_dIntegral;
-	double					m_dDerivative;
-	double					m_dDriveBaseWidth;
+    double					m_dProportional;
+    double					m_dIntegral;
+    double					m_dDerivative;
+    double					m_dDriveBaseWidth;
 };
 /////////////////////////////////////////////////////////////////////////////
 #endif

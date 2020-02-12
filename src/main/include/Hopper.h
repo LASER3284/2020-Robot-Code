@@ -1,49 +1,46 @@
 /****************************************************************************
-    Description:	Defines the CIntake control class.
-    Classes:		CIntake
+    Description:	Defines the CHopper control class.
+    Classes:		CHopper
     Project:		2020 Infinite Recharge Robot Code.
     Copyright 2020 First Team 3284 - Camdenton LASER Robotics.
 ****************************************************************************/
-#ifndef Intake_h
-#define Intake_h
+#ifndef Hopper_h
+#define Hopper_h
 
-#include <frc/Solenoid.h>
 #include <rev/CANSparkMax.h>
+#include <ctre/Phoenix.h>
 #include "IOMap.h"
 
 using namespace frc;
 using namespace rev;
+using namespace ctre;
 
-// Intake Contants.
-const double dIntakeFwdSpeed	=  1.0;
-const double dIntakeRevSpeed	= -0.5;
-
-// Intake Motor enum.
-enum MotorStates {eMotorReverse, eMotorStopped, eMotorForward};
+// Hopper Contants.
+const double dHopperMainSpeed       = 0.9;
+const double dHopperPreloadSpeed  	= 0.5;
 /////////////////////////////////////////////////////////////////////////////
 
 
 /******************************************************************************
-    Description:	CIntake class definition.
+    Description:	CHopper class definition.
     Arguments:		None
     Derived From:	Nothing
 ******************************************************************************/
-class CIntake
+class CHopper
 {
 public:
-    CIntake();
-    ~CIntake();
+    CHopper();
+    ~CHopper();
 
     // Public Methods.
     void Init();
-    void Extend(bool bExtend);
-    bool GetExtended();
-    void MotorSetPoint(int nState);
+    void Feed(bool bEnabled = true);
+    void Preload(bool bEnabled = true);
 
 private:
     // Object pointers.
-    CANSparkMax*		m_pIntakeMotor;
-    Solenoid*			m_pIntakeActuator;
+    WPI_TalonSRX*		m_pMainBelt;
+    CANSparkMax*        m_pShooterFeeder;
 
     // Declare variables.
 };

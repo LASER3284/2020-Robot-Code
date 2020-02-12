@@ -1,9 +1,9 @@
 /****************************************************************************
-	Description:	Defines the Blinkin Class for LED Control.
+    Description:	Defines the Blinkin Class for LED Control.
 
-	Classes:		Blinkin
+    Classes:		Blinkin
 
-	Project:		Blinkin LED Driver
+    Project:		Blinkin LED Driver
 ****************************************************************************/
 #ifndef Blinkin_h
 #define Blinkin_h
