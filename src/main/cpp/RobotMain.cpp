@@ -287,55 +287,153 @@ void CRobotMain::TestPeriodic()
     /********************************************************************
         Drive Controller - Actuate Intake (Button X)
     ********************************************************************/
+    if (m_pDriveController->GetRawButtonPressed(eButtonX))
+    {
+        m_pIntake->Extend(!m_pIntake->GetExtended());
+    }
 
     /********************************************************************
         Drive Controller - Move Intake Motors (Button B)
     ********************************************************************/
-
+    if (m_pDriveController->GetRawButton(eButtonB))
+    {
+        m_pIntake->MotorSetPoint(eMotorForward);
+    }
+    else
+    {
+        m_pIntake->MotorSetPoint(eMotorStopped);
+    }
+    
     /********************************************************************
         Drive Controller - Right Winch Up (Button Y)
     ********************************************************************/
+    if (m_pDriveController->GetRawButton(eButtonY))
+    {
+        // Do something.
+    }
+    else
+    {
+        // Do nothing.
+    }
+    
 
     /********************************************************************
         Drive Controller - Right Winch Down Aiming (Button A)
     ********************************************************************/
-
+    if (m_pDriveController->GetRawButton(eButtonA))
+    {
+        // Do something.
+    }
+    else
+    {
+        // Do nothing.
+    }
+    
     /********************************************************************
         Drive Controller - Left Winch Up (POV Up)
     ********************************************************************/
-   
+    if (m_pDriveController->GetPOV(0))
+    {
+        // Do something.
+    }
+    else
+    {
+        // Do nothing.
+    }
+    
     /********************************************************************
         Drive Controller - Left Winch Down (POV Down)
     ********************************************************************/
+    if (m_pDriveController->GetPOV(180))
+    {
+        // Do something.
+    }
+    else
+    {
+        // Do nothing.
+    }
 
     /********************************************************************
         Drive Controller - Turret Left (POV Left)
     ********************************************************************/
-
+    if (m_pDriveController->GetPOV(270))
+    {
+        m_pTurret->SetState(eTurretManualFwd);
+    }
+    else
+    {
     /********************************************************************
         Drive Controller - Turret Right (POV Right)
     ********************************************************************/
+        if (m_pDriveController->GetPOV(90))
+        {
+            m_pTurret->SetState(eTurretManualRev);
+        }
+        else
+        {
+            m_pTurret->SetState(eTurretIdle);
+        }
+        
+    }
 
     /********************************************************************
         Drive Controller - Shooter Forward (Right Trigger)
     ********************************************************************/
-
+    if (m_pDriveController->GetRawAxis(eRightTrigger) >= 0.65)
+    {
+        m_pShooter->SetShooterState(eShooterManualFwd);
+    }
+    else
+    {
     /********************************************************************
         Drive Controller - Shooter Reverse (Left Trigger)
     ********************************************************************/
+        if (m_pDriveController->GetRawAxis(eLeftTrigger) >= 0.65)
+        {
+            m_pShooter->SetShooterState(eShooterManualRev);
+        }
+        else
+        {
+            m_pShooter->SetShooterState(eShooterStopped);
+        }
+        
+    }
 
     /********************************************************************
         Drive Controller - Hood Up (Right Bumper)
     ********************************************************************/
-
+    if (m_pDriveController->GetRawButton(eButtonRB))
+    {
+        m_pShooter->SetHoodState(eHoodManualFwd);
+    }
+    else
+    {
     /********************************************************************
         Drive Controller - Hood Down (Left Bumper)
     ********************************************************************/
+        if (m_pDriveController->GetRawButton(eButtonLB))
+        {
+            m_pShooter->SetHoodState(eHoodManualRev);
+        }
+        else
+        {
+            m_pShooter->SetHoodState(eHoodIdle);
+        }
+        
+    }
 
     /********************************************************************
         Drive Controller - Actuate Lift (Left AND Right Stick)
     ********************************************************************/
-
+    if (m_pDriveController->GetRawButton(eButtonLS) && m_pDriveController->GetRawButton(eButtonRS))
+    {
+        // Do something.
+    }
+    else
+    {
+        // Do nothing.
+    }
+    
     // Update Subsystems.
     m_pDrive->Tick();
     m_pTurret->Tick();
