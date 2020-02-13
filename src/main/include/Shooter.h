@@ -24,6 +24,7 @@ const double dShooterManualFwdSpeed		=	  0.500;
 const double dShooterManualRevSpeed		=	 -0.500;
 const double dShooterMaxVelocity		= 	5700.00;
 const double dShooterIdleVelocity		=	2700.00;
+const double dShooterFiringVelocity     =   5200.00;
 const double dShooterMinVelocity		=	 200.00;
 // Hood Constants.
 const double dHoodMaxPosition			=      35.0;

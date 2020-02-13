@@ -54,6 +54,7 @@ void CTurret::Init()
     m_bIsReady						= true;
     m_bMotionMagic					= false;
     m_dActual						= m_pTurretMotor->GetSelectedSensorPosition();
+    m_dFakeActual                   = 0.00;
     m_dSetpoint						= 0.00;
     m_dTolerance					= 5.00;
     m_dMaxFindingTime				= 4.50;
@@ -94,6 +95,7 @@ void CTurret::Tick()
 {
     // Update Actual variable.
     m_dActual = (m_pTurretMotor->GetSelectedSensorPosition() + nTurretZeroOffset);
+    m_dFakeActual = SmartDashboard::GetNumber("Target Center X", 0.0);
 
     switch(m_nState)
     {
@@ -135,8 +137,18 @@ void CTurret::Tick()
                 m_bIsReady = false;
             }
             
-            // Always, while tracking, set the speed because the robot's orientation could always change.
-            m_pTurretMotor->Set(ControlMode::PercentOutput, m_pPIDController->Calculate(SmartDashboard::GetNumber("Target Center X", 45)));
+            // Check to see if it's out of bounds.
+            if ((m_dActual > dTurretMinPosition) && (m_dActual < dTurretMaxPosition))
+            {
+                // Always, while tracking, set the speed because the robot's orientation could always change.
+                m_pTurretMotor->Set(ControlMode::PercentOutput, m_pPIDController->Calculate(SmartDashboard::GetNumber("Target Center X", 45)));
+            }
+            else
+            {
+                // Overran while tracking, reset to zero.
+                std::cout << "VISION UNDER/OVERRUN! RESETTING" << std::endl;
+                SetSetpoint(0.0);
+            }
             break;
 
         case eTurretManualFwd :

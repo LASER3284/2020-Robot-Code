@@ -16,8 +16,8 @@ using namespace frc;
 using namespace ctre;
 
 // Turret Constants.
-const double dTurretMaxPosition		=     135.0;
-const double dTurretMinPosition		=    -135.0;
+const double dTurretMaxPosition		=      90.0;
+const double dTurretMinPosition		=     -90.0;
 const double dTurretProportional	=	   5e-5;
 const double dTurretIntegral		=	  0.000;
 const double dTurretDerivative		=	  0.000;
@@ -28,6 +28,7 @@ const double dTurretClosedLoopRamp	=     0.250;
 const int	 nTurretZeroOffset		=		629;
 const int	 nTurretPulsesPerRev	=      4096;
 const double dTurretRevsPerUnit		= 	1.0/360;
+
 // Turret enum.
 enum TurretState {eTurretIdle, eTurretFinding, eTurretTracking, eTurretManualFwd, eTurretManualRev};
 /////////////////////////////////////////////////////////////////////////////
@@ -72,6 +73,7 @@ private:
     double 		m_dTolerance;
     double 		m_dSetpoint;
     double		m_dActual;
+    double      m_dFakeActual;
     double		m_dMaxFindingTime;
     double		m_dFindingStartTime;
     TurretState	m_nState;

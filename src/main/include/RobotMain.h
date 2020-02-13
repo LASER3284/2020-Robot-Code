@@ -59,6 +59,7 @@ private:
         eTeleopIntake,
         eTeleopAiming,
         eTeleopFiring,
+        eTeleopAutoFiring,
         eTeleopFollowing
     };
 
@@ -81,6 +82,7 @@ private:
     CIntake*                    m_pIntake;
     CTurret*                    m_pTurret;
     CShooter*                   m_pShooter;
+    CHopper*                    m_pHopper;
     Blinkin*                    m_pBlinkin;
     CTrajectoryConstants*		m_pTrajectoryConstants;
     SendableChooser<string>*    m_pAutonomousChooser;

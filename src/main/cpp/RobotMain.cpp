@@ -26,6 +26,7 @@ CRobotMain::CRobotMain()
 	m_pIntake				= new CIntake();
 	m_pTurret				= new CTurret();
 	m_pShooter				= new CShooter();
+    m_pHopper               = new CHopper();
 	m_pBlinkin				= new Blinkin(nBlinkinID);
 	m_pAutonomousChooser	= new SendableChooser<string>();
 }
@@ -44,6 +45,7 @@ CRobotMain::~CRobotMain()
     delete m_pIntake;
     delete m_pTurret;
     delete m_pShooter;
+    delete m_pHopper;
     delete m_pBlinkin;
 
     // Set pointers to nullptrs.
@@ -53,6 +55,7 @@ CRobotMain::~CRobotMain()
     m_pIntake			= nullptr;
     m_pTurret			= nullptr;
     m_pShooter			= nullptr;
+    m_pHopper           = nullptr;
     m_pBlinkin			= nullptr;
 }
 
@@ -258,7 +261,7 @@ void CRobotMain::TeleopPeriodic()
             // Extend intake.
             m_pIntake->Extend(true);
             m_pIntake->MotorSetPoint(eMotorForward);
-            // Idle Shooter, stop Turret, and stop Hood.
+            // Stop Shooter, stop Turret, and stop Hood.
             m_pShooter->Stop();
             m_pTurret->Stop();
             // Set robot color.
@@ -280,9 +283,29 @@ void CRobotMain::TeleopPeriodic()
         
         case eTeleopFiring :
             /********************************************************************
-                Firing - Robot is firing the Energy into the high goal
-                         while tracking the goal actively.
+                Firing - Robot simply fires wherever it is currently aiming.
             ********************************************************************/
+            // Set the Turret to idle, we don't want it to move.
+            m_pTurret->SetState(eTurretIdle);
+            // Set the Shooter to firing speed.
+            m_pShooter->SetShooterSetpoint(dShooterFiringVelocity);
+            // Start preloading into the shooter.
+            m_pHopper->Feed();
+            m_pHopper->Preload();
+            break;
+
+        case eTeleopAutoFiring  :
+            /********************************************************************
+                AutoFiring - Robot is firing the Energy into the high goal
+                             while tracking the goal actively.
+            ********************************************************************/
+            // Set the Turret to Tracking mode.
+            m_pTurret->SetState(eTurretTracking);
+            // Set the Shooter to firing speed.
+            m_pShooter->SetShooterSetpoint(dShooterFiringVelocity);
+            // Start preloading into the shooter.
+            m_pHopper->Feed();
+            m_pHopper->Preload();
             break;
 
         case eTeleopFollowing :
@@ -416,11 +439,18 @@ void CRobotMain::TestPeriodic()
     }
 
     /********************************************************************
-        Drive Controller - Shooter Forward (Right Trigger)
+        Drive Controller - Shooter Forward (Right Trigger, Start for Full)
     ********************************************************************/
     if (m_pDriveController->GetRawAxis(eRightTrigger) >= 0.65)
     {
-        m_pShooter->SetShooterState(eShooterManualFwd);
+        if (m_pDriveController->GetRawButton(eStart))
+        {
+            m_pShooter->SetShooterSetpoint(dShooterFiringVelocity);
+        }
+        else
+        {
+            m_pShooter->SetShooterSetpoint(dShooterIdleVelocity);
+        }
     }
     else
     {
