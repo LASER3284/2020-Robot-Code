@@ -81,9 +81,9 @@ private:
     AHRS*                           m_pGyro;
     Timer*                          m_pTimer;
     DifferentialDriveOdometry*      m_pOdometry;
-	frc2::RamseteCommand*			m_pRamseteCommand;
+    frc2::RamseteCommand*			m_pRamseteCommand;
     CTrajectoryConstants			m_pTrajectoryConstants;
-	Trajectory              		m_Trajectory;
+    Trajectory              		m_Trajectory;
 
     // Member variables.
     bool					m_bJoystickControl;

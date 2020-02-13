@@ -106,8 +106,8 @@ void CDrive::Init()
     // Start the timer.
     m_pTimer->Start();
 
-	// Reset gyro.
-	m_pGyro->Reset();
+    // Reset gyro.
+    m_pGyro->Reset();
 }
 
 /****************************************************************************
@@ -321,20 +321,20 @@ bool CDrive::GetIsTrajectoryFinished()
 }
 
 /****************************************************************************
-	Description:	SetSelectedTrajectory - Select trajectory for auto.
-	Arguments: 		int nAutoState - The auto state.
-	Returns: 		Nothing
+    Description:	SetSelectedTrajectory - Select trajectory for auto.
+    Arguments: 		int nAutoState - The auto state.
+    Returns: 		Nothing
 ****************************************************************************/
 void CDrive::SetSelectedTrajectory(int nAutoState)
 {
-	m_pTrajectoryConstants.SelectTrajectory(nAutoState);
+    m_pTrajectoryConstants.SelectTrajectory(nAutoState);
 }
 
 /****************************************************************************
-	Description:	SetMotorExpiration - Sets the motor safety expiration
-					timeout.
-	Arguments: 		double dTimeout - Expiration timeout
-	Returns: 		Nothing
+    Description:	SetMotorExpiration - Sets the motor safety expiration
+                    timeout.
+    Arguments: 		double dTimeout - Expiration timeout
+    Returns: 		Nothing
 ****************************************************************************/
 void CDrive::SetMotorExpiration(double dTimeout)
 {

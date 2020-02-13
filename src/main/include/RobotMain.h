@@ -1,8 +1,8 @@
 /******************************************************************************
-	Description:	2020 Infinite Recharge Robot Control Software.
-	Classes:		CRobotMain
-	Project:		2020 Infinite Recharge Robot Code.
-	Copyright 2020 First Team 3284 - Camdenton LASER Robotics.
+    Description:	2020 Infinite Recharge Robot Control Software.
+    Classes:		CRobotMain
+    Project:		2020 Infinite Recharge Robot Code.
+    Copyright 2020 First Team 3284 - Camdenton LASER Robotics.
 ******************************************************************************/
 #ifndef RobotMain_h
 #define RobotMain_h
@@ -25,9 +25,9 @@ using namespace std;
 
 
 /******************************************************************************
-	Description:	CRobotMain class definition.
-	Arguments:		None
-	Derived From:	TimedRobot
+    Description:	CRobotMain class definition.
+    Arguments:		None
+    Derived From:	TimedRobot
 ******************************************************************************/
 class CRobotMain : public TimedRobot
 {
@@ -54,7 +54,7 @@ private:
 
     // State machines.
     enum TeleopStates
-	{
+    {
         eTeleopIdle,
         eTeleopIntake,
         eTeleopAiming,

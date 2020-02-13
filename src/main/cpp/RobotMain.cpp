@@ -23,12 +23,12 @@ CRobotMain::CRobotMain()
     m_pDriveController  	= new Joystick(0);
     m_pTimer            	= new Timer();
     m_pDrive            	= new CDrive(m_pDriveController);
-	m_pIntake				= new CIntake();
-	m_pTurret				= new CTurret();
-	m_pShooter				= new CShooter();
+    m_pIntake				= new CIntake();
+    m_pTurret				= new CTurret();
+    m_pShooter				= new CShooter();
     m_pHopper               = new CHopper();
-	m_pBlinkin				= new Blinkin(nBlinkinID);
-	m_pAutonomousChooser	= new SendableChooser<string>();
+    m_pBlinkin				= new Blinkin(nBlinkinID);
+    m_pAutonomousChooser	= new SendableChooser<string>();
 }
 
 /******************************************************************************
@@ -113,50 +113,50 @@ void CRobotMain::AutonomousInit()
     // Disable joystick control to prevent issues during Autonomous.
     m_pDrive->SetJoystickControl(false);
 
-	// Get the select auto mode from SmartDashboard.
-	string m_strAutonomousSelected = m_pAutonomousChooser->GetSelected();
-	if (m_strAutonomousSelected == "Autonomous Idle")
-	{
-		m_nAutoState = eDoNothing;
-	}
-	if (m_strAutonomousSelected == "Alliance Trench")
-	{
-		m_nAutoState = eAllianceTrench;
-	}
-	if (m_strAutonomousSelected == "Front Shield Generator")
-	{
-		m_nAutoState = eFrontShieldGenerator;
-	}
-	if (m_strAutonomousSelected == "Side Sheild Generator")
-	{
-		m_nAutoState = eSideShieldGenerator;
-	}
-	if (m_strAutonomousSelected == "Opposing Trench")
-	{
-		m_nAutoState = eOpposingTrench;
-	}
-	if (m_strAutonomousSelected == "Power Port")
-	{
-		m_nAutoState = ePowerPort;
-	}
-	if (m_strAutonomousSelected == "Take Power Cells")
-	{
-		m_nAutoState = eTakePowerCells;
-	}
-	if (m_strAutonomousSelected == "Test Path")
-	{
-		m_nAutoState = eTestPath;
-	}
+    // Get the select auto mode from SmartDashboard.
+    string m_strAutonomousSelected = m_pAutonomousChooser->GetSelected();
+    if (m_strAutonomousSelected == "Autonomous Idle")
+    {
+        m_nAutoState = eDoNothing;
+    }
+    if (m_strAutonomousSelected == "Alliance Trench")
+    {
+        m_nAutoState = eAllianceTrench;
+    }
+    if (m_strAutonomousSelected == "Front Shield Generator")
+    {
+        m_nAutoState = eFrontShieldGenerator;
+    }
+    if (m_strAutonomousSelected == "Side Sheild Generator")
+    {
+        m_nAutoState = eSideShieldGenerator;
+    }
+    if (m_strAutonomousSelected == "Opposing Trench")
+    {
+        m_nAutoState = eOpposingTrench;
+    }
+    if (m_strAutonomousSelected == "Power Port")
+    {
+        m_nAutoState = ePowerPort;
+    }
+    if (m_strAutonomousSelected == "Take Power Cells")
+    {
+        m_nAutoState = eTakePowerCells;
+    }
+    if (m_strAutonomousSelected == "Test Path")
+    {
+        m_nAutoState = eTestPath;
+    }
 
-	// Set the selected trajectory path. 
-	if (m_nAutoState == eDoNothing)
-	{
-		m_pDrive->SetSelectedTrajectory(eDoNothing);
-	}
-	else
-	{
-		m_pDrive->SetSelectedTrajectory(m_nAutoState);
-	}
+    // Set the selected trajectory path. 
+    if (m_nAutoState == eDoNothing)
+    {
+        m_pDrive->SetSelectedTrajectory(eDoNothing);
+    }
+    else
+    {
+        m_pDrive->SetSelectedTrajectory(m_nAutoState);
+    }
 }
 
 /******************************************************************************
@@ -167,8 +167,8 @@ void CRobotMain::AutonomousInit()
 ******************************************************************************/
 void CRobotMain::AutonomousPeriodic()
 {
-	// Follow the trajectory.
-	m_pDrive->FollowTrajectory();
+    // Follow the trajectory.
+    m_pDrive->FollowTrajectory();
 }
 
 /******************************************************************************
