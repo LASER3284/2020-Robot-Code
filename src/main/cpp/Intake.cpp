@@ -8,6 +8,7 @@
 
 using namespace frc;
 using namespace rev;
+using namespace ctre;
 /////////////////////////////////////////////////////////////////////////////
 
 
@@ -19,7 +20,8 @@ using namespace rev;
 CIntake::CIntake()
 {
     // Create Object Pointers.
-    m_pIntakeMotor		= new CANSparkMax(nIntakeMotor, CANSparkMax::MotorType::kBrushless);
+    m_pIntakeMotor		= new WPI_TalonSRX(nIntakeMotor);
+    m_pRetentionMotor   = new CANSparkMax(nIntakeRetentionMotor, CANSparkMax::MotorType::kBrushless);
     m_pIntakeActuator	= new Solenoid(nIntakeSolenoid);
 }
 
@@ -32,10 +34,12 @@ CIntake::~CIntake()
 {
     // Delete objects.
     delete m_pIntakeMotor;
+    delete m_pRetentionMotor;
     delete m_pIntakeActuator;
 
     // Set objects to nullptrs.
     m_pIntakeMotor		= nullptr;
+    m_pRetentionMotor   = nullptr;
     m_pIntakeActuator	= nullptr;
 }
 
@@ -87,14 +91,17 @@ void CIntake::MotorSetPoint(int nState)
     {
         case eMotorReverse :
             m_pIntakeMotor->Set(dIntakeRevSpeed);
+            m_pRetentionMotor->Set(dIntakeRevSpeed);
             break;
 
         case eMotorForward :
             m_pIntakeMotor->Set(dIntakeFwdSpeed);
+            m_pRetentionMotor->Set(dIntakeFwdSpeed);
             break;
 
         default :
             m_pIntakeMotor->Set(0.0);
+            m_pRetentionMotor->Set(0.0);
             break;		
     }
 }

@@ -9,6 +9,7 @@
 
 #include <frc/Solenoid.h>
 #include <rev/CANSparkMax.h>
+#include <ctre/Phoenix.h>
 #include "IOMap.h"
 
 using namespace frc;
@@ -41,8 +42,9 @@ public:
     void MotorSetPoint(int nState);
 
 private:
-    // Object pointers.
-    CANSparkMax*		m_pIntakeMotor;
+    // Object pointers. 
+    WPI_TalonSRX*		m_pIntakeMotor;
+    CANSparkMax*        m_pRetentionMotor;
     Solenoid*			m_pIntakeActuator;
 
     // Declare variables.

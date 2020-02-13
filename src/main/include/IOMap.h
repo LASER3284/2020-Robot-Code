@@ -26,6 +26,7 @@ const int nClimberMotorLeft				=  11;		// Spark MAX ID for left climber winch
 const int nClimberMotorRight			=  12;		// Spark MAX ID for right climber winch
 const int nHopperBeltMotor				=  13;		// Talon SRX ID for belts in the hopper
 const int nGondolaMotor					=  14;		// Talon SRX ID for the Gondola motor
+const int nIntakeRetentionMotor         =  15;      // Spark MAX ID for retention in intake
 
 
 // PWM Channels.
