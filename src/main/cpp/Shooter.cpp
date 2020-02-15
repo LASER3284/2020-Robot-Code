@@ -24,6 +24,7 @@ CShooter::CShooter()
     m_pRightShooter		= new CANSparkMax(nShooterRight, CANSparkMax::MotorType::kBrushless);
     m_pShooterPID		= new CANPIDController(*m_pLeftShooter);
     m_pHoodEncoder		= new Encoder(nHoodEncoderChannelA, nHoodEncoderChannelB);
+    m_pVisionSwitch     = new DigitalOutput(nVisionLEDChannel);
     m_pHoodPID			= new frc2::PIDController(1.0, 0.0, 0.0);
     m_pTimer			= new Timer();
 
@@ -44,13 +45,16 @@ CShooter::~CShooter()
     delete m_pRightShooter;
     delete m_pTimer;
     delete m_pHoodEncoder;
+    delete m_pVisionSwitch;
     delete m_pHoodPID;
+
     // Set objects to nullptrs.
     m_pHoodServo		= nullptr;
     m_pLeftShooter		= nullptr;
     m_pRightShooter		= nullptr;
     m_pTimer			= nullptr;
     m_pHoodEncoder		= nullptr;
+    m_pVisionSwitch     = nullptr;
     m_pHoodPID			= nullptr;
 }
 
@@ -109,7 +113,8 @@ void CShooter::Init()
     // Clear any faults in memory.
     m_pLeftShooter->ClearFaults();
     m_pRightShooter->ClearFaults();
-
+    // Turn off the LEDs.
+    m_pVisionSwitch->Set(false);
     // Start the timer.
     m_pTimer->Start();
 }
@@ -171,6 +176,8 @@ void CShooter::Tick()
     {
         case eHoodIdle :
             // Idle - Servo is off and ready to move again.
+            // Turn off the LEDs.
+            m_pVisionSwitch->Set(false);
             // Stop the servo.
             m_pHoodServo->Set(0.0);
             // Set servo to ready.
@@ -181,6 +188,8 @@ void CShooter::Tick()
             // Finding - Use PID Controller to drive to a given
             // Setpoint, and check if we are within the given
             // tolerance.
+            // Turn off the LEDs.
+            m_pVisionSwitch->Set(false);
             // Set the new Proportional term.
             m_pHoodPID->SetP(m_dHoodProportional);
             if (m_dHoodSetpoint - m_dHoodActual < m_dHoodTolerance)
@@ -198,6 +207,8 @@ void CShooter::Tick()
         case eHoodTracking :
             // Tracking - Utilizes Vision with a setpoint of zero
             // to track an object's center.
+            // Turn on the LEDs.
+            m_pVisionSwitch->Set(true);
             // Set the setpoint to zero to track the center of the target.
             SetHoodSetpoint(0.0);
             // Set the new Proportional term.
@@ -229,11 +240,15 @@ void CShooter::Tick()
 
         case eHoodManualFwd :
             // ManualForward - Move the Hood forward at a constant speed.
+            // Turn off the LEDs.
+            m_pVisionSwitch->Set(false);
             SetHoodSpeed(dHoodManualFwdSpeed);
             break;
 
         case eHoodManualRev :
             // ManualReverse - Move the Hood backwards at a constant speed.
+            // Turn off the LEDs.
+            m_pVisionSwitch->Set(false);
             SetHoodSpeed(dHoodManualRevSpeed);
             break;
     }

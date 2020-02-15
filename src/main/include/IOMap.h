@@ -38,8 +38,9 @@ const int nHoodServo					= 	1;		// PWM channel for Hood actuation servo
 // Analog Channels.
 
 // Digital Channels.
-const int nHoodEncoderChannelA			=	0;		// Encoder clock A signal for hood servo.
-const int nHoodEncoderChannelB			=	1;		// Encoder clock B signal for hood servo.
+const int nHoodEncoderChannelA			=	0;		// Encoder clock A signal for hood servo
+const int nHoodEncoderChannelB			=	1;		// Encoder clock B signal for hood servo
+const int nVisionLEDChannel             =   2;      // Channel for switching the Vision LEDs
 
 // Xbox Controller Button Assignments.
 enum XboxButtons 		{eButtonA = 1, eButtonB, eButtonX, eButtonY, eButtonLB, eButtonRB, eBack, eStart, eButtonLS, eButtonRS};

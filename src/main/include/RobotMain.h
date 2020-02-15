@@ -12,6 +12,7 @@
 #include <frc/Joystick.h>
 #include <frc/LiveWindow/LiveWindow.h>
 #include <frc/smartdashboard/SendableChooser.h>
+#include <frc/DigitalOutput.h>
 #include "Drive.h"
 #include "Intake.h"
 #include "Turret.h"
@@ -84,6 +85,7 @@ private:
     CShooter*                   m_pShooter;
     CHopper*                    m_pHopper;
     Blinkin*                    m_pBlinkin;
+    DigitalOutput*              m_pVisionSwitch;
     CTrajectoryConstants*		m_pTrajectoryConstants;
     SendableChooser<string>*    m_pAutonomousChooser;
 

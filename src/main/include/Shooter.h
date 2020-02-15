@@ -13,6 +13,7 @@
 #include <rev/CANSparkMax.h>
 #include <frc/controller/PIDController.h>
 #include <frc/smartdashboard/SmartDashboard.h>
+#include <frc/DigitalOutput.h>
 #include "IOMap.h"
 
 using namespace frc;
@@ -89,6 +90,7 @@ private:
     rev::CANSparkMax*		m_pLeftShooter;
     rev::CANSparkMax*		m_pRightShooter;
     rev::CANPIDController*	m_pShooterPID;
+    DigitalOutput*          m_pVisionSwitch;
     Encoder*				m_pHoodEncoder;
     frc2::PIDController*	m_pHoodPID;
     Timer*					m_pTimer;
