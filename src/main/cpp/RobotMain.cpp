@@ -378,7 +378,6 @@ void CRobotMain::TestPeriodic()
     {
         // Do nothing.
     }
-    
 
     /********************************************************************
         Drive Controller - Right Winch Down Aiming (Button A)
@@ -465,7 +464,6 @@ void CRobotMain::TestPeriodic()
         {
             m_pShooter->SetShooterState(eShooterStopped);
         }
-        
     }
 
     /********************************************************************
@@ -501,6 +499,14 @@ void CRobotMain::TestPeriodic()
     else
     {
         // Do nothing.
+    }
+    
+    /********************************************************************
+        Drive Controller - Toggle Vision LEDs (Back Button)
+    ********************************************************************/
+    if (m_pDriveController->GetRawButtonPressed(eBack))
+    {
+        m_pVisionSwitch->Set(!m_pVisionSwitch->Get());
     }
     
     // Update Subsystems.
