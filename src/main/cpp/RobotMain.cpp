@@ -486,7 +486,6 @@ void CRobotMain::TestPeriodic()
         {
             m_pShooter->SetHoodState(eHoodIdle);
         }
-        
     }
 
     /********************************************************************
