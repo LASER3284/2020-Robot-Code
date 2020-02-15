@@ -25,12 +25,12 @@ const double dTurretManualFwdSpeed 	=     0.250;
 const double dTurretManualRevSpeed	=    -0.250;
 const double dTurretOpenLoopRamp	=     0.250;
 const double dTurretClosedLoopRamp	=     0.250;
-const int	 nTurretZeroOffset		=		629;
+const int	 nTurretZeroOffset		=	  -1252;
 const int	 nTurretPulsesPerRev	=      4096;
 const double dTurretRevsPerUnit		= 	1.0/360;
 
 // Turret enum.
-enum TurretState {eTurretIdle, eTurretFinding, eTurretTracking, eTurretManualFwd, eTurretManualRev};
+enum TurretState {eTurretIdle = 0, eTurretFinding, eTurretTracking, eTurretManualFwd, eTurretManualRev};
 /////////////////////////////////////////////////////////////////////////////
 
 

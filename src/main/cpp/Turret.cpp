@@ -101,7 +101,7 @@ void CTurret::Tick()
     {
         case eTurretIdle :
             // Idle - Motor is off, and ready to move again.
-            m_pPIDController->Reset();
+//            m_pPIDController->Reset();
             m_pTurretMotor->Set(ControlMode::PercentOutput, 0.00);
             m_bIsReady = true;
             break;
@@ -166,10 +166,12 @@ void CTurret::Tick()
             break;
     }
 
+    SmartDashboard::PutNumber("State", GetState());
     SmartDashboard::PutNumber("PID Output", m_pPIDController->Calculate(m_dActual));
     SmartDashboard::PutNumber("Turret Position", m_dActual / dTurretRevsPerUnit / nTurretPulsesPerRev);
     SmartDashboard::PutNumber("Turret User Setpoint", m_dSetpoint);
     SmartDashboard::PutNumber("Turret Internal Setpoint", m_pPIDController->GetSetpoint());
+    SmartDashboard::PutNumber("Turret Internal Actual", m_dActual);
     SmartDashboard::PutNumber("Turret Error", m_pPIDController->GetPositionError() / dTurretRevsPerUnit / nTurretPulsesPerRev);
     SmartDashboard::PutNumber("Turret Tolerance", m_dTolerance * nTurretPulsesPerRev * dTurretRevsPerUnit);
 }

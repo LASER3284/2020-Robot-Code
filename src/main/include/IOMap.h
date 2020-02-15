@@ -9,7 +9,7 @@
 /////////////////////////////////////////////////////////////////////////////
 
 // Solenoid Channels.
-const int nIntakeSolenoid				=	0;		// Intake Solenoid Channel Number
+const int nIntakeSolenoid				=	1;		// Intake Solenoid Channel Number
 
 // CAN Device IDs.
 const int nLeftDriveMotor1		  		=  	1;		// Falcon ID for left drive motor 1

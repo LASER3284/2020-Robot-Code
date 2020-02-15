@@ -380,7 +380,7 @@ void CRobotMain::TestPeriodic()
     }
 
     /********************************************************************
-        Drive Controller - Right Winch Down Aiming (Button A)
+        Drive Controller - Right Winch Down (Button A)
     ********************************************************************/
     if (m_pDriveController->GetRawButton(eButtonA))
     {
@@ -394,7 +394,7 @@ void CRobotMain::TestPeriodic()
     /********************************************************************
         Drive Controller - Left Winch Up (POV Up)
     ********************************************************************/
-/*    if (m_pDriveController->GetPOV(0))
+    if (m_pDriveController->GetPOV() == 1)
     {
         // Do something.
     }
@@ -402,11 +402,11 @@ void CRobotMain::TestPeriodic()
     {
         // Do nothing.
     }
-*/    
+
     /********************************************************************
         Drive Controller - Left Winch Down (POV Down)
     ********************************************************************/
-    if (m_pDriveController->GetPOV(180))
+    if (m_pDriveController->GetPOV() == 180)
     {
         // Do something.
     }
@@ -418,7 +418,7 @@ void CRobotMain::TestPeriodic()
     /********************************************************************
         Drive Controller - Turret Left (POV Left)
     ********************************************************************/
-    if (m_pDriveController->GetPOV(270))
+    if (m_pDriveController->GetPOV() == 270)
     {
         m_pTurret->SetState(eTurretManualFwd);
     }
@@ -427,7 +427,7 @@ void CRobotMain::TestPeriodic()
     /********************************************************************
         Drive Controller - Turret Right (POV Right)
     ********************************************************************/
-        if (m_pDriveController->GetPOV(90))
+        if (m_pDriveController->GetPOV() == 90)
         {
             m_pTurret->SetState(eTurretManualRev);
         }
@@ -500,13 +500,13 @@ void CRobotMain::TestPeriodic()
         // Do nothing.
     }
     
-    /********************************************************************
-        Drive Controller - Toggle Vision LEDs (Back Button)
-    ********************************************************************/
-    if (m_pDriveController->GetRawButtonPressed(eBack))
-    {
-        m_pVisionSwitch->Set(!m_pVisionSwitch->Get());
-    }
+    // /********************************************************************
+    //     Drive Controller - Toggle Vision LEDs (Back Button)
+    // ********************************************************************/
+    // if (m_pDriveController->GetRawButtonPressed(eBack))
+    // {
+    //     m_pVisionSwitch->Set(!m_pVisionSwitch->Get());
+    // }
     
     // Update Subsystems.
     m_pDrive->Tick();

@@ -85,7 +85,6 @@ private:
     CShooter*                   m_pShooter;
     CHopper*                    m_pHopper;
     Blinkin*                    m_pBlinkin;
-    DigitalOutput*              m_pVisionSwitch;
     CTrajectoryConstants*		m_pTrajectoryConstants;
     SendableChooser<string>*    m_pAutonomousChooser;
 
