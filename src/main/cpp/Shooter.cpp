@@ -179,7 +179,7 @@ void CShooter::Tick()
             // Turn off the LEDs.
             m_pVisionSwitch->Set(false);
             // Stop the servo.
-            m_pHoodServo->Set(0.0);
+            SetHoodSpeed(0.0);
             // Set servo to ready.
             m_bHoodIsReady = true;
             break;
