@@ -35,10 +35,10 @@ CDrive::CDrive(Joystick* pDriveController)
 
     // Create object pointers.
     m_pDriveController 		= pDriveController;
-    m_pLeftMotor1			= new CFalconMotion(10);
-    m_pLeftMotor2			= new WPI_TalonFX(11);
-    m_pRightMotor1			= new CFalconMotion(8);
-    m_pRightMotor2			= new WPI_TalonFX(9);
+    m_pLeftMotor1			= new CFalconMotion(nLeftDriveMotor1);
+    m_pLeftMotor2			= new WPI_TalonFX(nLeftDriveMotor2);
+    m_pRightMotor1			= new CFalconMotion(nRightDriveMotor1);
+    m_pRightMotor2			= new WPI_TalonFX(nRightDriveMotor2);
     m_pRobotDrive			= new DifferentialDrive(*m_pLeftMotor1->GetMotorPointer(), *m_pRightMotor1->GetMotorPointer());
     m_pGyro 				= new AHRS(SPI::Port::kMXP);
     m_pTimer				= new Timer();

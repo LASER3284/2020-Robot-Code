@@ -394,7 +394,7 @@ void CRobotMain::TestPeriodic()
     /********************************************************************
         Drive Controller - Left Winch Up (POV Up)
     ********************************************************************/
-    if (m_pDriveController->GetPOV(0))
+/*    if (m_pDriveController->GetPOV(0))
     {
         // Do something.
     }
@@ -402,7 +402,7 @@ void CRobotMain::TestPeriodic()
     {
         // Do nothing.
     }
-    
+*/    
     /********************************************************************
         Drive Controller - Left Winch Down (POV Down)
     ********************************************************************/
