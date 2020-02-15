@@ -190,7 +190,9 @@ void CRobotMain::TeleopInit()
 ******************************************************************************/
 void CRobotMain::TeleopPeriodic()
 {
-    static bool bIsIntaking = false;
+    static bool bIsIntaking     = false;
+    static bool bHasFired       = false;
+    static bool bManualMoving   = false;
     /********************************************************************
         Drive Controller - Toggle Intake (Button A)
     ********************************************************************/
@@ -217,14 +219,14 @@ void CRobotMain::TeleopPeriodic()
     }
 
     /********************************************************************
-        Drive Controller - Vision Aiming (Button Y)
+        Drive Controller - Vision Aiming (Left Bumper)
     ********************************************************************/
-    if (m_pDriveController->GetRawButtonPressed(eButtonY))
+    if (m_pDriveController->GetRawButtonPressed(eButtonLB) && !m_pDriveController->GetRawAxis(eRightTrigger) >= 0.65)
     {
         // Set state to Aiming.
         m_nTeleopState = eTeleopAiming;
     }
-    if (m_pDriveController->GetRawButtonReleased(eButtonY))
+    if (m_pDriveController->GetRawButtonReleased(eButtonLB) && !m_pDriveController->GetRawAxis(eRightTrigger) >= 0.65)
     {
         // If released while still in aiming...
         if (m_nTeleopState == eTeleopAiming)
@@ -235,6 +237,73 @@ void CRobotMain::TeleopPeriodic()
         // If the button was released but we didn't change states
         // yet, do nothing to prevent it from leaving it's current
         // state.
+    }
+
+    /********************************************************************
+        Drive Controller - Fire (Right Trigger)
+    ********************************************************************/
+    if (m_pDriveController->GetRawAxis(eRightTrigger) >= 0.65)
+    {
+        // Set state to Firing.
+        m_nTeleopState = eTeleopFiring;
+        bHasFired = true;
+    }
+    else
+    {
+        if (bHasFired)
+        {
+            // Has been fired, return to idle.
+            m_nTeleopState = eTeleopIdle;
+            bHasFired = false;
+        }
+    }
+
+    /********************************************************************
+        Drive Controller - AutoFire (Right Trigger + Left Bumper)
+    ********************************************************************/
+    if (m_pDriveController->GetRawButton(eButtonLB) && m_pDriveController->GetRawAxis(eRightTrigger) >= 0.65)
+    {
+        // Set the state to AutoFire.
+        m_nTeleopState = eTeleopAutoFiring;
+    }
+    // Other states related to this button will set state back to Idle.
+
+    /********************************************************************
+        Drive Controller - Manual Move Turret Left (Left POV)
+    ********************************************************************/
+    if (m_pDriveController->GetPOV() == 270)
+    {
+        // Manually move left.
+        m_pTurret->SetState(eTurretManualRev);
+        bManualMoving = true;
+    }
+    else
+    {
+    /********************************************************************
+        Drive Controller - Manual Move Turret Right (Right POV)
+    ********************************************************************/
+        if (m_pDriveController->GetPOV() == 90)
+        {
+            // Manually move right.
+            m_pTurret->SetState(eTurretManualFwd);
+            bManualMoving = true;
+        }
+        else
+        {
+            if (bManualMoving)
+            {
+                // No longer pressing any buttons, move to Idle.
+                m_pTurret->SetState(eTurretIdle);
+            }
+        }
+    }
+
+    /********************************************************************
+        Drive Controller - Toggle Turret "Idle" speed (Button B)
+    ********************************************************************/
+    if (m_pDriveController->GetRawButtonPressed(eButtonB))
+    {
+        m_pShooter->SetShooterState(m_pShooter->GetShooterState() == eShooterIdle ? eShooterStopped : eShooterIdle);
     }
 
     switch(m_nTeleopState)
