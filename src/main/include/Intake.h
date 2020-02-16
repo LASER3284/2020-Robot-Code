@@ -16,11 +16,8 @@ using namespace frc;
 using namespace rev;
 
 // Intake Contants.
-const double dIntakeFwdSpeed	=  1.0;
-const double dIntakeRevSpeed	= -0.5;
-
-// Intake Motor enum.
-enum MotorStates {eMotorReverse, eMotorStopped, eMotorForward};
+const double dRetentionFwdSpeed =   1.0;
+const double dIntakeFwdSpeed	=  0.75;
 /////////////////////////////////////////////////////////////////////////////
 
 
@@ -39,8 +36,9 @@ public:
     void Init();
     void Extend(bool bExtend);
     bool GetExtended();
-    void MotorSetPoint(int nState);
-//    bool IsJammed();
+    void IntakeMotor(bool bEnabled);
+    void RetentionMotor(bool bEnabled);
+    bool IsJammed();
 
 private:
     // Object pointers. 

@@ -54,10 +54,14 @@ void CIntake::Init()
     Extend(false);
 
     // Turn off Intake Motor.
-    MotorSetPoint(eMotorStopped);
+    IntakeMotor(false);
+    RetentionMotor(false);
 
     // Enable more strict current limiting.
     m_pRetentionMotor->SetSmartCurrentLimit(15);
+
+    // Flip Retention motor.
+    m_pRetentionMotor->SetInverted(true);
 }
 
 /****************************************************************************
@@ -84,28 +88,36 @@ bool CIntake::GetExtended()
 
 /****************************************************************************
     Description:	Turns Intake Motor on or off.
-    Arguments: 		int nState - eMotorReverse, eMotorStopped, eMotorForward
+    Arguments: 		bool bStartIntake - Enable or disable motor.
     Returns: 		Nothing
 ****************************************************************************/
-void CIntake::MotorSetPoint(int nState)
+void CIntake::IntakeMotor(bool bStartIntake)
 {
-    // Start or stop intake motor.
-    switch (nState)
+    if (bStartIntake)
     {
-        case eMotorReverse :
-            m_pIntakeMotor->Set(dIntakeRevSpeed);
-            m_pRetentionMotor->Set(dIntakeRevSpeed);
-            break;
+        m_pIntakeMotor->Set(dIntakeFwdSpeed);
+    }
+    else
+    {
+        m_pIntakeMotor->Set(0.0);
+    }
+    
+}
 
-        case eMotorForward :
-            m_pIntakeMotor->Set(ControlMode::PercentOutput, dIntakeFwdSpeed);
-            m_pRetentionMotor->Set(dIntakeFwdSpeed);
-            break;
-
-        default :
-            m_pIntakeMotor->Set(0.0);
-            m_pRetentionMotor->Set(0.0);
-            break;		
+/****************************************************************************
+    Description:	Turns Retention Motor on or off.
+    Arguments: 		bool bStartIntake - Enable or disable motor.
+    Returns: 		Nothing
+****************************************************************************/
+void CIntake::RetentionMotor(bool bStartIntake)
+{
+    if (bStartIntake)
+    {
+        m_pRetentionMotor->Set(dRetentionFwdSpeed);
+    }
+    else
+    {
+        m_pRetentionMotor->Set(0.0);
     }
 }
 
@@ -114,8 +126,8 @@ void CIntake::MotorSetPoint(int nState)
     Arguments: 		None
     Returns: 		bool bIsJammed
 ****************************************************************************/
-// bool CIntake::IsJammed()
-// {
-//     return m_pRetentionMotor->GetOutputCurrent() > 18.0;
-// }
+bool CIntake::IsJammed()
+{
+    return m_pRetentionMotor->GetOutputCurrent() > 18.0;
+}
 /////////////////////////////////////////////////////////////////////////////

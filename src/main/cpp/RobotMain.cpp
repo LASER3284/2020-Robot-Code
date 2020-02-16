@@ -235,7 +235,7 @@ void CRobotMain::TeleopPeriodic()
     /********************************************************************
         Drive Controller - Fire (Right Trigger)
     ********************************************************************/
-    if (m_pDriveController->GetRawAxis(eRightTrigger) >= 0.65)
+    if (m_pDriveController->GetRawAxis(eRightTrigger) >= 0.65 && !m_pDriveController->GetRawButton(eButtonRB))
     {
         // Set state to Firing.
         m_nTeleopState = eTeleopFiring;
@@ -299,7 +299,6 @@ void CRobotMain::TeleopPeriodic()
     {
         m_pShooter->SetShooterState(m_pShooter->GetShooterState() == eShooterIdle ? eShooterStopped : eShooterIdle);
     }
-    
 
     switch(m_nTeleopState)
     {
@@ -310,7 +309,8 @@ void CRobotMain::TeleopPeriodic()
             ********************************************************************/
             // Return intake to it's retracted state.
             m_pIntake->Extend(false);
-            m_pIntake->MotorSetPoint(eMotorStopped);
+            m_pIntake->IntakeMotor(false);
+            m_pIntake->RetentionMotor(false);
             // Idle Shooter, stop Turret, and stop Hood.
             m_pShooter->Stop();
             m_pTurret->Stop();
@@ -324,21 +324,13 @@ void CRobotMain::TeleopPeriodic()
             ********************************************************************/
             // Extend intake.
             m_pIntake->Extend(true);
-            m_pIntake->MotorSetPoint(eMotorForward);
+            m_pIntake->IntakeMotor(true);
+            m_pIntake->RetentionMotor(true);
             // Stop Shooter, stop Turret, and stop Hood.
             m_pShooter->Stop();
             m_pTurret->Stop();
             // Set robot color.
             m_pBlinkin->SetState(m_pBlinkin->eBeatsPerMin);
-            // if (m_pIntake->IsJammed())
-            // {
-            //     // Jog the belts in reverse.
-            //     m_pHopper->Unjam(true);
-            // }
-            // else
-            // {
-            //     m_pHopper->Unjam(false);
-            // }
             break;
 
         case eTeleopAiming :
@@ -362,9 +354,13 @@ void CRobotMain::TeleopPeriodic()
             m_pTurret->SetState(eTurretIdle);
             // Set the Shooter to firing speed.
             m_pShooter->SetShooterSetpoint(dShooterFiringVelocity);
-            // Start preloading into the shooter.
-            m_pHopper->Feed();
-            m_pHopper->Preload();
+            if (m_pShooter->IsShooterAtSetpoint())
+            {
+                // Start preloading into the shooter.
+                m_pHopper->Feed();
+                m_pHopper->Preload();
+                m_pIntake->RetentionMotor(true);
+            }
             break;
 
         case eTeleopAutoFiring  :
@@ -398,6 +394,7 @@ void CRobotMain::TeleopPeriodic()
     m_pTurret->Tick();
     m_pShooter->Tick();
 
+    SmartDashboard::PutNumber("Shooter State", m_pShooter->GetShooterState());
     SmartDashboard::PutNumber("State", m_nTeleopState);
 }
 
@@ -433,11 +430,13 @@ void CRobotMain::TestPeriodic()
     ********************************************************************/
     if (m_pDriveController->GetRawButton(eButtonB))
     {
-        m_pIntake->MotorSetPoint(eMotorForward);
+        m_pIntake->IntakeMotor(true);
+        m_pIntake->RetentionMotor(true);
     }
     else
     {
-        m_pIntake->MotorSetPoint(eMotorStopped);
+        m_pIntake->IntakeMotor(false);
+        m_pIntake->RetentionMotor(false);
     }
     
     /********************************************************************

@@ -16,7 +16,7 @@ using namespace rev;
 using namespace ctre;
 
 // Hopper Contants.
-const double dHopperMainSpeed       = 0.9;
+const double dHopperMainSpeed       = -0.9;
 const double dHopperPreloadSpeed  	= 0.5;
 /////////////////////////////////////////////////////////////////////////////
 
@@ -36,7 +36,6 @@ public:
     void Init();
     void Feed(bool bEnabled = true);
     void Preload(bool bEnabled = true);
-//    void Unjam(bool bEnabled = true);
 
 private:
     // Object pointers.

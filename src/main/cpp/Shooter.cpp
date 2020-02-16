@@ -74,7 +74,7 @@ void CShooter::Init()
     m_dShooterTolerance			=			   100.0;
     m_dShooterSetpoint			=		         0.0;
     m_dShooterActual			= GetShooterActual();
-    m_nShooterState				= 		eShooterIdle;
+    m_nShooterState				= 	 eShooterStopped;
     m_bShooterIsReady			=			   false;
 
     m_dHoodProportional			=		         1.0;
@@ -404,9 +404,9 @@ void CShooter::Stop()
     m_pHoodPID->Reset();
     // Stop the motor.
     m_pShooterPID->SetReference(0.0, ControlType::kDutyCycle);
-    */
     // Set the state to idle.
     SetShooterState(eShooterIdle);
+    */
     SetHoodState(eHoodIdle);
 }
 
