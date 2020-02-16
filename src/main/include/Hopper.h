@@ -36,6 +36,7 @@ public:
     void Init();
     void Feed(bool bEnabled = true);
     void Preload(bool bEnabled = true);
+//    void Unjam(bool bEnabled = true);
 
 private:
     // Object pointers.

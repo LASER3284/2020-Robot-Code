@@ -40,6 +40,7 @@ public:
     void Extend(bool bExtend);
     bool GetExtended();
     void MotorSetPoint(int nState);
+//    bool IsJammed();
 
 private:
     // Object pointers. 

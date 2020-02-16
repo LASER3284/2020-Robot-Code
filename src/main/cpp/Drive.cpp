@@ -136,13 +136,12 @@ void CDrive::Tick()
         // Update odometry. (Position on field.)
         m_pOdometry->Update(Rotation2d(degree_t(/*-m_pGyro->GetYaw()*/ 0)), inch_t(m_pLeftMotor1->GetActual(true)), inch_t(m_pRightMotor1->GetActual(true)));
 
+        // Set drivetrain powers to joystick controls.
+        m_pRobotDrive->ArcadeDrive(YAxis, XAxis, false);
 /*
         // Drive the robot.
         if (!m_pDriveController->GetRawButton(1))
         {
-            // Set drivetrain powers to joystick controls.
-            m_pRobotDrive->ArcadeDrive(YAxis, XAxis, false);
-
             // Stop motors if we were previously following a path and reset trajectory.
             if (m_bMotionProfile)
             {

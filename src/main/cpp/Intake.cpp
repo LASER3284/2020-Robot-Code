@@ -55,6 +55,9 @@ void CIntake::Init()
 
     // Turn off Intake Motor.
     MotorSetPoint(eMotorStopped);
+
+    // Enable more strict current limiting.
+    m_pRetentionMotor->SetSmartCurrentLimit(15);
 }
 
 /****************************************************************************
@@ -105,4 +108,14 @@ void CIntake::MotorSetPoint(int nState)
             break;		
     }
 }
+
+/****************************************************************************
+    Description:	Returns whether or not the intake is jammed.
+    Arguments: 		None
+    Returns: 		bool bIsJammed
+****************************************************************************/
+// bool CIntake::IsJammed()
+// {
+//     return m_pRetentionMotor->GetOutputCurrent() > 18.0;
+// }
 /////////////////////////////////////////////////////////////////////////////

@@ -91,4 +91,20 @@ void CHopper::Preload(bool bEnabled)
     }
 }
 
+/****************************************************************************
+    Description:	Reverse the belts for a short amount of time.
+    Arugments: 		bool - True for start, false for stop.
+    Returns: 		Nothing
+****************************************************************************/
+// void CHopper::Unjam(bool bEnabled)
+// {
+//     if (bEnabled)
+//     {
+//         m_pMainBelt->Set(0.6);
+//     }
+//     else
+//     {
+//         m_pMainBelt->Set(0.0);
+//     }
+// }
 /////////////////////////////////////////////////////////////////////////////

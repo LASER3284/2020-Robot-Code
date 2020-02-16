@@ -69,6 +69,7 @@ void CRobotMain::RobotInit()
     m_pDrive->Init();
     m_pIntake->Init();
     m_pTurret->Init();
+    m_pShooter->Init();
     SmartDashboard::PutNumber("Idle Color", m_pBlinkin->eTwinkle);
 }
 
@@ -190,7 +191,6 @@ void CRobotMain::TeleopInit()
 ******************************************************************************/
 void CRobotMain::TeleopPeriodic()
 {
-    static bool bButtonBIsPressed = false;
     static bool bHasFired       = false;
     static bool bManualMoving   = false;
     
@@ -214,12 +214,12 @@ void CRobotMain::TeleopPeriodic()
     /********************************************************************
         Drive Controller - Vision Aiming (Left Bumper)
     ********************************************************************/
-    if (m_pDriveController->GetRawButtonPressed(eButtonLB) && (!m_pDriveController->GetRawAxis(eRightTrigger) >= 0.65))
+    if ((m_pDriveController->GetRawButtonPressed(eButtonLB)) && !(m_pDriveController->GetRawAxis(eRightTrigger) >= 0.65))
     {
         // Set state to Aiming.
         m_nTeleopState = eTeleopAiming;
     }
-    if (m_pDriveController->GetRawButtonReleased(eButtonLB) && (!m_pDriveController->GetRawAxis(eRightTrigger) >= 0.65))
+    if ((m_pDriveController->GetRawButtonReleased(eButtonLB)) && !(m_pDriveController->GetRawAxis(eRightTrigger) >= 0.65))
     {
         // If released while still in aiming...
         if (m_nTeleopState == eTeleopAiming)
@@ -287,6 +287,7 @@ void CRobotMain::TeleopPeriodic()
             {
                 // No longer pressing any buttons, move to Idle.
                 m_pTurret->SetState(eTurretIdle);
+                bManualMoving = false;
             }
         }
     }
@@ -294,14 +295,9 @@ void CRobotMain::TeleopPeriodic()
     /********************************************************************
         Drive Controller - Toggle Turret "Idle" speed (Button B)
     ********************************************************************/
-    if (m_pDriveController->GetRawButtonPressed(eButtonB) && !bButtonBIsPressed)
+    if (m_pDriveController->GetRawButtonPressed(eButtonB))
     {
         m_pShooter->SetShooterState(m_pShooter->GetShooterState() == eShooterIdle ? eShooterStopped : eShooterIdle);
-        bButtonBIsPressed = true;
-    }
-    else
-    {
-        bButtonBIsPressed = false;
     }
     
 
@@ -330,10 +326,19 @@ void CRobotMain::TeleopPeriodic()
             m_pIntake->Extend(true);
             m_pIntake->MotorSetPoint(eMotorForward);
             // Stop Shooter, stop Turret, and stop Hood.
-//          m_pShooter->Stop();
-//          m_pTurret->Stop();
+            m_pShooter->Stop();
+            m_pTurret->Stop();
             // Set robot color.
             m_pBlinkin->SetState(m_pBlinkin->eBeatsPerMin);
+            // if (m_pIntake->IsJammed())
+            // {
+            //     // Jog the belts in reverse.
+            //     m_pHopper->Unjam(true);
+            // }
+            // else
+            // {
+            //     m_pHopper->Unjam(false);
+            // }
             break;
 
         case eTeleopAiming :
