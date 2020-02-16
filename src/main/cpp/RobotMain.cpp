@@ -190,43 +190,36 @@ void CRobotMain::TeleopInit()
 ******************************************************************************/
 void CRobotMain::TeleopPeriodic()
 {
-    static bool bIsIntaking     = false;
+    static bool bButtonBIsPressed = false;
     static bool bHasFired       = false;
     static bool bManualMoving   = false;
+    
     /********************************************************************
         Drive Controller - Toggle Intake (Button A)
     ********************************************************************/
     if (m_pDriveController->GetRawButtonPressed(eButtonA))
     {
-        if (!bIsIntaking)
+        if (m_nTeleopState == (int)eTeleopIntake)
         {
-            // Set the state to intaking.
-            m_nTeleopState = eTeleopIntake;
-            bIsIntaking = true;
+            // Leave to idle.
+            m_nTeleopState = eTeleopIdle;
         }
         else
         {
-            // If pressed while still intaking..
-            if (m_nTeleopState == eTeleopIntake)
-            {
-                // Go back to idle.
-                m_nTeleopState = eTeleopIdle;
-            }
-            // If it isn't still intaking, do nothing to prevent it
-            // from leaving it's current state.
-            bIsIntaking = false;
+            // Start intaking.
+            m_nTeleopState = eTeleopIntake;
         }
     }
 
     /********************************************************************
         Drive Controller - Vision Aiming (Left Bumper)
     ********************************************************************/
-    if (m_pDriveController->GetRawButtonPressed(eButtonLB) && !m_pDriveController->GetRawAxis(eRightTrigger) >= 0.65)
+    if (m_pDriveController->GetRawButtonPressed(eButtonLB) && (!m_pDriveController->GetRawAxis(eRightTrigger) >= 0.65))
     {
         // Set state to Aiming.
         m_nTeleopState = eTeleopAiming;
     }
-    if (m_pDriveController->GetRawButtonReleased(eButtonLB) && !m_pDriveController->GetRawAxis(eRightTrigger) >= 0.65)
+    if (m_pDriveController->GetRawButtonReleased(eButtonLB) && (!m_pDriveController->GetRawAxis(eRightTrigger) >= 0.65))
     {
         // If released while still in aiming...
         if (m_nTeleopState == eTeleopAiming)
@@ -301,10 +294,16 @@ void CRobotMain::TeleopPeriodic()
     /********************************************************************
         Drive Controller - Toggle Turret "Idle" speed (Button B)
     ********************************************************************/
-    if (m_pDriveController->GetRawButtonPressed(eButtonB))
+    if (m_pDriveController->GetRawButtonPressed(eButtonB) && !bButtonBIsPressed)
     {
         m_pShooter->SetShooterState(m_pShooter->GetShooterState() == eShooterIdle ? eShooterStopped : eShooterIdle);
+        bButtonBIsPressed = true;
     }
+    else
+    {
+        bButtonBIsPressed = false;
+    }
+    
 
     switch(m_nTeleopState)
     {
@@ -331,8 +330,8 @@ void CRobotMain::TeleopPeriodic()
             m_pIntake->Extend(true);
             m_pIntake->MotorSetPoint(eMotorForward);
             // Stop Shooter, stop Turret, and stop Hood.
-            m_pShooter->Stop();
-            m_pTurret->Stop();
+//          m_pShooter->Stop();
+//          m_pTurret->Stop();
             // Set robot color.
             m_pBlinkin->SetState(m_pBlinkin->eBeatsPerMin);
             break;

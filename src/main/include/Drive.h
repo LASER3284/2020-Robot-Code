@@ -23,7 +23,7 @@
 #include <frc/trajectory/TrajectoryConfig.h>
 #include <frc/trajectory/Trajectory.h>
 #include <frc/geometry/Pose2d.h>
-#include <AHRS.h>
+//#include <AHRS.h>
 #include "FalconMotion.h"
 #include "TrajectoryConstants.h"
 
@@ -78,7 +78,7 @@ private:
     CFalconMotion*                  m_pRightMotor1;
     WPI_TalonFX*                    m_pRightMotor2;
     DifferentialDrive*              m_pRobotDrive;
-    AHRS*                           m_pGyro;
+//    AHRS*                           m_pGyro;
     Timer*                          m_pTimer;
     DifferentialDriveOdometry*      m_pOdometry;
     frc2::RamseteCommand*			m_pRamseteCommand;

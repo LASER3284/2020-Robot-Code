@@ -313,14 +313,14 @@ private:
     {
         Pose2d
         {
-            0.0_ft,
-            0.0_ft,
+            0.1_ft,
+            0.1_ft,
             Rotation2d(0_deg)
         },
         Pose2d
         {
-            0.0_ft,
-            0.0_ft,
+            0.2_ft,
+            0.2_ft,
             Rotation2d(0_deg)
         }
     };

@@ -95,7 +95,7 @@ void CIntake::MotorSetPoint(int nState)
             break;
 
         case eMotorForward :
-            m_pIntakeMotor->Set(dIntakeFwdSpeed);
+            m_pIntakeMotor->Set(ControlMode::PercentOutput, dIntakeFwdSpeed);
             m_pRetentionMotor->Set(dIntakeFwdSpeed);
             break;
 
