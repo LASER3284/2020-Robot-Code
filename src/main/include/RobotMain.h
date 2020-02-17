@@ -18,6 +18,7 @@
 #include "Turret.h"
 #include "Shooter.h"
 #include "Hopper.h"
+#include "Lift.h"
 #include "Blinkin.h"
 
 using namespace frc;

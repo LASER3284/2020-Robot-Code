@@ -109,7 +109,7 @@ void CTurret::Tick()
     {
         case eTurretIdle :
             // Idle - Motor is off, and ready to move again.
-//            m_pPIDController->Reset();
+            m_pPIDController->Reset();
             m_pTurretMotor->Set(ControlMode::PercentOutput, 0.00);
             m_bIsReady = true;
             break;
@@ -147,7 +147,8 @@ void CTurret::Tick()
             
             // Always, while tracking, set the speed because the robot's orientation could always change.
             m_pTurretMotor->Set(ControlMode::PercentOutput, m_pPIDController->Calculate(SmartDashboard::GetNumber("Target Center X", 45)));
-
+            break;
+            
         case eTurretManualFwd :
             // ManualFwd - Manually move the motor forward at a constant speed.
             m_pTurretMotor->Set(ControlMode::PercentOutput, dTurretManualFwdSpeed);
