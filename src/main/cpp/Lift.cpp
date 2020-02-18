@@ -187,4 +187,14 @@ void CLift::TestRightWinch(double dSpeed)
 {
     m_pWinchMotorRight->Set(dSpeed);
 }
+
+/****************************************************************************
+    Description:	SetState - Set the state of the Lift machine
+    Arguments:		enum LiftState
+    Returns:		Nothing
+****************************************************************************/
+void CLift::SetState(int nNewState)
+{
+    m_nState = nNewState;
+}
 ///////////////////////////////////////////////////////////////////////////////

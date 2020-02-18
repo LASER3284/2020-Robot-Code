@@ -62,6 +62,7 @@ private:
         eTeleopAiming,
         eTeleopFiring,
         eTeleopAutoFiring,
+        eTeleopClimbing,
         eTeleopFollowing
     };
 

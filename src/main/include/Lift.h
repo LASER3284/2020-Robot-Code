@@ -47,6 +47,7 @@ public:
     bool IsReady();
     void TestLeftWinch(double dSpeed);
     void TestRightWinch(double dSpeed);
+    void SetState(int nNewState);
 
 private:
     // Object Pointers.

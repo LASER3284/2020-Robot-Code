@@ -381,6 +381,14 @@ void CRobotMain::TeleopPeriodic()
             m_pHopper->Preload();
             break;
 
+        case eTeleopClimbing :
+            /********************************************************************
+                Climbing - Robot is beginning to climb for Endgame.
+            ********************************************************************/
+            // Move the Lift state machine.
+            m_pLift->SetState(eLiftExtend);
+            break;
+
         case eTeleopFollowing :
             /********************************************************************
                 Following - Robot is following a pre-determined path.
