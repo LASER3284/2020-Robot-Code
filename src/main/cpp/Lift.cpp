@@ -10,6 +10,7 @@ using namespace frc;
 using namespace rev;
 /////////////////////////////////////////////////////////////////////////////
 
+
 /****************************************************************************
     Description:	CLift Constructor.
     Arguments:		None
@@ -25,7 +26,7 @@ CLift::CLift()
     // Initialize member variables.
     m_nState    = eLiftIdle;
     m_bIsReady  = false;
-    m_dActual   = m_pWinchMotorLeft->GetEncoder().GetPosition();
+    m_dActual   = m_pWinchMotorLeft->GetEncoder().GetPosition() / dLiftWinchPPR / dLiftWinchRPU;
     m_dSetpoint = dLiftWinchSetpoint;
 }
 
@@ -59,7 +60,7 @@ void CLift::Init()
     m_pWinchMotorRight->SetIdleMode(CANSparkMax::IdleMode::kBrake);
 
     // Make sure the solenoid is extended. (When going into Auto or Teleop, will engage)
-    m_pLiftSolenoid->Set(true);
+    ExtendArm(false);
 }
 
 /****************************************************************************
@@ -130,7 +131,7 @@ void CLift::Tick()
 ****************************************************************************/
 void CLift::ExtendArm(bool bExtend)
 {
-    m_pLiftSolenoid->Set(bExtend);
+    m_pLiftSolenoid->Set(!bExtend);
 }
 
 /****************************************************************************
@@ -140,8 +141,8 @@ void CLift::ExtendArm(bool bExtend)
 ****************************************************************************/
 void CLift::MoveToSetpoint()
 {
-    m_pWinchMotorLeft->GetPIDController().SetReference(dLiftWinchSetpoint, ControlType::kPosition);
-    m_pWinchMotorRight->GetPIDController().SetReference(-dLiftWinchSetpoint, ControlType::kPosition);
+    m_pWinchMotorLeft->GetPIDController().SetReference(m_dSetpoint * dLiftWinchPPR * dLiftWinchRPU, ControlType::kPosition);
+    m_pWinchMotorRight->GetPIDController().SetReference(-m_dSetpoint * dLiftWinchPPR * dLiftWinchRPU, ControlType::kPosition);
 }
 
 /****************************************************************************
@@ -163,5 +164,27 @@ void CLift::Stop()
 bool CLift::IsReady()
 {
     return (m_dSetpoint - m_dActual) <= dLiftWinchTolerance;
+}
+
+/****************************************************************************
+    Description:	TestLeftWinch - Manually drive left winch motor for
+                    testing.
+    Arguments:		double - Speed in percent.
+    Returns:		Nothing
+****************************************************************************/
+void CLift::TestLeftWinch(double dSpeed)
+{
+    m_pWinchMotorLeft->Set(dSpeed);
+}
+
+/****************************************************************************
+    Description:	TestRightWinch - Manually drive right winch motor for
+                    testing.
+    Arguments:		double - Speed in percent.
+    Returns:		Nothing
+****************************************************************************/
+void CLift::TestRightWinch(double dSpeed)
+{
+    m_pWinchMotorRight->Set(dSpeed);
 }
 ///////////////////////////////////////////////////////////////////////////////

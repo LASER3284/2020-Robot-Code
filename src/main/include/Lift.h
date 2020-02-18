@@ -45,6 +45,8 @@ public:
     void MoveToSetpoint();
     void Stop();
     bool IsReady();
+    void TestLeftWinch(double dSpeed);
+    void TestRightWinch(double dSpeed);
 
 private:
     // Object Pointers.
