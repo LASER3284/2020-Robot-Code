@@ -27,6 +27,7 @@ CRobotMain::CRobotMain()
     m_pTurret				= new CTurret();
     m_pShooter				= new CShooter();
     m_pHopper               = new CHopper();
+    m_pLift                 = new CLift();
     m_pBlinkin				= new Blinkin(nBlinkinID);
     m_pAutonomousChooser	= new SendableChooser<string>();
 }
@@ -46,6 +47,7 @@ CRobotMain::~CRobotMain()
     delete m_pTurret;
     delete m_pShooter;
     delete m_pHopper;
+    delete m_pLift;
     delete m_pBlinkin;
 
     // Set pointers to nullptrs.
@@ -56,6 +58,7 @@ CRobotMain::~CRobotMain()
     m_pTurret			= nullptr;
     m_pShooter			= nullptr;
     m_pHopper           = nullptr;
+    m_pLift             = nullptr;
     m_pBlinkin			= nullptr;
 }
 
@@ -70,6 +73,7 @@ void CRobotMain::RobotInit()
     m_pIntake->Init();
     m_pTurret->Init();
     m_pShooter->Init();
+    m_pLift->Init();
     SmartDashboard::PutNumber("Idle Color", m_pBlinkin->eTwinkle);
 }
 
@@ -444,23 +448,21 @@ void CRobotMain::TestPeriodic()
     ********************************************************************/
     if (m_pDriveController->GetRawButton(eButtonY))
     {
-        // Do something.
+        m_pLift->TestRightWinch(0.5);
     }
     else
     {
-        // Do nothing.
-    }
-
     /********************************************************************
         Drive Controller - Right Winch Down (Button A)
     ********************************************************************/
-    if (m_pDriveController->GetRawButton(eButtonA))
-    {
-        // Do something.
-    }
-    else
-    {
-        // Do nothing.
+        if (m_pDriveController->GetRawButton(eButtonA))
+        {
+            m_pLift->TestRightWinch(-0.5);
+        }
+        else
+        {
+            m_pLift->TestRightWinch(0.0);
+        }
     }
     
     /********************************************************************
@@ -468,23 +470,21 @@ void CRobotMain::TestPeriodic()
     ********************************************************************/
     if (m_pDriveController->GetPOV() == 1)
     {
-        // Do something.
+        m_pLift->TestLeftWinch(0.5);
     }
     else
     {
-        // Do nothing.
-    }
-
     /********************************************************************
         Drive Controller - Left Winch Down (POV Down)
     ********************************************************************/
-    if (m_pDriveController->GetPOV() == 180)
-    {
-        // Do something.
-    }
-    else
-    {
-        // Do nothing.
+        if (m_pDriveController->GetPOV() == 180)
+        {
+            m_pLift->TestLeftWinch(-0.5);
+        }
+        else
+        {
+            m_pLift->TestLeftWinch(0.0);
+        }
     }
 
     /********************************************************************
@@ -561,15 +561,15 @@ void CRobotMain::TestPeriodic()
     }
 
     /********************************************************************
-        Drive Controller - Actuate Lift (Left AND Right Stick)
+        Drive Controller - Actuate Lift (Right Stick)
     ********************************************************************/
-    if (m_pDriveController->GetRawButton(eButtonLS) && m_pDriveController->GetRawButton(eButtonRS))
+    if (m_pDriveController->GetRawButton(eButtonRS))
     {
-        // Do something.
+        m_pLift->ExtendArm(true);
     }
     else
     {
-        // Do nothing.
+        m_pLift->ExtendArm(false);
     }
     
     // /********************************************************************

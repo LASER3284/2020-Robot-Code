@@ -85,6 +85,7 @@ private:
     CTurret*                    m_pTurret;
     CShooter*                   m_pShooter;
     CHopper*                    m_pHopper;
+    CLift*                      m_pLift;
     Blinkin*                    m_pBlinkin;
     CTrajectoryConstants*		m_pTrajectoryConstants;
     SendableChooser<string>*    m_pAutonomousChooser;
