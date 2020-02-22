@@ -58,7 +58,7 @@ void CIntake::Init()
     RetentionMotor(false);
 
     // Enable more strict current limiting.
-    m_pRetentionMotor->SetSmartCurrentLimit(15);
+    m_pRetentionMotor->SetSmartCurrentLimit(20);
 
     // Flip Retention motor.
     m_pRetentionMotor->SetInverted(true);
@@ -129,5 +129,25 @@ void CIntake::RetentionMotor(bool bStartIntake)
 bool CIntake::IsJammed()
 {
     return m_pRetentionMotor->GetOutputCurrent() > 18.0;
+}
+
+/****************************************************************************
+    Description:	Returns the current Amp draw of the motor.
+    Arguments:		None
+    Returns:		double - Amperage, in Amps
+****************************************************************************/
+double CIntake::GetRetentionCurrent()
+{
+    return m_pRetentionMotor->GetOutputCurrent();
+}
+
+/****************************************************************************
+    Description:	Returns the current Amp draw of the motor.
+    Arguments:		None
+    Returns:		double - Amperage, in Amps
+****************************************************************************/
+double CIntake::GetIntakeCurrent()
+{
+    return m_pIntakeMotor->GetStatorCurrent();
 }
 /////////////////////////////////////////////////////////////////////////////

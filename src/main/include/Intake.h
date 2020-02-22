@@ -39,6 +39,8 @@ public:
     void IntakeMotor(bool bEnabled);
     void RetentionMotor(bool bEnabled);
     bool IsJammed();
+    double GetRetentionCurrent();
+    double GetIntakeCurrent();
 
 private:
     // Object pointers. 

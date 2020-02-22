@@ -70,8 +70,8 @@ void CShooter::Init()
     m_dShooterProportional		=		 	  0.0004;
     m_dShooterIntegral			=			     0.0;
     m_dShooterDerivative		=		 	     0.0;
-    m_dShooterFeedForward		=			  0.0001;
-    m_dShooterTolerance			=			   100.0;
+    m_dShooterFeedForward		=			 0.00015;
+    m_dShooterTolerance			=			   300.0;
     m_dShooterSetpoint			=		         0.0;
     m_dShooterActual			= GetShooterActual();
     m_nShooterState				= 	 eShooterStopped;
@@ -229,7 +229,7 @@ void CShooter::Tick()
             if ((m_dHoodActual < dHoodMaxPosition) && (m_dHoodActual >= dHoodMinPosition))
             {
                 // Set the speed because the robot's orientation could always change.
-                SetHoodSpeed(m_pHoodPID->Calculate(SmartDashboard::GetNumber("Target Center Y", 5)));
+                SetHoodSpeed(m_pHoodPID->Calculate(SmartDashboard::GetNumber("Target Center Y", 0)));
             }
             else
             {
@@ -252,6 +252,9 @@ void CShooter::Tick()
             SetHoodSpeed(dHoodManualRevSpeed);
             break;
     }
+
+    SmartDashboard::PutNumber("Shooter Setpoint", m_dShooterSetpoint);
+    SmartDashboard::PutNumber("Shooter Actual", m_dShooterActual);
 }
 
 /****************************************************************************
@@ -399,14 +402,12 @@ void CShooter::SetHoodTolerance(double dTolerance)
 ****************************************************************************/
 void CShooter::Stop()
 {
-    /*
     // Disable the PID controller to stop any movement.
     m_pHoodPID->Reset();
     // Stop the motor.
     m_pShooterPID->SetReference(0.0, ControlType::kDutyCycle);
     // Set the state to idle.
-    SetShooterState(eShooterIdle);
-    */
+    SetShooterState(eShooterStopped);
     SetHoodState(eHoodIdle);
 }
 
@@ -427,6 +428,6 @@ bool CShooter::IsHoodAtSetpoint()
 ****************************************************************************/
 bool CShooter::IsShooterAtSetpoint()
 {
-    return (m_dShooterSetpoint - m_pLeftShooter->GetEncoder().GetVelocity()) <= m_dShooterTolerance;
+    return (m_dShooterSetpoint - m_dShooterActual) <= m_dShooterTolerance;
 }
 /////////////////////////////////////////////////////////////////////////////

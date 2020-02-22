@@ -31,17 +31,17 @@ const int nIntakeRetentionMotor         =  15;      // Spark MAX ID for retentio
 
 
 // PWM Channels.
-const int nBlinkinID					=	0;		// PWM channel for Blinkin LED driver
-const int nHoodServo					= 	1;		// PWM channel for Hood actuation servo
+const int nBlinkinID					=	1;		// PWM channel for Blinkin LED driver
+const int nHoodServo					= 	0;		// PWM channel for Hood actuation servo
 
 // Relay Channels.
 
 // Analog Channels.
 
 // Digital Channels.
-const int nHoodEncoderChannelA			=	0;		// Encoder clock A signal for hood servo
-const int nHoodEncoderChannelB			=	1;		// Encoder clock B signal for hood servo
-const int nVisionLEDChannel             =   9;      // Channel for switching the Vision LEDs
+const int nHoodEncoderChannelA			=	4;		// Encoder clock A signal for hood servo
+const int nHoodEncoderChannelB			=	5;		// Encoder clock B signal for hood servo
+const int nVisionLEDChannel             =   0;      // Channel for switching the Vision LEDs
 
 // Xbox Controller Button Assignments.
 enum XboxButtons 		{eButtonA = 1, eButtonB, eButtonX, eButtonY, eButtonLB, eButtonRB, eBack, eStart, eButtonLS, eButtonRS};

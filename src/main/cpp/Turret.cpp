@@ -146,7 +146,7 @@ void CTurret::Tick()
             }
             
             // Always, while tracking, set the speed because the robot's orientation could always change.
-            m_pTurretMotor->Set(ControlMode::PercentOutput, m_pPIDController->Calculate(SmartDashboard::GetNumber("Target Center X", 45)));
+            m_pTurretMotor->Set(ControlMode::PercentOutput, m_pPIDController->Calculate(SmartDashboard::GetNumber("Target Center X", 1)));
             break;
             
         case eTurretManualFwd :

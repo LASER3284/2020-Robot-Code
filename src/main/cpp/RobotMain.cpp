@@ -196,14 +196,15 @@ void CRobotMain::TeleopInit()
 void CRobotMain::TeleopPeriodic()
 {
     static bool bHasFired       = false;
-    static bool bManualMoving   = false;
+    static bool bTurretMoving   = false;
+    static bool bHoodMoving     = false;
     
     /********************************************************************
         Drive Controller - Toggle Intake (Button A)
     ********************************************************************/
     if (m_pDriveController->GetRawButtonPressed(eButtonA))
     {
-        if (m_nTeleopState == (int)eTeleopIntake)
+        if (m_nTeleopState == eTeleopIntake)
         {
             // Leave to idle.
             m_nTeleopState = eTeleopIdle;
@@ -250,6 +251,7 @@ void CRobotMain::TeleopPeriodic()
         if (bHasFired)
         {
             // Has been fired, return to idle.
+            m_pShooter->SetShooterState(eShooterStopped);
             m_nTeleopState = eTeleopIdle;
             bHasFired = false;
         }
@@ -272,7 +274,7 @@ void CRobotMain::TeleopPeriodic()
     {
         // Manually move left.
         m_pTurret->SetState(eTurretManualRev);
-        bManualMoving = true;
+        bTurretMoving = true;
     }
     else
     {
@@ -283,15 +285,15 @@ void CRobotMain::TeleopPeriodic()
         {
             // Manually move right.
             m_pTurret->SetState(eTurretManualFwd);
-            bManualMoving = true;
+            bTurretMoving = true;
         }
         else
         {
-            if (bManualMoving)
+            if (bTurretMoving)
             {
                 // No longer pressing any buttons, move to Idle.
                 m_pTurret->SetState(eTurretIdle);
-                bManualMoving = false;
+                bTurretMoving = false;
             }
         }
     }
@@ -316,8 +318,10 @@ void CRobotMain::TeleopPeriodic()
             m_pIntake->IntakeMotor(false);
             m_pIntake->RetentionMotor(false);
             // Idle Shooter, stop Turret, and stop Hood.
-            m_pShooter->Stop();
+//            m_pShooter->Stop();
             m_pTurret->Stop();
+            m_pHopper->Feed(false);
+            m_pHopper->Preload(false);
             // Set robot color.
             m_pBlinkin->SetState(m_pBlinkin->eTwinkle);
             break;
@@ -333,6 +337,8 @@ void CRobotMain::TeleopPeriodic()
             // Stop Shooter, stop Turret, and stop Hood.
             m_pShooter->Stop();
             m_pTurret->Stop();
+            m_pHopper->Feed(false);
+            m_pHopper->Preload(false);
             // Set robot color.
             m_pBlinkin->SetState(m_pBlinkin->eBeatsPerMin);
             break;
@@ -361,10 +367,12 @@ void CRobotMain::TeleopPeriodic()
             if (m_pShooter->IsShooterAtSetpoint())
             {
                 // Start preloading into the shooter.
-                m_pHopper->Feed();
-                m_pHopper->Preload();
+                m_pHopper->Feed(true);
+                m_pHopper->Preload(true);
                 m_pIntake->RetentionMotor(true);
             }
+            // Set robot color.
+            m_pBlinkin->SetState(m_pBlinkin->eStrobe2);
             break;
 
         case eTeleopAutoFiring  :
@@ -376,9 +384,15 @@ void CRobotMain::TeleopPeriodic()
             m_pTurret->SetState(eTurretTracking);
             // Set the Shooter to firing speed.
             m_pShooter->SetShooterSetpoint(dShooterFiringVelocity);
-            // Start preloading into the shooter.
-            m_pHopper->Feed();
-            m_pHopper->Preload();
+            if (m_pShooter->IsReady()) 
+            {
+                // Start preloading into the shooter.
+                m_pHopper->Feed();
+                m_pHopper->Preload();
+                m_pIntake->RetentionMotor(true);
+            }
+            // Set robot color.
+            m_pBlinkin->SetState(m_pBlinkin->eStrobe2);
             break;
 
         case eTeleopClimbing :
@@ -387,6 +401,8 @@ void CRobotMain::TeleopPeriodic()
             ********************************************************************/
             // Move the Lift state machine.
             m_pLift->SetState(eLiftExtend);
+            // Set robot color.
+            m_pBlinkin->SetState(m_pBlinkin->eOrange);
             break;
 
         case eTeleopFollowing :
@@ -407,7 +423,10 @@ void CRobotMain::TeleopPeriodic()
     m_pShooter->Tick();
 
     SmartDashboard::PutNumber("Shooter State", m_pShooter->GetShooterState());
-    SmartDashboard::PutNumber("State", m_nTeleopState);
+    SmartDashboard::PutNumber("Shooter At Setpoint", m_pShooter->IsShooterAtSetpoint());
+    SmartDashboard::PutNumber("Retention Amperage", m_pIntake->GetRetentionCurrent());
+    SmartDashboard::PutNumber("Intake Amperage", m_pIntake->GetIntakeCurrent());
+    SmartDashboard::PutBoolean("State", m_nTeleopState);
 }
 
 /******************************************************************************
