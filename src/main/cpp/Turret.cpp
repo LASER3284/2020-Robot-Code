@@ -94,15 +94,16 @@ void CTurret::Init()
 void CTurret::Tick()
 {
     // Update Actual variable.
-    m_dActual = (m_pTurretMotor->GetSelectedSensorPosition() + nTurretZeroOffset);
-    m_dFakeActual = SmartDashboard::GetNumber("Target Center X", 0.0);
+    m_dActual = m_pTurretMotor->GetSelectedSensorPosition() + nTurretZeroOffset;
+    m_dFakeActual = -SmartDashboard::GetNumber("Target Center X", 0.0);
 
     // Check to see if it's out of bounds.
-    if ((m_dActual <= dTurretMinPosition) || (m_dActual >= dTurretMaxPosition))
+    if ((m_dActual / nTurretPulsesPerRev / dTurretRevsPerUnit <= dTurretMinPosition) ||
+         m_dActual / nTurretPulsesPerRev / dTurretRevsPerUnit >= dTurretMaxPosition)
     {
         // Overran while tracking, reset to zero.
         std::cout << "VISION UNDER/OVERRUN! RESETTING" << std::endl;
-        SetSetpoint(0.0);
+//      SetSetpoint(0.0);
     }
 
     switch(m_nState)
@@ -132,9 +133,9 @@ void CTurret::Tick()
             // Tracking - Utilizes Vision with a setpoint of zero to get
             // to the center of the tracked object.
             // Set the setpoint to zero to track the center of the target.
-            SetSetpoint(0.0);
+            m_pPIDController->SetSetpoint(0.0);
             // Check if at setpoint.
-            if (IsAtSetpoint())
+            if (m_dSetpoint - m_dFakeActual <= m_dTolerance)
             {
                 // Set to ready to signify that we're ready for shooting.
                 m_bIsReady = true;
@@ -146,7 +147,7 @@ void CTurret::Tick()
             }
             
             // Always, while tracking, set the speed because the robot's orientation could always change.
-            m_pTurretMotor->Set(ControlMode::PercentOutput, m_pPIDController->Calculate(SmartDashboard::GetNumber("Target Center X", 1)));
+            m_pTurretMotor->Set(ControlMode::PercentOutput, m_pPIDController->Calculate(m_dFakeActual));
             break;
             
         case eTurretManualFwd :
@@ -164,8 +165,8 @@ void CTurret::Tick()
             break;
     }
 
-    SmartDashboard::PutNumber("State", GetState());
-    SmartDashboard::PutNumber("PID Output", m_pPIDController->Calculate(m_dActual));
+    SmartDashboard::PutNumber("Turret State", GetState());
+    SmartDashboard::PutNumber("PID Output", m_pPIDController->Calculate(m_dFakeActual));
     SmartDashboard::PutNumber("Turret Position", m_dActual / dTurretRevsPerUnit / nTurretPulsesPerRev);
     SmartDashboard::PutNumber("Turret User Setpoint", m_dSetpoint);
     SmartDashboard::PutNumber("Turret Internal Setpoint", m_pPIDController->GetSetpoint());

@@ -16,8 +16,10 @@ using namespace frc;
 using namespace rev;
 
 // Intake Contants.
-const double dRetentionFwdSpeed =   1.0;
+const double dRetentionFwdSpeed =  1.00;
 const double dIntakeFwdSpeed	=  0.75;
+const double dRetentionRevSpeed =  0.25;
+const double dRetentionCurrent  =  20.0;
 /////////////////////////////////////////////////////////////////////////////
 
 

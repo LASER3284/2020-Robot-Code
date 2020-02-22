@@ -219,12 +219,13 @@ void CRobotMain::TeleopPeriodic()
     /********************************************************************
         Drive Controller - Vision Aiming (Left Bumper)
     ********************************************************************/
-    if ((m_pDriveController->GetRawButtonPressed(eButtonLB)) && !(m_pDriveController->GetRawAxis(eRightTrigger) >= 0.65))
+    if ((m_pDriveController->GetRawButton(eButtonLB)) && !(m_pDriveController->GetRawAxis(eRightTrigger) >= 0.65))
     {
         // Set state to Aiming.
         m_nTeleopState = eTeleopAiming;
+        std::cout << "AIMING" << std::endl;
     }
-    if ((m_pDriveController->GetRawButtonReleased(eButtonLB)) && !(m_pDriveController->GetRawAxis(eRightTrigger) >= 0.65))
+    if (!(m_pDriveController->GetRawButton(eButtonLB)) && !(m_pDriveController->GetRawAxis(eRightTrigger) >= 0.65))
     {
         // If released while still in aiming...
         if (m_nTeleopState == eTeleopAiming)
@@ -306,6 +307,37 @@ void CRobotMain::TeleopPeriodic()
         m_pShooter->SetShooterState(m_pShooter->GetShooterState() == eShooterIdle ? eShooterStopped : eShooterIdle);
     }
 
+    /********************************************************************
+        Drive Controller - Manual Move Hood Up (Up POV)
+    ********************************************************************/
+    if (m_pDriveController->GetPOV() == 1)
+    {
+        // Manual move up.
+        m_pShooter->SetHoodState(eHoodManualFwd);
+        bHoodMoving = true;
+    }
+    else
+    {
+    /********************************************************************
+        Drive Controller - Manual Move Hood Down (Down POV)
+    ********************************************************************/
+        if (m_pDriveController->GetPOV() == 180)
+        {
+            // Manual move down.
+            m_pShooter->SetHoodState(eHoodManualRev);
+            bHoodMoving = true;
+        }
+        else
+        {
+            if (bHoodMoving)
+            {
+                // No longer moving, set to idle.
+                m_pShooter->SetHoodState(eHoodIdle);
+                bHoodMoving = false;
+            }
+        }
+    }
+
     switch(m_nTeleopState)
     {
         case eTeleopIdle :
@@ -318,7 +350,7 @@ void CRobotMain::TeleopPeriodic()
             m_pIntake->IntakeMotor(false);
             m_pIntake->RetentionMotor(false);
             // Idle Shooter, stop Turret, and stop Hood.
-//            m_pShooter->Stop();
+//          m_pShooter->Stop();
             m_pTurret->Stop();
             m_pHopper->Feed(false);
             m_pHopper->Preload(false);
@@ -426,7 +458,7 @@ void CRobotMain::TeleopPeriodic()
     SmartDashboard::PutNumber("Shooter At Setpoint", m_pShooter->IsShooterAtSetpoint());
     SmartDashboard::PutNumber("Retention Amperage", m_pIntake->GetRetentionCurrent());
     SmartDashboard::PutNumber("Intake Amperage", m_pIntake->GetIntakeCurrent());
-    SmartDashboard::PutBoolean("State", m_nTeleopState);
+    SmartDashboard::PutNumber("State", m_nTeleopState);
 }
 
 /******************************************************************************

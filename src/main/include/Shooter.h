@@ -27,20 +27,31 @@ const double dShooterMaxVelocity		= 	5700.00;
 const double dShooterIdleVelocity		=	2400.00;
 const double dShooterFiringVelocity     =   4500.00;
 const double dShooterMinVelocity		=	 200.00;
+const double dShooterProportional       =      4e-4;
+const double dShooterIntegral           =       0.0;
+const double dShooterDerivative         =       0.0;
+const double dShooterFeedForward        =     17e-5;
+const double dShooterTolerance          =     180.0;
 // Hood Constants.
-const double dHoodMaxPosition			=      35.0;
-const double dHoodMinPosition			=    	0.0;
+const double dHoodMaxPosition			=      66.0;
+const double dHoodMinPosition			=      28.0;
 const double dHoodManualFwdSpeed 		=     1.000;
 const double dHoodManualRevSpeed		=    -1.000;
 const double dHoodOpenLoopRamp			=     0.250;
 const double dHoodClosedLoopRamp		=     0.250;
 const int	 dHoodPulsesPerRev			=      1024;
 const double dHoodRevsPerUnit			= 	1.0/360;
+const double dHoodProportional          =       1.0;
+const double dHoodIntegral              =       0.0;
+const double dHoodDerivative            =       0.0;
+const double dHoodFeedForward           =       0.0;
+const double dHoodTolerance             =       0.5;
+const double dHoodFindingTime           =       0.0;
 
 // Shooter enum.
 enum ShooterState	{eShooterStopped, eShooterIdle, eShooterFinding, eShooterManualFwd, eShooterManualRev};
 // Hood enum.
-enum HoodState 		{eHoodIdle, eHoodFinding, eHoodTracking, eHoodManualFwd, eHoodManualRev};
+enum HoodState 		{eHoodIdle, eHoodTracking, eHoodFinding, eHoodManualFwd, eHoodManualRev};
 /////////////////////////////////////////////////////////////////////////////
 
 

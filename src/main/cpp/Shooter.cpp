@@ -66,30 +66,29 @@ CShooter::~CShooter()
 void CShooter::Init()
 {
     // Initialize variables.
-    m_bMotionMagic				=	  		   false;
-    m_dShooterProportional		=		 	  0.0004;
-    m_dShooterIntegral			=			     0.0;
-    m_dShooterDerivative		=		 	     0.0;
-    m_dShooterFeedForward		=			 0.00015;
-    m_dShooterTolerance			=			   300.0;
-    m_dShooterSetpoint			=		         0.0;
+    m_bMotionMagic				= false;
+    m_dShooterProportional		= dShooterProportional;
+    m_dShooterIntegral			= dShooterIntegral;
+    m_dShooterDerivative		= dShooterDerivative;
+    m_dShooterFeedForward		= dShooterFeedForward;
+    m_dShooterTolerance			= dShooterTolerance;
+    m_dShooterSetpoint			= 0.0;
     m_dShooterActual			= GetShooterActual();
-    m_nShooterState				= 	 eShooterStopped;
-    m_bShooterIsReady			=			   false;
+    m_nShooterState				= eShooterStopped;
+    m_bShooterIsReady			= false;
 
-    m_dHoodProportional			=		         1.0;
-    m_dHoodTrackingP			=				 0.5;
-    m_dHoodIntegral				=		         0.0;
-    m_dHoodDerivative			=		         0.0;
-    m_dHoodTolerance			= 		         2.0;
-    m_dHoodSetpoint				=		         0.0;
-    m_dHoodActual				=    GetHoodActual();
-    m_dHoodMaxFindingTime		=		         3.0;
-    m_dHoodFindingStartTime		=		         0.0;
-    m_nHoodState				=          eHoodIdle;
-    m_bHoodIsReady              =              false;
+    m_dHoodProportional			= dHoodProportional;
+    m_dHoodIntegral				= dHoodIntegral;
+    m_dHoodDerivative			= dHoodDerivative;
+    m_dHoodTolerance			= dHoodTolerance;
+    m_dHoodSetpoint				= 0.0;
+    m_dHoodActual				= GetHoodActual();
+    m_dHoodMaxFindingTime		= dHoodFindingTime;
+    m_dHoodFindingStartTime		= 0.0;
+    m_nHoodState				= eHoodIdle;
+    m_bHoodIsReady              = false;
 
-    m_bIsReady					=		   IsReady();
+    m_bIsReady					= IsReady();
 
     // Set the shooter motors inverted from each other.
     m_pLeftShooter->SetInverted(false);
@@ -128,7 +127,7 @@ void CShooter::Tick()
 {
     // Update Actual variables.
     m_dShooterActual = m_pLeftShooter->GetEncoder().GetVelocity();
-    m_dHoodActual	 = m_pHoodEncoder->GetDistance();
+    m_dHoodActual	 = m_pHoodEncoder->GetDistance()  / (20 / 310) + dHoodMinPosition;
 
     // Shooter state machine.
     switch(m_nShooterState)
@@ -136,6 +135,7 @@ void CShooter::Tick()
         case eShooterStopped :
             // Stopped - Motor is off, and ready to move again.
             m_pLeftShooter->Set(0.00);
+            m_dShooterSetpoint = 0;
             m_bIsReady = true;
             break;
 
@@ -143,6 +143,7 @@ void CShooter::Tick()
             // Idle - Motor is free spinning at a constant velocity to
             // reduce current draw.
             m_pShooterPID->SetReference(dShooterIdleVelocity, ControlType::kVelocity);
+            m_dShooterSetpoint = dShooterIdleVelocity;
             m_bIsReady = true;
             break;
 
@@ -177,19 +178,34 @@ void CShooter::Tick()
         case eHoodIdle :
             // Idle - Servo is off and ready to move again.
             // Turn off the LEDs.
-            m_pVisionSwitch->Set(false);
+            m_pVisionSwitch->Set(true);
             // Stop the servo.
             SetHoodSpeed(0.0);
             // Set servo to ready.
             m_bHoodIsReady = true;
             break;
 
+        case eHoodTracking :
+            // Tracking - Utilizes Vision to find the setpoint of the hood.
+            // Turn on the LEDs.
+            m_pVisionSwitch->Set(true);
+            // Check if the distance has changed, which means we've found a target.
+            static double dPreviousDistance = 0.0;
+            if ((SmartDashboard::GetNumber("Distance", 0.0)) != dPreviousDistance)
+            {
+                // Distance has changed, calculate the new angle.
+//                SetHoodSetpoint();
+            }
+            // Update previous distance.
+            dPreviousDistance = SmartDashboard::GetNumber("Distance", dPreviousDistance);
+            break;
+
         case eHoodFinding :
             // Finding - Use PID Controller to drive to a given
             // Setpoint, and check if we are within the given
             // tolerance.
-            // Turn off the LEDs.
-            m_pVisionSwitch->Set(false);
+            // Turn on the LEDs.
+            m_pVisionSwitch->Set(true);
             // Set the new Proportional term.
             m_pHoodPID->SetP(m_dHoodProportional);
             if (m_dHoodSetpoint - m_dHoodActual < m_dHoodTolerance)
@@ -201,40 +217,6 @@ void CShooter::Tick()
             {
                 // Not at the setpoint, continue.
                 SetHoodSpeed(m_pHoodPID->Calculate(m_dHoodActual));
-            }
-            break;
-
-        case eHoodTracking :
-            // Tracking - Utilizes Vision with a setpoint of zero
-            // to track an object's center.
-            // Turn on the LEDs.
-            m_pVisionSwitch->Set(true);
-            // Set the setpoint to zero to track the center of the target.
-            SetHoodSetpoint(0.0);
-            // Set the new Proportional term.
-            m_pHoodPID->SetP(m_dHoodTrackingP);
-            // Check if at setpoint.
-            if (IsHoodAtSetpoint())
-            {
-                // Set to ready to signify that we're ready for shooting.
-                m_bIsReady = true;
-            }
-            else
-            {
-                // Not locked on yet, keep trying.
-                m_bIsReady = false;
-            }
-            
-            // As long as we're in bounds...
-            if ((m_dHoodActual < dHoodMaxPosition) && (m_dHoodActual >= dHoodMinPosition))
-            {
-                // Set the speed because the robot's orientation could always change.
-                SetHoodSpeed(m_pHoodPID->Calculate(SmartDashboard::GetNumber("Target Center Y", 0)));
-            }
-            else
-            {
-                // Change to idle, we're out of bounds.
-                SetHoodState(eHoodIdle);
             }
             break;
 
@@ -255,6 +237,8 @@ void CShooter::Tick()
 
     SmartDashboard::PutNumber("Shooter Setpoint", m_dShooterSetpoint);
     SmartDashboard::PutNumber("Shooter Actual", m_dShooterActual);
+    SmartDashboard::PutNumber("Hood Setpoint", m_dHoodSetpoint);
+    SmartDashboard::PutNumber("Hood Actual", m_dHoodActual);
 }
 
 /****************************************************************************
@@ -334,10 +318,10 @@ void CShooter::SetShooterSetpoint(double dSetpoint)
 void CShooter::SetHoodSpeed(double dSpeed)
 {
     // Convert a -1 -> 1 value to a 0 -> 1 value.
-    dSpeed += 1.0;
-    dSpeed /= 2.0;
+    double dFakeSpeed = dSpeed + 1.0;
+    dFakeSpeed /= 2.0;
     // Set the "Speed" of the continuous rotation servo.
-    m_pHoodServo->Set(dSpeed);
+    m_pHoodServo->Set(dFakeSpeed);
 }
 
 /****************************************************************************
