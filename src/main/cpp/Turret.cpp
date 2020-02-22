@@ -93,60 +93,29 @@ void CTurret::Init()
 ****************************************************************************/
 void CTurret::Tick()
 {
-    // Update Actual variable.
-    m_dActual = m_pTurretMotor->GetSelectedSensorPosition() + nTurretZeroOffset;
-    m_dFakeActual = -SmartDashboard::GetNumber("Target Center X", 0.0);
-
-    // Check to see if it's out of bounds.
-    if ((m_dActual / nTurretPulsesPerRev / dTurretRevsPerUnit <= dTurretMinPosition) ||
-         m_dActual / nTurretPulsesPerRev / dTurretRevsPerUnit >= dTurretMaxPosition)
-    {
-        // Overran while tracking, reset to zero.
-        std::cout << "VISION UNDER/OVERRUN! RESETTING" << std::endl;
-//      SetSetpoint(0.0);
-    }
+    m_dActual = (m_pTurretMotor->GetSelectedSensorPosition() + nTurretZeroOffset) / nTurretPulsesPerRev / dTurretRevsPerUnit;
+    m_dFakeActual = (SmartDashboard::GetNumber("Target Position X", 0.0));
 
     switch(m_nState)
     {
         case eTurretIdle :
-            // Idle - Motor is off, and ready to move again.
+            // Idle - Do nothing.
             m_pPIDController->Reset();
-            m_pTurretMotor->Set(ControlMode::PercentOutput, 0.00);
-            m_bIsReady = true;
+            m_pTurretMotor->Set(ControlMode::PercentOutput, 0.0);
             break;
 
         case eTurretFinding :
-            // Finding - Motor uses built-in PID controller to seek the
-            // given Setpoint, and performs checks to ensure we are within
-            // the given tolerance.
-            // Move the motor to a given point.
+            // Finding - Go to a given setpoint on the Turret.
             m_pTurretMotor->Set(ControlMode::PercentOutput, m_pPIDController->Calculate(m_dActual));
-            // Check to make sure it is or is not at setpoint.
-            if (IsAtSetpoint() || ((m_pTimer->Get() - m_dFindingStartTime) > m_dMaxFindingTime))
+            if (IsAtSetpoint())
             {
-                // Stop the motor, return to Idle.
-                Stop();
+                // At setpoint, return to Idle.
+                SetState(eTurretIdle);
             }
             break;
 
         case eTurretTracking :
-            // Tracking - Utilizes Vision with a setpoint of zero to get
-            // to the center of the tracked object.
-            // Set the setpoint to zero to track the center of the target.
-            m_pPIDController->SetSetpoint(0.0);
-            // Check if at setpoint.
-            if (m_dSetpoint - m_dFakeActual <= m_dTolerance)
-            {
-                // Set to ready to signify that we're ready for shooting.
-                m_bIsReady = true;
-            }
-            else
-            {
-                // Not locked on yet, keep trying.
-                m_bIsReady = false;
-            }
-            
-            // Always, while tracking, set the speed because the robot's orientation could always change.
+            // Tracking - Uses a setpoint of zero and an actual from the Camera to center on the target.
             m_pTurretMotor->Set(ControlMode::PercentOutput, m_pPIDController->Calculate(m_dFakeActual));
             break;
             
@@ -165,14 +134,11 @@ void CTurret::Tick()
             break;
     }
 
-    SmartDashboard::PutNumber("Turret State", GetState());
-    SmartDashboard::PutNumber("PID Output", m_pPIDController->Calculate(m_dFakeActual));
-    SmartDashboard::PutNumber("Turret Position", m_dActual / dTurretRevsPerUnit / nTurretPulsesPerRev);
-    SmartDashboard::PutNumber("Turret User Setpoint", m_dSetpoint);
-    SmartDashboard::PutNumber("Turret Internal Setpoint", m_pPIDController->GetSetpoint());
-    SmartDashboard::PutNumber("Turret Internal Actual", m_dActual);
-    SmartDashboard::PutNumber("Turret Error", m_pPIDController->GetPositionError() / dTurretRevsPerUnit / nTurretPulsesPerRev);
-    SmartDashboard::PutNumber("Turret Tolerance", m_dTolerance * nTurretPulsesPerRev * dTurretRevsPerUnit);
+    SmartDashboard::PutNumber("Turret State", m_nState);
+    SmartDashboard::PutNumber("Turret Encoder", m_pTurretMotor->GetSelectedSensorPosition());
+    SmartDashboard::PutNumber("Turret Actual", m_dActual);
+    SmartDashboard::PutNumber("Turret Setpoint", m_dSetpoint);
+
 }
 
 /****************************************************************************
@@ -220,6 +186,22 @@ void CTurret::SetSetpoint(double dSetpoint)
     SetState(eTurretFinding);
 
     std::cout << "Setpoint - " << m_dSetpoint << std::endl;
+}
+
+/****************************************************************************
+    Description:	Set the setpoint of the turret's PID controller and move
+                    to that position.
+    Arguments: 		double dSetpoint - Units in degrees
+    Returns: 		Nothing
+****************************************************************************/
+void CTurret::SetVision()
+{
+    // Set the setpoint to zero.
+    m_pPIDController->SetSetpoint(0.0);
+
+    // Set Turret state to Tracking.
+    SetState(eTurretTracking);
+    std::cout << "Vision Mode Enabled" << std::endl;
 }
 
 /****************************************************************************

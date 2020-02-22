@@ -300,7 +300,7 @@ void CRobotMain::TeleopPeriodic()
     }
 
     /********************************************************************
-        Drive Controller - Toggle Turret "Idle" speed (Button B)
+        Drive Controller - Toggle Shooter "Idle" speed (Button B)
     ********************************************************************/
     if (m_pDriveController->GetRawButtonPressed(eButtonB))
     {
@@ -381,7 +381,7 @@ void CRobotMain::TeleopPeriodic()
                          using the Vision points determined.
             ********************************************************************/
             // Set the Turret to tracking mode.
-            m_pTurret->SetState(eTurretTracking);
+            m_pTurret->SetVision();
             // Set the Hood to tracking mode.
             m_pShooter->SetHoodState(eHoodTracking);
             // Set robot color.

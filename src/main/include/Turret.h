@@ -50,6 +50,7 @@ public:
     void 		Tick();
     void		SetPID(double dProportional, double dIntegral, double dDerivative);
     void 		SetSetpoint(double dSetpoint);
+    void        SetVision();
     void 		SetState(TurretState nState);
     void 		SetTolerance(double dTolerance);
     void 		Stop();
