@@ -127,7 +127,7 @@ void CShooter::Tick()
 {
     // Update Actual variables.
     m_dShooterActual = m_pLeftShooter->GetEncoder().GetVelocity();
-    m_dHoodActual	 = m_pHoodEncoder->GetDistance()  / (20 / 310) + dHoodMinPosition;
+    m_dHoodActual	 = m_pHoodEncoder->GetDistance()  / (20.0 / 310.0) + dHoodMinPosition;
 
     // Shooter state machine.
     switch(m_nShooterState)
@@ -178,7 +178,7 @@ void CShooter::Tick()
         case eHoodIdle :
             // Idle - Servo is off and ready to move again.
             // Turn off the LEDs.
-            m_pVisionSwitch->Set(true);
+            m_pVisionSwitch->Set(false);
             // Stop the servo.
             SetHoodSpeed(0.0);
             // Set servo to ready.

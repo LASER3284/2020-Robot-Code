@@ -351,6 +351,7 @@ void CRobotMain::TeleopPeriodic()
             m_pIntake->RetentionMotor(false);
             // Idle Shooter, stop Turret, and stop Hood.
 //          m_pShooter->Stop();
+            m_pShooter->SetHoodState(eHoodIdle);
             m_pTurret->Stop();
             m_pHopper->Feed(false);
             m_pHopper->Preload(false);

@@ -94,7 +94,7 @@ void CTurret::Init()
 void CTurret::Tick()
 {
     m_dActual = (m_pTurretMotor->GetSelectedSensorPosition() + nTurretZeroOffset) / nTurretPulsesPerRev / dTurretRevsPerUnit;
-    m_dFakeActual = (SmartDashboard::GetNumber("Target Position X", 0.0));
+    m_dFakeActual = (SmartDashboard::GetNumber("Target Center X", 0.0));
 
     switch(m_nState)
     {
@@ -116,7 +116,7 @@ void CTurret::Tick()
 
         case eTurretTracking :
             // Tracking - Uses a setpoint of zero and an actual from the Camera to center on the target.
-            m_pTurretMotor->Set(ControlMode::PercentOutput, m_pPIDController->Calculate(m_dFakeActual));
+            m_pTurretMotor->Set(ControlMode::PercentOutput, m_pPIDController->Calculate(-m_dFakeActual));
             break;
             
         case eTurretManualFwd :
