@@ -22,7 +22,7 @@ CTurret::CTurret()
     // Create Object Pointers.
     m_pTurretMotor			= new WPI_TalonSRX(nTurretMotor);
     m_pTimer				= new Timer();
-    m_pPIDController		= new frc2::PIDController(dTurretProportional, dTurretIntegral, dTurretIntegral);
+    m_pPIDController		= new frc2::PIDController(dTurretProportional, dTurretIntegral, dTurretDerivative);
 }
 
 /****************************************************************************
