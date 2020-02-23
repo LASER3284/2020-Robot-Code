@@ -177,8 +177,6 @@ void CShooter::Tick()
     {
         case eHoodIdle :
             // Idle - Servo is off and ready to move again.
-            // Turn off the LEDs.
-            m_pVisionSwitch->Set(false);
             // Stop the servo.
             SetHoodSpeed(0.0);
             // Set servo to ready.
@@ -187,25 +185,29 @@ void CShooter::Tick()
 
         case eHoodTracking :
             // Tracking - Utilizes Vision to find the setpoint of the hood.
-            // Turn on the LEDs.
-            m_pVisionSwitch->Set(true);
             // Check if the distance has changed, which means we've found a target.
-            static double dPreviousDistance = 0.0;
-            if ((SmartDashboard::GetNumber("Distance", 0.0)) != dPreviousDistance)
-            {
-                // Distance has changed, calculate the new angle.
-//                SetHoodSetpoint();
-            }
-            // Update previous distance.
-            dPreviousDistance = SmartDashboard::GetNumber("Distance", dPreviousDistance);
+            // static int nCounter = 0;
+            // static double dDistance = SmartDashboard::GetNumber("Target Distance", 0.0);
+            // static double dTheta = 1.0;
+            // static double dCalculatedAngle = 0.0;
+            // while (dTheta - fabs(dCalculatedAngle) > 0.25)
+            // {
+            //     dCalculatedAngle = acos(((dDistance + (44.0 * 44.0) * (sin(dTheta) * sin(dTheta)) / 64.0)) * (32.0 / (44.0 * 44.0 * sin(dTheta))));
+            //     dTheta = dCalculatedAngle;
+            //     nCounter++;
+            //     std::cout << "Iterations - " << nCounter << std::endl;
+            // }
+
+            // SmartDashboard::PutNumber("Theta", dTheta);
+            // SmartDashboard::PutNumber("Calculated Angle", dCalculatedAngle);
+            // nCounter = 0;
+            // SetHoodSetpoint(dCalculatedAngle);
             break;
 
         case eHoodFinding :
             // Finding - Use PID Controller to drive to a given
             // Setpoint, and check if we are within the given
             // tolerance.
-            // Turn on the LEDs.
-            m_pVisionSwitch->Set(true);
             // Set the new Proportional term.
             m_pHoodPID->SetP(m_dHoodProportional);
             if (m_dHoodSetpoint - m_dHoodActual < m_dHoodTolerance)
@@ -222,15 +224,11 @@ void CShooter::Tick()
 
         case eHoodManualFwd :
             // ManualForward - Move the Hood forward at a constant speed.
-            // Turn off the LEDs.
-            m_pVisionSwitch->Set(false);
             SetHoodSpeed(dHoodManualFwdSpeed);
             break;
 
         case eHoodManualRev :
             // ManualReverse - Move the Hood backwards at a constant speed.
-            // Turn off the LEDs.
-            m_pVisionSwitch->Set(false);
             SetHoodSpeed(dHoodManualRevSpeed);
             break;
     }
@@ -413,5 +411,15 @@ bool CShooter::IsHoodAtSetpoint()
 bool CShooter::IsShooterAtSetpoint()
 {
     return (m_dShooterSetpoint - m_dShooterActual) <= m_dShooterTolerance;
+}
+
+/****************************************************************************
+    Description:	Sets the state of the Vision LEDs
+    Arguments: 		bool - True to enable.
+    Returns: 		Nothing
+****************************************************************************/
+void CShooter::SetVisionLED(bool bEnabled)
+{
+    m_pVisionSwitch->Set(bEnabled);
 }
 /////////////////////////////////////////////////////////////////////////////

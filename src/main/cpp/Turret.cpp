@@ -94,7 +94,12 @@ void CTurret::Init()
 void CTurret::Tick()
 {
     m_dActual = (m_pTurretMotor->GetSelectedSensorPosition() + nTurretZeroOffset) / nTurretPulsesPerRev / dTurretRevsPerUnit;
-    m_dFakeActual = (SmartDashboard::GetNumber("Target Center X", 0.0));
+    m_dFakeActual = (SmartDashboard::GetNumber("Target Angle", 0.0));
+
+    if (m_dActual >= dTurretMaxPosition || m_dActual <= dTurretMinPosition)
+    {
+        std::cout << "TRACKING OVERRUN" << std::endl;
+    }
 
     switch(m_nState)
     {
@@ -201,7 +206,6 @@ void CTurret::SetVision()
 
     // Set Turret state to Tracking.
     SetState(eTurretTracking);
-    std::cout << "Vision Mode Enabled" << std::endl;
 }
 
 /****************************************************************************

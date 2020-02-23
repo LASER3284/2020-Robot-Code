@@ -95,6 +95,8 @@ public:
     double			GetHoodTolerance()													{	return m_dHoodTolerance;							};
     HoodState		GetHoodState()														{	return m_nHoodState;								};
 
+    void            SetVisionLED(bool bEnabled = true);
+
 private:
     // Object pointers.
     Servo*					m_pHoodServo;

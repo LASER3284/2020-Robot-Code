@@ -94,7 +94,8 @@ void CRobotMain::RobotPeriodic()
 ****************************************************************************/
 void CRobotMain::DisabledInit()
 {
-    
+    // Disable LEDs
+    m_pShooter->SetVisionLED(false);
 }
 
 /******************************************************************************
@@ -223,7 +224,6 @@ void CRobotMain::TeleopPeriodic()
     {
         // Set state to Aiming.
         m_nTeleopState = eTeleopAiming;
-        std::cout << "AIMING" << std::endl;
     }
     if (!(m_pDriveController->GetRawButton(eButtonLB)) && !(m_pDriveController->GetRawAxis(eRightTrigger) >= 0.65))
     {
@@ -345,6 +345,8 @@ void CRobotMain::TeleopPeriodic()
                 Idle - Robot is not currently doing anything.
                        May or may not be driving as well.
             ********************************************************************/
+            // Disable LEDs
+            m_pShooter->SetVisionLED(false);
             // Return intake to it's retracted state.
             m_pIntake->Extend(false);
             m_pIntake->IntakeMotor(false);
@@ -363,6 +365,8 @@ void CRobotMain::TeleopPeriodic()
             /********************************************************************
                 Intake - Robot is intaking Energy.
             ********************************************************************/
+            // Disable LEDs
+            m_pShooter->SetVisionLED(false);
             // Extend intake.
             m_pIntake->Extend(true);
             m_pIntake->IntakeMotor(true);
@@ -383,6 +387,8 @@ void CRobotMain::TeleopPeriodic()
             ********************************************************************/
             // Set the Turret to tracking mode.
             m_pTurret->SetVision();
+            // Enabled LEDs
+            m_pShooter->SetVisionLED(true);
             // Set the Hood to tracking mode.
             m_pShooter->SetHoodState(eHoodTracking);
             // Set robot color.
@@ -393,6 +399,8 @@ void CRobotMain::TeleopPeriodic()
             /********************************************************************
                 Firing - Robot simply fires wherever it is currently aiming.
             ********************************************************************/
+            // Enabled LEDs
+            m_pShooter->SetVisionLED(false);
             // Set the Turret to idle, we don't want it to move.
             m_pTurret->SetState(eTurretIdle);
             // Set the Shooter to firing speed.
@@ -413,6 +421,8 @@ void CRobotMain::TeleopPeriodic()
                 AutoFiring - Robot is firing the Energy into the high goal
                              while tracking the goal actively.
             ********************************************************************/
+            // Enabled LEDs
+            m_pShooter->SetVisionLED(true);
             // Set the Turret to Tracking mode.
             m_pTurret->SetState(eTurretTracking);
             // Set the Shooter to firing speed.
@@ -432,6 +442,8 @@ void CRobotMain::TeleopPeriodic()
             /********************************************************************
                 Climbing - Robot is beginning to climb for Endgame.
             ********************************************************************/
+            // Enabled LEDs
+            m_pShooter->SetVisionLED(true);
             // Move the Lift state machine.
             m_pLift->SetState(eLiftExtend);
             // Set robot color.
@@ -481,6 +493,9 @@ void CRobotMain::TestInit()
 ******************************************************************************/
 void CRobotMain::TestPeriodic()
 {
+    // Enabled LEDs
+    m_pShooter->SetVisionLED(true);
+
     /********************************************************************
         Drive Controller - Actuate Intake (Button X)
     ********************************************************************/
