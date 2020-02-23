@@ -49,17 +49,19 @@ CRobotMain::~CRobotMain()
     delete m_pHopper;
     delete m_pLift;
     delete m_pBlinkin;
+    delete m_pAutonomousChooser;
 
     // Set pointers to nullptrs.
-    m_pDriveController  = nullptr;
-    m_pTimer            = nullptr;
-    m_pDrive 			= nullptr;
-    m_pIntake			= nullptr;
-    m_pTurret			= nullptr;
-    m_pShooter			= nullptr;
-    m_pHopper           = nullptr;
-    m_pLift             = nullptr;
-    m_pBlinkin			= nullptr;
+    m_pDriveController   = nullptr;
+    m_pTimer             = nullptr;
+    m_pDrive 			 = nullptr;
+    m_pIntake			 = nullptr;
+    m_pTurret			 = nullptr;
+    m_pShooter			 = nullptr;
+    m_pHopper            = nullptr;
+    m_pLift              = nullptr;
+    m_pBlinkin			 = nullptr;
+    m_pAutonomousChooser = nullptr;
 }
 
 /****************************************************************************
@@ -173,8 +175,51 @@ void CRobotMain::AutonomousInit()
 ******************************************************************************/
 void CRobotMain::AutonomousPeriodic()
 {
-    // Follow the trajectory.
-    m_pDrive->FollowTrajectory();
+    static double dStartTime = m_pTimer->Get();
+    switch (m_nAutoState)
+    {
+        case eDoNothing :
+            // Do nothing.
+            break;
+
+        case eTestPath :
+            // Simply follow the path.
+            m_pDrive->FollowTrajectory();
+            break;
+
+        case eAllianceTrench :
+            // Set the Turret to tracking mode.
+            m_pTurret->SetVision();
+            // Enabled LEDs
+            m_pShooter->SetVisionLED(true);
+            // Set robot color.
+            m_pBlinkin->SetState(m_pBlinkin->eLarsonScanner1);
+            // Set the Shooter setpoint.
+            m_pShooter->SetShooterSetpoint(dShooterFiringVelocity);
+            // Start shooting when ready.
+            if (m_pShooter->IsShooterAtSetpoint())
+            {
+                // Start preloading into the shooter.
+                m_pHopper->Feed(true);
+                m_pHopper->Preload(true);
+                m_pIntake->RetentionMotor(true);
+            }
+            // Follow Trajectory after given time to shoot.
+            if (m_pTimer->Get() - dStartTime > 5.00)
+            {
+                // Start intake, Follow Trajectory.
+                m_pIntake->Extend(true);
+                m_pIntake->IntakeMotor(true);
+                m_pIntake->RetentionMotor(true);
+                m_pDrive->FollowTrajectory();
+            }
+            break;
+    }
+
+    // Call all subsystem Ticks.
+    m_pDrive->Tick();
+    m_pShooter->Tick();
+    m_pTurret->Tick();
 }
 
 /******************************************************************************
