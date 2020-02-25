@@ -94,6 +94,7 @@ private:
     // Declare variables.
     int         m_nTeleopState;
     int         m_nAutoState;
+    double      m_dStartTime;
 };
 ////////////////////////////////////////////////////////////////////////////////
 #endif

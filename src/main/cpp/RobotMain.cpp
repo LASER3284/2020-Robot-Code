@@ -30,6 +30,10 @@ CRobotMain::CRobotMain()
     m_pLift                 = new CLift();
     m_pBlinkin				= new Blinkin(nBlinkinID);
     m_pAutonomousChooser	= new SendableChooser<string>();
+
+    m_nTeleopState  = 0;
+    m_nAutoState    = 0;
+    m_dStartTime    = 0.0;
 }
 
 /******************************************************************************
@@ -71,17 +75,21 @@ CRobotMain::~CRobotMain()
 ****************************************************************************/
 void CRobotMain::RobotInit()
 {
+    // Call Init of all classes required.
     m_pDrive->Init();
     m_pIntake->Init();
     m_pTurret->Init();
     m_pShooter->Init();
     m_pLift->Init();
+    // Put Autonomous things on the Dashboard.
     SmartDashboard::PutNumber("Idle Color", m_pBlinkin->eTwinkle);
     m_pAutonomousChooser->SetDefaultOption("Autonomous Idle", "Autonomous Idle");
     m_pAutonomousChooser->AddOption("Alliance Trench", "Alliance Trench");
     m_pAutonomousChooser->AddOption("Front Shield Generator", "Front Shield Generator");
     m_pAutonomousChooser->AddOption("Test Path", "Test Path");
     SmartDashboard::PutData(m_pAutonomousChooser);
+    // Start the Timer.
+    m_pTimer->Start();
 }
 
 /******************************************************************************
@@ -275,6 +283,8 @@ void CRobotMain::TeleopPeriodic()
         {
             // Start intaking.
             m_nTeleopState = eTeleopIntake;
+            // Set up timer.
+            m_dStartTime = m_pTimer->Get();
         }
     }
 
@@ -434,8 +444,12 @@ void CRobotMain::TeleopPeriodic()
             m_pLift->ExtendArm(false);
             // Extend intake.
             m_pIntake->Extend(true);
-            m_pIntake->IntakeMotor(true);
-            m_pIntake->RetentionMotor(true);
+            // Start intake on a half second delay.
+            if (m_pTimer->Get() - m_dStartTime == 0.5)
+            {
+                m_pIntake->IntakeMotor(true);
+                m_pIntake->RetentionMotor(true);
+            }
             // Stop Shooter, stop Turret, and stop Hood.
             m_pShooter->Stop();
             m_pTurret->Stop();
