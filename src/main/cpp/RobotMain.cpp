@@ -488,7 +488,7 @@ void CRobotMain::TeleopPeriodic()
             m_pTurret->SetState(eTurretTracking);
             // Set the Shooter to firing speed.
             m_pShooter->SetShooterSetpoint(dShooterFiringVelocity);
-            if (m_pShooter->IsReady()) 
+            if (m_pShooter->IsShooterAtSetpoint())) 
             {
                 // Start preloading into the shooter.
                 m_pHopper->Feed();
