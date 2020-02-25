@@ -412,6 +412,8 @@ void CRobotMain::TeleopPeriodic()
             m_pIntake->Extend(false);
             m_pIntake->IntakeMotor(false);
             m_pIntake->RetentionMotor(false);
+            // Return Lift arm to it's lower position.
+            m_pLift->ExtendArm(false);
             // Idle Shooter, stop Turret, and stop Hood.
 //          m_pShooter->Stop();
             m_pShooter->SetHoodState(eHoodIdle);
@@ -428,6 +430,8 @@ void CRobotMain::TeleopPeriodic()
             ********************************************************************/
             // Disable LEDs
             m_pShooter->SetVisionLED(false);
+            // Return Lift arm to it's lower position.
+            m_pLift->ExtendArm(false);
             // Extend intake.
             m_pIntake->Extend(true);
             m_pIntake->IntakeMotor(true);
@@ -446,6 +450,8 @@ void CRobotMain::TeleopPeriodic()
                 Aiming - Turret is tracking the position of the high goal
                          using the Vision points determined.
             ********************************************************************/
+            // Return Lift arm to it's lower position.
+            m_pLift->ExtendArm(false);
             // Set the Turret to tracking mode.
             m_pTurret->SetVision();
             // Enabled LEDs
@@ -460,6 +466,8 @@ void CRobotMain::TeleopPeriodic()
             /********************************************************************
                 Firing - Robot simply fires wherever it is currently aiming.
             ********************************************************************/
+            // Return Lift arm to it's lower position.
+            m_pLift->ExtendArm(false);
             // Enabled LEDs
             m_pShooter->SetVisionLED(false);
             // Set the Turret to idle, we don't want it to move.
@@ -482,13 +490,15 @@ void CRobotMain::TeleopPeriodic()
                 AutoFiring - Robot is firing the Energy into the high goal
                              while tracking the goal actively.
             ********************************************************************/
+            // Return Lift arm to it's lower position.
+            m_pLift->ExtendArm(false);
             // Enabled LEDs
             m_pShooter->SetVisionLED(true);
             // Set the Turret to Tracking mode.
             m_pTurret->SetState(eTurretTracking);
             // Set the Shooter to firing speed.
             m_pShooter->SetShooterSetpoint(dShooterFiringVelocity);
-            if (m_pShooter->IsShooterAtSetpoint())) 
+            if (m_pShooter->IsShooterAtSetpoint()) 
             {
                 // Start preloading into the shooter.
                 m_pHopper->Feed();
@@ -505,7 +515,7 @@ void CRobotMain::TeleopPeriodic()
             ********************************************************************/
             // Enabled LEDs
             m_pShooter->SetVisionLED(true);
-            // Move the Lift state machine.
+            // Start the Lift state machine.
             m_pLift->SetState(eLiftExtend);
             // Set robot color.
             m_pBlinkin->SetState(m_pBlinkin->eOrange);
