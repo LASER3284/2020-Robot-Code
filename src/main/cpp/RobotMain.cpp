@@ -77,6 +77,11 @@ void CRobotMain::RobotInit()
     m_pShooter->Init();
     m_pLift->Init();
     SmartDashboard::PutNumber("Idle Color", m_pBlinkin->eTwinkle);
+    m_pAutonomousChooser->SetDefaultOption("Autonomous Idle", "Autonomous Idle");
+    m_pAutonomousChooser->AddOption("Alliance Trench", "Alliance Trench");
+    m_pAutonomousChooser->AddOption("Front Shield Generator", "Front Shield Generator");
+    m_pAutonomousChooser->AddOption("Test Path", "Test Path");
+    SmartDashboard::PutData(m_pAutonomousChooser);
 }
 
 /******************************************************************************
@@ -123,6 +128,7 @@ void CRobotMain::AutonomousInit()
 
     // Get the select auto mode from SmartDashboard.
     string m_strAutonomousSelected = m_pAutonomousChooser->GetSelected();
+    std::cout << "STRING : " << m_strAutonomousSelected << std::endl;
     if (m_strAutonomousSelected == "Autonomous Idle")
     {
         m_nAutoState = eDoNothing;
@@ -165,6 +171,8 @@ void CRobotMain::AutonomousInit()
     {
         m_pDrive->SetSelectedTrajectory(m_nAutoState);
     }
+
+    std::cout << m_nAutoState << std::endl;
 }
 
 /******************************************************************************
@@ -188,31 +196,39 @@ void CRobotMain::AutonomousPeriodic()
             break;
 
         case eAllianceTrench :
-            // Set the Turret to tracking mode.
-            m_pTurret->SetVision();
-            // Enabled LEDs
-            m_pShooter->SetVisionLED(true);
-            // Set robot color.
-            m_pBlinkin->SetState(m_pBlinkin->eLarsonScanner1);
-            // Set the Shooter setpoint.
-            m_pShooter->SetShooterSetpoint(dShooterFiringVelocity);
-            // Start shooting when ready.
-            if (m_pShooter->IsShooterAtSetpoint())
-            {
-                // Start preloading into the shooter.
-                m_pHopper->Feed(true);
-                m_pHopper->Preload(true);
-                m_pIntake->RetentionMotor(true);
-            }
-            // Follow Trajectory after given time to shoot.
-            if (m_pTimer->Get() - dStartTime > 5.00)
-            {
+            // std::cout << "ALLIANCE TRENCH" << std::endl;
+            // if (m_pTimer->Get() - dStartTime < 7.00)
+            // {
+            //     // Set the Turret to tracking mode.
+            //     m_pTurret->SetVision();
+            //     // Enabled LEDs
+            //     m_pShooter->SetVisionLED(true);
+            //     // Set robot color.
+            //     m_pBlinkin->SetState(m_pBlinkin->eLarsonScanner1);
+            //     // Set the Shooter setpoint.
+            //     m_pShooter->SetShooterSetpoint(dShooterFiringVelocity);
+            //     // Start shooting when ready.
+            //     if (m_pShooter->IsShooterAtSetpoint())
+            //     {
+            //         // Start preloading into the shooter.
+            //         m_pHopper->Feed(true);
+            //         m_pHopper->Preload(true);
+            //         m_pIntake->RetentionMotor(true);
+            //     }
+            // }
+            // // Follow Trajectory after given time to shoot.
+            // if (m_pTimer->Get() - dStartTime >= 7.00)
+            // {
+                // Set the Shooter setpoint.
+                m_pShooter->SetShooterSetpoint(dShooterIdleVelocity);
+                // Disable LEDs
+                m_pShooter->SetVisionLED(false);
                 // Start intake, Follow Trajectory.
                 m_pIntake->Extend(true);
                 m_pIntake->IntakeMotor(true);
                 m_pIntake->RetentionMotor(true);
                 m_pDrive->FollowTrajectory();
-            }
+            // }
             break;
     }
 

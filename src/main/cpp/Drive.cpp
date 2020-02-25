@@ -40,9 +40,9 @@ CDrive::CDrive(Joystick* pDriveController)
     m_pRightMotor1			= new CFalconMotion(nRightDriveMotor1);
     m_pRightMotor2			= new WPI_TalonFX(nRightDriveMotor2);
     m_pRobotDrive			= new DifferentialDrive(*m_pLeftMotor1->GetMotorPointer(), *m_pRightMotor1->GetMotorPointer());
-//    m_pGyro 				= new AHRS(SPI::Port::kMXP);
+    m_pGyro 				= new AHRS(SPI::Port::kMXP);
     m_pTimer				= new Timer();
-    m_pOdometry 			= new DifferentialDriveOdometry(Rotation2d(degree_t(/*-m_pGyro->GetYaw()*/ 0)), m_pTrajectoryConstants.GetSelectedTrajectoryStartPoint());	
+    m_pOdometry 			= new DifferentialDriveOdometry(Rotation2d(degree_t(-m_pGyro->GetYaw())), m_pTrajectoryConstants.GetSelectedTrajectoryStartPoint());	
 }
 
 /****************************************************************************
@@ -58,7 +58,7 @@ CDrive::~CDrive()
     delete m_pRightMotor1;
     delete m_pRightMotor2;
     delete m_pRobotDrive;
-//    delete m_pGyro;
+    delete m_pGyro;
     delete m_pTimer;
 
     m_pLeftMotor1			= nullptr;
@@ -66,7 +66,7 @@ CDrive::~CDrive()
     m_pRightMotor1			= nullptr;
     m_pRightMotor2			= nullptr;
     m_pRobotDrive			= nullptr;
-//    m_pGyro					= nullptr;
+    m_pGyro					= nullptr;
     m_pTimer				= nullptr;
 }
 
@@ -107,7 +107,7 @@ void CDrive::Init()
     m_pTimer->Start();
 
     // Reset gyro.
-//    m_pGyro->Reset();
+    m_pGyro->Reset();
 }
 
 /****************************************************************************
@@ -134,7 +134,7 @@ void CDrive::Tick()
         }
 
         // Update odometry. (Position on field.)
-        m_pOdometry->Update(Rotation2d(degree_t(/*-m_pGyro->GetYaw()*/ 0)), inch_t(m_pLeftMotor1->GetActual(true)), inch_t(m_pRightMotor1->GetActual(true)));
+        m_pOdometry->Update(Rotation2d(degree_t(-m_pGyro->GetYaw())), inch_t(m_pLeftMotor1->GetActual(true)), inch_t(m_pRightMotor1->GetActual(true)));
 
         // Set drivetrain powers to joystick controls.
         m_pRobotDrive->ArcadeDrive(YAxis, XAxis, false);
@@ -281,7 +281,7 @@ void CDrive::ResetOdometry()
     ResetEncoders();
 
     // Reset field position.
-    m_pOdometry->ResetPosition(m_pTrajectoryConstants.GetSelectedTrajectoryStartPoint(), Rotation2d(degree_t(/*-m_pGyro->GetYaw()*/ 0)));
+    m_pOdometry->ResetPosition(m_pTrajectoryConstants.GetSelectedTrajectoryStartPoint(), Rotation2d(degree_t(-m_pGyro->GetYaw())));
 }
 
 /****************************************************************************
@@ -327,7 +327,9 @@ bool CDrive::GetIsTrajectoryFinished()
 ****************************************************************************/
 void CDrive::SetSelectedTrajectory(int nAutoState)
 {
+    ResetOdometry();
     m_pTrajectoryConstants.SelectTrajectory(nAutoState);
+    GenerateTrajectory(m_pTrajectoryConstants.GetSelectedTrajectory(), m_pTrajectoryConstants.kMaxSpeed, m_pTrajectoryConstants.kMaxAcceleration);
 }
 
 /****************************************************************************

@@ -244,28 +244,16 @@ public:
                     m_StartPoint,
                     Pose2d
                     {
-                        7.5_ft,					// X of point 1 on field in feet.
-                        7.0_ft,					// Y of point 1 on field in feet.
+                        2.0_ft,					// X of point 1 on field in feet.
+                        1.0_ft,					// Y of point 1 on field in feet.
                         Rotation2d(0_deg)
                     },
                     Pose2d
                     {
-                        11.0_ft,				// X of point 2 on field in feet.
-                        4.5_ft,					// Y of point 2 on field in feet.
-                        Rotation2d(-90_deg)
+                        5.0_ft,				// X of point 2 on field in feet.
+                        1.0_ft,					// Y of point 2 on field in feet.
+                        Rotation2d(0_deg)
                     },
-                    Pose2d
-                    {
-                        8.0_ft,				    // X of point 2 on field in feet.
-                        2.0_ft,					// Y of point 2 on field in feet.
-                        Rotation2d(-180_deg)
-                    },
-                    Pose2d
-                    {
-                        1.0_ft,				    // X ending position on field in feet.
-                        1.0_ft,					// Y ending position on field in feet.
-                        Rotation2d(-180_deg)    // Ending rotation on field in degrees.
-                    }
                 };
                 break;
 
@@ -296,8 +284,8 @@ public:
     Pose2d GetSelectedTrajectoryStartPoint()    {   return m_StartPoint;    };
 
     // Configure trajectory properties.
-    const meters_per_second_t kMaxSpeed = 1.5_mps;
-    const meters_per_second_squared_t kMaxAcceleration = 1_mps_sq;
+    const meters_per_second_t kMaxSpeed = 0.5_mps;
+    const meters_per_second_squared_t kMaxAcceleration = 0.5_mps_sq;
 
     enum TrajectoryList {eAllianceTrench = 1, eFrontShieldGenerator, eSideShieldGenerator, eOpposingTrench, ePowerPort, eTakePowerCells, eDoNothing, eTestPath};
 
