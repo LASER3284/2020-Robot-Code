@@ -17,7 +17,7 @@ using namespace ctre;
 
 // Hopper Contants.
 const double dHopperMainSpeed       = -0.9;
-const double dHopperPreloadSpeed  	= 0.5;
+const double dHopperPreloadSpeed  	= 1.0;
 /////////////////////////////////////////////////////////////////////////////
 
 
