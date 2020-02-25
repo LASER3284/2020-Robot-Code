@@ -21,6 +21,7 @@ CRobotMain::CRobotMain()
 {
     // Create object pointers.
     m_pDriveController  	= new Joystick(0);
+    m_pAuxController        = new Joystick(1);
     m_pTimer            	= new Timer();
     m_pDrive            	= new CDrive(m_pDriveController);
     m_pIntake				= new CIntake();
@@ -45,6 +46,7 @@ CRobotMain::~CRobotMain()
 {
     // Delete objects.
     delete m_pDriveController;
+    delete m_pAuxController;
     delete m_pTimer;
     delete m_pDrive;
     delete m_pIntake;
@@ -57,6 +59,7 @@ CRobotMain::~CRobotMain()
 
     // Set pointers to nullptrs.
     m_pDriveController   = nullptr;
+    m_pAuxController     = nullptr;
     m_pTimer             = nullptr;
     m_pDrive 			 = nullptr;
     m_pIntake			 = nullptr;
@@ -409,6 +412,15 @@ void CRobotMain::TeleopPeriodic()
         }
     }
 
+    /********************************************************************
+        Drive Controller - Bump Retention backwards (Aux Button A)
+    ********************************************************************/
+    if (m_pAuxController->GetRawButtonPressed(eButtonA))
+    {
+        m_nPreviousState = m_nTeleopState;
+        m_nTeleopState = eTeleopUnjam;
+    }
+
     switch(m_nTeleopState)
     {
         case eTeleopIdle :
@@ -533,6 +545,22 @@ void CRobotMain::TeleopPeriodic()
             m_pLift->SetState(eLiftExtend);
             // Set robot color.
             m_pBlinkin->SetState(m_pBlinkin->eOrange);
+            break;
+
+        case eTeleopUnjam :
+            /********************************************************************
+                Unjam - Intake is jammed, attempt unjamming.
+            ********************************************************************/
+            // Unjam the intake.
+            m_pIntake->Unjam();
+            // Run for a second.
+            if ((m_pTimer->Get() - m_dStartTime) == 1.0)
+            {
+                // Stop motor.
+                m_pIntake->RetentionMotor(false);
+                // Go back to previous state.
+                m_nTeleopState = m_nPreviousState;
+            }
             break;
 
         case eTeleopFollowing :

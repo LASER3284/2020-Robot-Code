@@ -23,6 +23,10 @@ CIntake::CIntake()
     m_pIntakeMotor		= new WPI_TalonSRX(nIntakeMotor);
     m_pRetentionMotor   = new CANSparkMax(nIntakeRetentionMotor, CANSparkMax::MotorType::kBrushless);
     m_pIntakeActuator	= new Solenoid(nIntakeSolenoid);
+    m_pTimer            = new Timer();
+
+    // Invert Retention motor.
+    m_pRetentionMotor->SetInverted(true);
 }
 
 /****************************************************************************
@@ -150,4 +154,15 @@ double CIntake::GetIntakeCurrent()
 {
     return m_pIntakeMotor->GetStatorCurrent();
 }
+
+/****************************************************************************
+    Description:	Attempts to unjam a ball lodged behind the Retention motor.
+    Arguments: 		None
+    Returns: 		Nothing
+****************************************************************************/
+void CIntake::Unjam()
+{
+    m_pRetentionMotor->Set(dRetentionRevSpeed);
+}
+
 /////////////////////////////////////////////////////////////////////////////

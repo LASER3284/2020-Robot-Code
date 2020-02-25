@@ -63,6 +63,7 @@ private:
         eTeleopFiring,
         eTeleopAutoFiring,
         eTeleopClimbing,
+        eTeleopUnjam,
         eTeleopFollowing
     };
 
@@ -80,6 +81,7 @@ private:
 
     // Object pointers.
     Joystick*                   m_pDriveController;
+    Joystick*                   m_pAuxController;
     Timer*                      m_pTimer;
     CDrive*                     m_pDrive;
     CIntake*                    m_pIntake;
@@ -94,6 +96,7 @@ private:
     // Declare variables.
     int         m_nTeleopState;
     int         m_nAutoState;
+    int         m_nPreviousState;
     double      m_dStartTime;
 };
 ////////////////////////////////////////////////////////////////////////////////
