@@ -142,8 +142,8 @@ void CLift::ExtendArm(bool bExtend)
 ****************************************************************************/
 void CLift::MoveToSetpoint()
 {
-    m_pWinchMotorLeft->GetPIDController().SetReference(m_dSetpoint * dLiftWinchPPR * dLiftWinchRPU, ControlType::kPosition);
-    m_pWinchMotorRight->GetPIDController().SetReference(-m_dSetpoint * dLiftWinchPPR * dLiftWinchRPU, ControlType::kPosition);
+    m_pWinchMotorLeft->GetPIDController().SetReference(m_dSetpoint, ControlType::kPosition);
+    m_pWinchMotorRight->GetPIDController().SetReference(-m_dSetpoint, ControlType::kPosition);
 }
 
 /****************************************************************************
