@@ -71,7 +71,7 @@ void CLift::Init()
 void CLift::Tick()
 {
     // Update the actual.
-    m_dActual = m_pWinchMotorLeft->GetEncoder().GetPosition() / dLiftWinchPPR / dLiftWinchRPU;
+    m_dActual = m_pWinchMotorLeft->GetEncoder().GetPosition();
 
     switch (m_nState)
     {
@@ -86,6 +86,7 @@ void CLift::Tick()
         case eLiftExtend :
             // Extend - Retract cylinders to extend arms upwards, begin moving.
             ExtendArm(true);
+            m_dSetpoint = dLiftWinchSetpoint;
             MoveToSetpoint();
             // Move to Raising.
             m_nState = eLiftRaising;
@@ -108,7 +109,7 @@ void CLift::Tick()
         
         case eLiftRetract1 :
             // Retract 1 - Begin moving the winch back to zero.
-            m_dSetpoint = 0.00;
+            m_dSetpoint = dLiftWinchRaisedSetpoint;
             MoveToSetpoint();
             m_nState = eLiftRetract2;
             break;

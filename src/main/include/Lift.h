@@ -15,14 +15,14 @@ using namespace frc;
 using namespace rev;
 
 // Default constants for the CLift class.
-const int       dLiftWinchPPR               =   52;              // NEO Integrated pulses per revolution.
-const double    dLiftWinchRPU               = 14.6;              // Revolutions per unit (Inches).
-const double    dLiftWinchSetpoint          = 36.0;              // Constant setpoint for climbing.
-const double    dLiftWinchRaisedSetpoint    = 12.0;              // Constant setpoint for raising during climbing.
-const double    dLiftWinchTolerance         =  0.5;              // Tolerance for winch PID controller.
-const double    dLiftProportional           =  1.0;              // Winch PID Proportional.
-const double    dLiftIntegral               =  0.0;              // Winch PID Integral.
-const double    dLiftDerivative             =  0.0;              // Winch PID Derivative.
+const int       dLiftWinchPPR               =  52;              // NEO Integrated pulses per revolution.
+const double    dLiftWinchRPU               =  14.6;            // Revolutions per unit (Inches).
+const double    dLiftWinchSetpoint          =  180.0;           // Constant setpoint for climbing.
+const double    dLiftWinchRaisedSetpoint    =  80.0;            // Constant setpoint for raising during climbing.
+const double    dLiftWinchTolerance         =  5.0;             // Tolerance for winch PID controller.
+const double    dLiftProportional           =  0.1;             // Winch PID Proportional.
+const double    dLiftIntegral               =  0.0;             // Winch PID Integral.
+const double    dLiftDerivative             =  0.0;             // Winch PID Derivative.
 
 // Lift Enum
 enum LiftStates {eLiftIdle = 0, eLiftExtend, eLiftRaising, eLiftStopped, eLiftRetract1, eLiftRetract2};
