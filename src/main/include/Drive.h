@@ -33,15 +33,15 @@ using namespace std;
 using namespace units;
 
 // Default constants for the CDrive class.
-const auto 		m_dDefaultkS 							= 0.363_V;											//	|
-const auto 		m_dDefaultkV 							= 0.0573 * 1_V * 1_s / 1_in;						//	|	Drive characterization constants.
-const auto 		m_dDefaultkA 							= 0.00743 * 1_V * 1_s * 1_s / 1_in;					//	|
-const double    m_dDefaultBeta                         	= 2.200;	// 1.800
-const double    m_dDefaultZeta                         	= 0.900;	// 0.9
-const double	m_dDefaultProportional					= 0.344;	// Left drive proportional value. // 0.000179
+const auto 		m_dDefaultkS 							= 0.39_V;											//	|
+const auto 		m_dDefaultkV 							= 0.0544 * 1_V * 1_s / 1_in;						//	|	Drive characterization constants.
+const auto 		m_dDefaultkA 							= 0.00583 * 1_V * 1_s * 1_s / 1_in;					//	|
+const double    m_dDefaultBeta                         	= 1.000;	// 1.800
+const double    m_dDefaultZeta                         	= 0.400;	// 0.9
+const double	m_dDefaultProportional					= 0.265;	// Left drive proportional value. // 0.000179
 const double	m_dDefaultIntegral						= 0.000;	// Left drive integral value.
 const double 	m_dDefaultDerivative					= 0.000;	// Left drive derivative value.
-const auto    	m_dDefaultDrivebaseWidth               	= 24.997;
+const auto    	m_dDefaultDrivebaseWidth               	= 27.019388;
 /////////////////////////////////////////////////////////////////////////////
 
 

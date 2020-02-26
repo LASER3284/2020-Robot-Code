@@ -48,18 +48,18 @@ public:
                         24.5_ft,				// Y of point 2 on field in feet.
                         Rotation2d(0_deg)       // Rotation at point 2 in degrees.
                     },
-                    Pose2d
-                    {
-                        27.0_ft,				// X of point 3 on field in feet.
-                        24.5_ft,				// Y of point 3 on field in feet.
-                        Rotation2d(0_deg)       // Rotation at point 3 in degrees.
-                    },
-                    Pose2d
-                    {
-                        7.0_ft,				    // X ending position on field in feet.
-                        19.0_ft,				// Y ending position on field in feet.
-                        Rotation2d(0_deg)		// Ending rotation on field in degrees.
-                    }
+                    // Pose2d
+                    // {
+                    //     27.0_ft,				// X of point 3 on field in feet.
+                    //     24.5_ft,				// Y of point 3 on field in feet.
+                    //     Rotation2d(0_deg)       // Rotation at point 3 in degrees.
+                    // },
+                    // Pose2d
+                    // {
+                    //     7.0_ft,				    // X ending position on field in feet.
+                    //     19.0_ft,				// Y ending position on field in feet.
+                    //     Rotation2d(0_deg)		// Ending rotation on field in degrees.
+                    // }
                 };
                 break;
 
@@ -234,7 +234,7 @@ public:
             case eTestPath :
                 m_StartPoint =
                 {
-                    1.0_ft,					// X starting position on field in feet.
+                    0.0_ft,					// X starting position on field in feet.
                     1.0_ft,					// Y starting position on field in feet.
                     Rotation2d(0_deg)		// Starting rotation on field in degrees.
                 };
@@ -250,7 +250,7 @@ public:
                     },
                     Pose2d
                     {
-                        5.0_ft,				// X of point 2 on field in feet.
+                        10.0_ft,				// X of point 2 on field in feet.
                         1.0_ft,					// Y of point 2 on field in feet.
                         Rotation2d(0_deg)
                     },
@@ -284,8 +284,8 @@ public:
     Pose2d GetSelectedTrajectoryStartPoint()    {   return m_StartPoint;    };
 
     // Configure trajectory properties.
-    const meters_per_second_t kMaxSpeed = 0.5_mps;
-    const meters_per_second_squared_t kMaxAcceleration = 0.5_mps_sq;
+    const meters_per_second_t kMaxSpeed = 2.0_mps;
+    const meters_per_second_squared_t kMaxAcceleration = 1.0_mps_sq;
 
     enum TrajectoryList {eAllianceTrench = 1, eFrontShieldGenerator, eSideShieldGenerator, eOpposingTrench, ePowerPort, eTakePowerCells, eDoNothing, eTestPath};
 

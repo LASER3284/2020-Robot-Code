@@ -65,7 +65,7 @@ void CIntake::Init()
     m_pRetentionMotor->SetSmartCurrentLimit(20);
 
     // Flip Retention motor.
-    m_pRetentionMotor->SetInverted(true);
+    m_pRetentionMotor->SetInverted(false);
 }
 
 /****************************************************************************

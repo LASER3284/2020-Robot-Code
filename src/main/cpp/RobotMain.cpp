@@ -461,7 +461,7 @@ void CRobotMain::TeleopPeriodic()
             // Extend intake.
             m_pIntake->Extend(true);
             // Start intake on a half second delay.
-            if (m_pTimer->Get() - m_dStartTime == 0.5)
+            if ((m_pTimer->Get() - m_dStartTime) >= 0.5)
             {
                 m_pIntake->IntakeMotor(true);
                 m_pIntake->RetentionMotor(true);
@@ -489,7 +489,7 @@ void CRobotMain::TeleopPeriodic()
             // Enabled LEDs
             m_pShooter->SetVisionLED(true);
             // Set the Hood to tracking mode.
-            m_pShooter->SetHoodState(eHoodTracking);
+            m_pShooter->SetHoodSetpoint(SmartDashboard::GetNumber("Target Distance", 0.0));
             // Set robot color.
             m_pBlinkin->SetState(m_pBlinkin->eLarsonScanner1);
             break;
@@ -648,7 +648,7 @@ void CRobotMain::TestPeriodic()
     ********************************************************************/
     if (m_pDriveController->GetRawButton(eButtonY))
     {
-        m_pLift->TestRightWinch(0.5);
+        m_pLift->TestRightWinch(-0.5);
     }
     else
     {
@@ -657,7 +657,7 @@ void CRobotMain::TestPeriodic()
     ********************************************************************/
         if (m_pDriveController->GetRawButton(eButtonA))
         {
-            m_pLift->TestRightWinch(-0.5);
+            m_pLift->TestRightWinch(0.5);
         }
         else
         {
@@ -668,7 +668,7 @@ void CRobotMain::TestPeriodic()
     /********************************************************************
         Drive Controller - Left Winch Up (POV Up)
     ********************************************************************/
-    if (m_pDriveController->GetPOV() == 1)
+    if (m_pDriveController->GetPOV() == 0)
     {
         m_pLift->TestLeftWinch(0.5);
     }
@@ -763,13 +763,9 @@ void CRobotMain::TestPeriodic()
     /********************************************************************
         Drive Controller - Actuate Lift (Right Stick)
     ********************************************************************/
-    if (m_pDriveController->GetRawButton(eButtonRS))
+    if (m_pDriveController->GetRawButtonPressed(eButtonRS))
     {
-        m_pLift->ExtendArm(true);
-    }
-    else
-    {
-        m_pLift->ExtendArm(false);
+        m_pLift->ExtendArm(!m_pLift->IsExtended());
     }
     
     // /********************************************************************
@@ -784,6 +780,8 @@ void CRobotMain::TestPeriodic()
     m_pDrive->Tick();
     m_pTurret->Tick();
     m_pShooter->Tick();
+    m_pLift->SetState(999);
+    m_pLift->Tick();
 }
 ///////////////////////////////////////////////////////////////////////////////
 #ifndef RUNNING_FRC_TESTS

@@ -33,8 +33,8 @@ const double dShooterDerivative         =       0.0;
 const double dShooterFeedForward        =     17e-5;
 const double dShooterTolerance          =     180.0;
 // Hood Constants.
-const double dHoodMaxPosition			=      66.0;
-const double dHoodMinPosition			=      28.0;
+const double dHoodMaxPosition			=    3750.0;
+const double dHoodMinPosition			=      60.0;
 const double dHoodManualFwdSpeed 		=     1.000;
 const double dHoodManualRevSpeed		=    -1.000;
 const double dHoodOpenLoopRamp			=     0.250;

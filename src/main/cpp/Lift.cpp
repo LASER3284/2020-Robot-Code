@@ -71,7 +71,7 @@ void CLift::Init()
 void CLift::Tick()
 {
     // Update the actual.
-    m_dActual = m_pWinchMotorLeft->GetEncoder().GetPosition();
+    m_dActual = m_pWinchMotorRight->GetEncoder().GetPosition();
 
     if (m_bIsIdling)
     {
@@ -135,7 +135,12 @@ void CLift::Tick()
                 Stop();
             }
             break;
+
+        default :
+            break;
     }
+
+    SmartDashboard::PutNumber("Lift Actual", m_dActual);
 }
 
 /****************************************************************************
@@ -212,6 +217,21 @@ void CLift::SetState(int nNewState)
     m_nState = nNewState;
 }
 
+/****************************************************************************
+    Description:	IsExtended
+    Arguments:		None
+    Returns:		bool
+****************************************************************************/
+bool CLift::IsExtended()
+{
+    return !m_pLiftSolenoid->Get();
+}
+
+/****************************************************************************
+    Description:	ReverseIdle
+    Arguments:		bool
+    Returns:		Nothing
+****************************************************************************/
 void CLift::ReverseIdle(bool bEnabled)
 {
     m_bIsIdling = bEnabled;

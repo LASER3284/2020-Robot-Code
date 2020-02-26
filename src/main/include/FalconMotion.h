@@ -17,7 +17,7 @@ using namespace frc;
 
 // Default Constants set for drive motors.
 const int	 	nDefaultFalconMotionPulsesPerRev				=  	 21504;		// Encoder Pulses Per Revolution (84/8 * 2048).
-const double 	dDefaultFalconMotionRevsPerUnit		    		=    (1.000 / (5.875 * 3.1415));	// Revolutions per unit of measure. (1 revs(Encoder)/(5.875 in * PI))
+const double 	dDefaultFalconMotionRevsPerUnit		    		=    (1.000 / (6.32640898790284 * 3.1415));	// Revolutions per unit of measure. (1 revs(Encoder)/(5.875 in * PI))
 const double	dDefaultFalconMotionTimeUnitInterval			=	10.000;		// Falcon velocity returns rotations/100ms. (x10 for seconds)
 const double 	dDefaultFalconMotionFwdHomeSpeed				=    0.000;		// Homing forward speed (set to zero because drive motors don't home)
 const double 	dDefaultFalconMotionRevHomeSpeed				=    0.000;		// Homing reverse speed (set to zero because drive motors don't home)
