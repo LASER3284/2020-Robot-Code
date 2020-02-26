@@ -345,7 +345,7 @@ void CRobotMain::TeleopPeriodic()
     /********************************************************************
         Drive Controller - Manual Move Turret Left (Left POV)
     ********************************************************************/
-    if (m_pDriveController->GetPOV() == 270)
+    if (m_pAuxController->GetPOV() == 270)
     {
         // Manually move left.
         m_pTurret->SetState(eTurretManualRev);
@@ -356,7 +356,7 @@ void CRobotMain::TeleopPeriodic()
     /********************************************************************
         Drive Controller - Manual Move Turret Right (Right POV)
     ********************************************************************/
-        if (m_pDriveController->GetPOV() == 90)
+        if (m_pAuxController->GetPOV() == 90)
         {
             // Manually move right.
             m_pTurret->SetState(eTurretManualFwd);
@@ -376,7 +376,7 @@ void CRobotMain::TeleopPeriodic()
     /********************************************************************
         Drive Controller - Toggle Shooter "Idle" speed (Button B)
     ********************************************************************/
-    if (m_pDriveController->GetRawButtonPressed(eButtonB))
+    if (m_pAuxController->GetRawButtonPressed(eButtonB))
     {
         m_pShooter->SetShooterState(m_pShooter->GetShooterState() == eShooterIdle ? eShooterStopped : eShooterIdle);
     }
@@ -384,7 +384,7 @@ void CRobotMain::TeleopPeriodic()
     /********************************************************************
         Drive Controller - Manual Move Hood Up (Up POV)
     ********************************************************************/
-    if (m_pDriveController->GetPOV() == 1)
+    if (m_pAuxController->GetPOV() == 0)
     {
         // Manual move up.
         m_pShooter->SetHoodState(eHoodManualFwd);
@@ -395,7 +395,7 @@ void CRobotMain::TeleopPeriodic()
     /********************************************************************
         Drive Controller - Manual Move Hood Down (Down POV)
     ********************************************************************/
-        if (m_pDriveController->GetPOV() == 180)
+        if (m_pAuxController->GetPOV() == 180)
         {
             // Manual move down.
             m_pShooter->SetHoodState(eHoodManualRev);
