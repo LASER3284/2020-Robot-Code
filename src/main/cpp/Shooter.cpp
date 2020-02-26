@@ -25,9 +25,10 @@ CShooter::CShooter()
     m_pShooterPID		= new CANPIDController(*m_pLeftShooter);
     m_pHoodEncoder		= new Encoder(nHoodEncoderChannelA, nHoodEncoderChannelB);
     m_pVisionSwitch     = new DigitalOutput(nVisionLEDChannel);
-    m_pHoodPID			= new frc2::PIDController(1.0, 0.0, 0.0);
+    m_pHoodPID			= new frc2::PIDController(0.1, 0.0, 0.0);
     m_pTimer			= new Timer();
 
+    m_pHoodPID->DisableContinuousInput();
     // Set Right shooter to follow Left shooter.
     m_pRightShooter->Follow(*m_pLeftShooter, true);
 }
@@ -127,7 +128,7 @@ void CShooter::Tick()
 {
     // Update Actual variables.
     m_dShooterActual = m_pLeftShooter->GetEncoder().GetVelocity();
-    m_dHoodActual	 = m_pHoodEncoder->GetDistance()  / (20.0 / 310.0) + dHoodMinPosition;
+    m_dHoodActual	 = m_pHoodEncoder->Get() / (20.0 / 310.0) + dHoodMinPosition;
 
     // Shooter state machine.
     switch(m_nShooterState)
@@ -186,31 +187,14 @@ void CShooter::Tick()
         case eHoodTracking :
             // Tracking - Utilizes Vision to find the setpoint of the hood.
             // Check if the distance has changed, which means we've found a target.
-            // static int nCounter = 0;
-            // static double dDistance = SmartDashboard::GetNumber("Target Distance", 0.0);
-            // static double dTheta = 1.0;
-            // static double dCalculatedAngle = 0.0;
-            // while (dTheta - fabs(dCalculatedAngle) > 0.25)
-            // {
-            //     dCalculatedAngle = acos(((dDistance + (44.0 * 44.0) * (sin(dTheta) * sin(dTheta)) / 64.0)) * (32.0 / (44.0 * 44.0 * sin(dTheta))));
-            //     dTheta = dCalculatedAngle;
-            //     nCounter++;
-            //     std::cout << "Iterations - " << nCounter << std::endl;
-            // }
-
-            // SmartDashboard::PutNumber("Theta", dTheta);
-            // SmartDashboard::PutNumber("Calculated Angle", dCalculatedAngle);
-            // nCounter = 0;
-            // SetHoodSetpoint(dCalculatedAngle);
+            SetHoodSetpoint(SmartDashboard::GetNumber("Target Distance", 0.0));
             break;
 
         case eHoodFinding :
             // Finding - Use PID Controller to drive to a given
             // Setpoint, and check if we are within the given
             // tolerance.
-            // Set the new Proportional term.
-            m_pHoodPID->SetP(m_dHoodProportional);
-            if (m_dHoodSetpoint - m_dHoodActual < m_dHoodTolerance)
+            if (fabs(m_pHoodPID->GetPositionError()) < m_dHoodTolerance)
             {
                 // At our setpoint, return to idle.
                 SetHoodState(eHoodIdle);
@@ -237,6 +221,7 @@ void CShooter::Tick()
     SmartDashboard::PutNumber("Shooter Actual", m_dShooterActual);
     SmartDashboard::PutNumber("Hood Setpoint", m_dHoodSetpoint);
     SmartDashboard::PutNumber("Hood Actual", m_dHoodActual);
+    SmartDashboard::PutNumber("Hood Output", m_pHoodPID->Calculate(m_dHoodActual));
 }
 
 /****************************************************************************
@@ -315,11 +300,22 @@ void CShooter::SetShooterSetpoint(double dSetpoint)
 ****************************************************************************/
 void CShooter::SetHoodSpeed(double dSpeed)
 {
+    // Cap values.
+    if (dSpeed > 1.0)
+    {
+        dSpeed = 1.0;
+    }
+    if (dSpeed < -1.0)
+    {
+        dSpeed = -1.0;
+    }
     // Convert a -1 -> 1 value to a 0 -> 1 value.
     double dFakeSpeed = dSpeed + 1.0;
     dFakeSpeed /= 2.0;
     // Set the "Speed" of the continuous rotation servo.
     m_pHoodServo->Set(dFakeSpeed);
+
+    SmartDashboard::PutNumber("Servo Output", dFakeSpeed);
 }
 
 /****************************************************************************
@@ -330,16 +326,6 @@ void CShooter::SetHoodSpeed(double dSpeed)
 ****************************************************************************/
 void CShooter::SetHoodSetpoint(double dSetpoint)
 {
-    // Check the bounds of the setpoint. Change if neccessary.
-    if (dSetpoint > dHoodMaxPosition)
-    {
-        dSetpoint = dHoodMaxPosition;
-    }
-    if (dSetpoint < dHoodMinPosition)
-    {
-        dSetpoint = dHoodMinPosition;
-    }
-
     // Set the member variable.
     m_dHoodSetpoint = dSetpoint;
 
@@ -349,8 +335,8 @@ void CShooter::SetHoodSetpoint(double dSetpoint)
     // Start the timer for beginning finding.
     m_dHoodFindingStartTime = m_pTimer->Get();
 
-    // Set Shooter state to finding.
-    SetShooterState(eShooterFinding);
+    // Set Hood state to finding.
+    SetHoodState(eHoodFinding);
 }
 
 /****************************************************************************

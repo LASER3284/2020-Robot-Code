@@ -9,6 +9,7 @@
 
 #include <frc/Solenoid.h>
 #include <rev/CANSparkMax.h>
+#include <frc/smartdashboard/SmartDashboard.h>
 #include "IOMap.h"
 
 using namespace frc;
@@ -44,6 +45,7 @@ public:
     void ExtendArm(bool bExtend = true);
     void MoveToSetpoint();
     void Stop();
+    bool IsExtended();
     bool IsReady();
     void TestLeftWinch(double dSpeed);
     void TestRightWinch(double dSpeed);

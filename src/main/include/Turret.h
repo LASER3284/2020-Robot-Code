@@ -18,7 +18,7 @@ using namespace ctre;
 // Turret Constants.
 const double dTurretMaxPosition		=      90.0;
 const double dTurretMinPosition		=     -90.0;
-const double dTurretProportional	=	  0.020;
+const double dTurretProportional	=	  0.012;
 const double dTurretIntegral		=	  0.024;
 const double dTurretDerivative		=     0.027;
 const double dTurretManualFwdSpeed 	=     0.250;
