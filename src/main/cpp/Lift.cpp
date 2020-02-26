@@ -73,6 +73,19 @@ void CLift::Tick()
     // Update the actual.
     m_dActual = m_pWinchMotorRight->GetEncoder().GetPosition();
 
+    if (m_bIsIdling)
+    {
+        m_pWinchMotorLeft->SetSmartCurrentLimit(1.5);
+        m_pWinchMotorRight->SetSmartCurrentLimit(1.5);
+        m_pWinchMotorLeft->Set(-0.05);
+        m_pWinchMotorRight->Set(-0.05);
+    }
+    else
+    {
+        m_pWinchMotorLeft->SetSmartCurrentLimit(60);
+        m_pWinchMotorRight->SetSmartCurrentLimit(60);
+    }
+    
     switch (m_nState)
     {
         case eLiftIdle :
@@ -86,6 +99,7 @@ void CLift::Tick()
         case eLiftExtend :
             // Extend - Retract cylinders to extend arms upwards, begin moving.
             ExtendArm(true);
+            m_dSetpoint = dLiftWinchSetpoint;
             MoveToSetpoint();
             // Move to Raising.
             m_nState = eLiftRaising;
@@ -108,7 +122,7 @@ void CLift::Tick()
         
         case eLiftRetract1 :
             // Retract 1 - Begin moving the winch back to zero.
-            m_dSetpoint = 0.00;
+            m_dSetpoint = dLiftWinchRaisedSetpoint;
             MoveToSetpoint();
             m_nState = eLiftRetract2;
             break;
@@ -146,8 +160,8 @@ void CLift::ExtendArm(bool bExtend)
 ****************************************************************************/
 void CLift::MoveToSetpoint()
 {
-    m_pWinchMotorLeft->GetPIDController().SetReference(m_dSetpoint * dLiftWinchPPR * dLiftWinchRPU, ControlType::kPosition);
-    m_pWinchMotorRight->GetPIDController().SetReference(-m_dSetpoint * dLiftWinchPPR * dLiftWinchRPU, ControlType::kPosition);
+    m_pWinchMotorLeft->GetPIDController().SetReference(m_dSetpoint, ControlType::kPosition);
+    m_pWinchMotorRight->GetPIDController().SetReference(-m_dSetpoint, ControlType::kPosition);
 }
 
 /****************************************************************************
@@ -211,5 +225,15 @@ void CLift::SetState(int nNewState)
 bool CLift::IsExtended()
 {
     return !m_pLiftSolenoid->Get();
+}
+
+/****************************************************************************
+    Description:	ReverseIdle
+    Arguments:		bool
+    Returns:		Nothing
+****************************************************************************/
+void CLift::ReverseIdle(bool bEnabled)
+{
+    m_bIsIdling = bEnabled;
 }
 ///////////////////////////////////////////////////////////////////////////////

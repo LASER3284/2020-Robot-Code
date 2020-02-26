@@ -135,8 +135,6 @@ void CSparkMotion::Tick()
                 else
                 {
                     // Reset the encoder to zero.
-//TODO: Find equivalent of this! Very Important!
-//					m_pMotor->SetSelectedSensorPosition(0);
                     // Stop the motor and change the control mode to position.
                     m_pMotor->GetPIDController().SetReference(0, ControlType::kVoltage);
                     // Set flag that homing is complete.
@@ -162,9 +160,6 @@ void CSparkMotion::Tick()
             if ((!IsRevLimitSwitchPressed()) ||
                 ((m_dMaxHomingTime > 0.000) && (m_pTimer->Get() > (m_dHomingStartTime + m_dMaxHomingTime))))
             {
-                // Reset the encoder to zero.
-//TODO: Find equivalent of this! Very Important!
-//				m_pMotor->SetSelectedSensorPosition(0);
                 // Stop the motor and change the control mode to position.
                 m_pMotor->GetPIDController().SetReference(0, ControlType::kPosition);
                 // Set flag that homing is complete.
