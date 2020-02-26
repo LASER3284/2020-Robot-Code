@@ -44,6 +44,7 @@ public:
     void ExtendArm(bool bExtend = true);
     void MoveToSetpoint();
     void Stop();
+    void ReverseIdle(bool bEnabled);
     bool IsReady();
     void TestLeftWinch(double dSpeed);
     void TestRightWinch(double dSpeed);
@@ -58,6 +59,7 @@ private:
     // Member variables.
     int     m_nState;
     bool    m_bIsReady;
+    bool    m_bIsIdling;
     double  m_dActual;
     double  m_dSetpoint;
 

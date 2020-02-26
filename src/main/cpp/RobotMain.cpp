@@ -436,6 +436,8 @@ void CRobotMain::TeleopPeriodic()
             m_pIntake->RetentionMotor(false);
             // Return Lift arm to it's lower position.
             m_pLift->ExtendArm(false);
+            // Idle the arm.
+            m_pLift->ReverseIdle(true);
             // Idle Shooter, stop Turret, and stop Hood.
 //          m_pShooter->Stop();
             m_pShooter->SetHoodState(eHoodIdle);
@@ -454,6 +456,8 @@ void CRobotMain::TeleopPeriodic()
             m_pShooter->SetVisionLED(false);
             // Return Lift arm to it's lower position.
             m_pLift->ExtendArm(false);
+            // Idle the arm.
+            m_pLift->ReverseIdle(true);
             // Extend intake.
             m_pIntake->Extend(true);
             // Start intake on a half second delay.
@@ -478,6 +482,8 @@ void CRobotMain::TeleopPeriodic()
             ********************************************************************/
             // Return Lift arm to it's lower position.
             m_pLift->ExtendArm(false);
+            // Idle the arm.
+            m_pLift->ReverseIdle(true);
             // Set the Turret to tracking mode.
             m_pTurret->SetVision();
             // Enabled LEDs
@@ -494,6 +500,8 @@ void CRobotMain::TeleopPeriodic()
             ********************************************************************/
             // Return Lift arm to it's lower position.
             m_pLift->ExtendArm(false);
+            // Idle the arm.
+            m_pLift->ReverseIdle(true);
             // Enabled LEDs
             m_pShooter->SetVisionLED(false);
             // Set the Turret to idle, we don't want it to move.
@@ -518,6 +526,8 @@ void CRobotMain::TeleopPeriodic()
             ********************************************************************/
             // Return Lift arm to it's lower position.
             m_pLift->ExtendArm(false);
+            // Idle the arm.
+            m_pLift->ReverseIdle(true);
             // Enabled LEDs
             m_pShooter->SetVisionLED(true);
             // Set the Turret to Tracking mode.
@@ -539,8 +549,10 @@ void CRobotMain::TeleopPeriodic()
             /********************************************************************
                 Climbing - Robot is beginning to climb for Endgame.
             ********************************************************************/
-            // Enabled LEDs
-            m_pShooter->SetVisionLED(true);
+            // Stop idling the arm.
+            m_pLift->ReverseIdle(false);
+            // Disable LEDs
+            m_pShooter->SetVisionLED(false);
             // Start the Lift state machine.
             m_pLift->SetState(eLiftExtend);
             // Set robot color.

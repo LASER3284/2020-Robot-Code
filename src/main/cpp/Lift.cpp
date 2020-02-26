@@ -73,6 +73,19 @@ void CLift::Tick()
     // Update the actual.
     m_dActual = m_pWinchMotorLeft->GetEncoder().GetPosition();
 
+    if (m_bIsIdling)
+    {
+        m_pWinchMotorLeft->SetSmartCurrentLimit(1.5);
+        m_pWinchMotorRight->SetSmartCurrentLimit(1.5);
+        m_pWinchMotorLeft->Set(-0.05);
+        m_pWinchMotorRight->Set(-0.05);
+    }
+    else
+    {
+        m_pWinchMotorLeft->SetSmartCurrentLimit(60);
+        m_pWinchMotorRight->SetSmartCurrentLimit(60);
+    }
+    
     switch (m_nState)
     {
         case eLiftIdle :
@@ -197,5 +210,10 @@ void CLift::TestRightWinch(double dSpeed)
 void CLift::SetState(int nNewState)
 {
     m_nState = nNewState;
+}
+
+void CLift::ReverseIdle(bool bEnabled)
+{
+    m_bIsIdling = bEnabled;
 }
 ///////////////////////////////////////////////////////////////////////////////
