@@ -68,6 +68,26 @@ private:
         eTeleopFollowing
     };
 
+    enum AutoStates
+    {
+        eAutoIdle,
+        eAutoAllianceTrench1,
+        eAutoAllianceTrench2,
+        eAutoAllianceTrench3,
+        eAutoAllianceTrench4,
+        eAutoFrontShieldGenerator1,
+        eAutoFrontShieldGenerator2,
+        eAutoFrontShieldGenerator3,
+        eAutoSideShieldGenerator1,
+        eAutoSideShieldGenerator2,
+        eAutoSideShieldGenerator3,
+        eAutoOpposingTrench1,
+        eAutoPowerPort1,
+        eAutoPowerPort2,
+        eAutoTakePowerCells1,
+        eAutoTestPath1
+    };
+
     // Object pointers.
     Joystick*                   m_pDriveController;
     Joystick*                   m_pAuxController;
@@ -85,6 +105,7 @@ private:
     // Declare variables.
     int         m_nTeleopState;
     int         m_nAutoState;
+    int         m_nSelectedTrajectory;
     int         m_nPreviousState;
     double      m_dStartTime;
 };

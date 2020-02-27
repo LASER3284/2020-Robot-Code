@@ -18,16 +18,17 @@ using namespace std;
 
 enum TrajectoryList 
 {
-    eAllianceTrench = 1, 
+    eAllianceTrench1 = 1,
     eAllianceTrench2, 
-    eFrontShieldGenerator,
-    eFrontShieldGenerator2, 
-    eSideShieldGenerator, 
-    eOpposingTrench, 
-    ePowerPort, 
-    eTakePowerCells, 
+    eFrontShieldGenerator1,
+    eFrontShieldGenerator2,
+    eSideShieldGenerator1, 
+    eSideShieldGenerator2,
+    eOpposingTrench1, 
+    ePowerPort1, 
+    eTakePowerCells1, 
     eDoNothing, 
-    eTestPath
+    eTestPath1
 };
 /////////////////////////////////////////////////////////////////////////////
 
@@ -39,7 +40,7 @@ public:
         // Retrieve the correct trajectory.
         switch(nTrajectory)
         {
-            case eAllianceTrench :
+            case eAllianceTrench1 :
                 m_StartPoint =
                 {
                     10.0_ft,				// X starting position on field in feet.
@@ -92,7 +93,7 @@ public:
                 m_bIsReversed = true;
                 break;
 
-            case eFrontShieldGenerator :
+            case eFrontShieldGenerator1 :
                 m_StartPoint =
                 {
                     10.0_ft,				// X starting position on field in feet.
@@ -107,7 +108,7 @@ public:
                     {
                         18.5_ft,				    // X of point 1 on field in feet.
                         13.5_ft,				    // Y of point 1 on field in feet.
-                        Rotation2d(20_deg)     // Rotation at point 1 in degrees.
+                        Rotation2d(10_deg)     // Rotation at point 1 in degrees.
                     }
                 };
 
@@ -130,8 +131,8 @@ public:
                     m_StartPoint,
                     Pose2d
                     {
-                        8.0_ft,				    // X ending position on field in feet.
-                        19.0_ft,				// Y ending position on field in feet.
+                        10.0_ft,				    // X ending position on field in feet.
+                        15.5_ft,				// Y ending position on field in feet.
                         Rotation2d(-20_deg)		// Ending rotation on field in degrees.
                     }
                 };
@@ -139,7 +140,7 @@ public:
                 m_bIsReversed = true;
                 break;
 
-            case eSideShieldGenerator :
+            case eSideShieldGenerator1 :
                 m_StartPoint =
                 {
                     10.0_ft,				// X starting position on field in feet.
@@ -161,7 +162,22 @@ public:
                         20.5_ft,				// X of point 2 on field in feet.
                         18.0_ft,				// Y of point 2 on field in feet.
                         Rotation2d(-70_deg)     // Rotation at point 2 in degrees.
-                    },
+                    }
+                };
+
+                m_bIsReversed = false;
+                break;
+
+            case eSideShieldGenerator2 :
+                m_StartPoint = 
+                {
+                    20.5_ft,				// X of point 2 on field in feet.
+                    18.0_ft,				// Y of point 2 on field in feet.
+                    Rotation2d(-70_deg)     // Rotation at point 2 in degrees.
+                };
+
+                m_Waypoints = 
+                {
                     Pose2d
                     {
                         14.0_ft,				// X of point 3 on field in feet.
@@ -176,10 +192,10 @@ public:
                     }
                 };
 
-                m_bIsReversed = false;
+                m_bIsReversed = true;
                 break;
 
-            case eOpposingTrench :
+            case eOpposingTrench1 :
                 m_StartPoint =
                 {
                     10.0_ft,				// X starting position on field in feet.
@@ -213,7 +229,7 @@ public:
                 m_bIsReversed = false;
                 break;
 
-            case ePowerPort :
+            case ePowerPort1 :
                 m_StartPoint =
                 {
                     10.0_ft,				// X starting position on field in feet.
@@ -241,7 +257,7 @@ public:
                 m_bIsReversed = false;
                 break;
 
-            case eTakePowerCells :
+            case eTakePowerCells1 :
                 m_StartPoint =
                 {
                     0.0_ft,					// X starting position on field in feet.
@@ -291,7 +307,7 @@ public:
                 m_bIsReversed = false;
                 break;
 
-            case eTestPath :
+            case eTestPath1 :
                 m_StartPoint =
                 {
                     0.0_ft,					// X starting position on field in feet.
