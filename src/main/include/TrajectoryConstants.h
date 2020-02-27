@@ -15,6 +15,20 @@
 using namespace frc;
 using namespace units;
 using namespace std;
+
+enum TrajectoryList 
+{
+    eAllianceTrench = 1, 
+    eAllianceTrench2, 
+    eFrontShieldGenerator,
+    eFrontShieldGenerator2, 
+    eSideShieldGenerator, 
+    eOpposingTrench, 
+    ePowerPort, 
+    eTakePowerCells, 
+    eDoNothing, 
+    eTestPath
+};
 /////////////////////////////////////////////////////////////////////////////
 
 class CTrajectoryConstants
@@ -44,23 +58,38 @@ public:
                     },
                     Pose2d
                     {
-                        34.5_ft,				// X of point 2 on field in feet.
+                        26.0_ft,				// X of point 2 on field in feet.
                         24.5_ft,				// Y of point 2 on field in feet.
                         Rotation2d(0_deg)       // Rotation at point 2 in degrees.
-                    },
-                    // Pose2d
-                    // {
-                    //     27.0_ft,				// X of point 3 on field in feet.
-                    //     24.5_ft,				// Y of point 3 on field in feet.
-                    //     Rotation2d(0_deg)       // Rotation at point 3 in degrees.
-                    // },
-                    // Pose2d
-                    // {
-                    //     7.0_ft,				    // X ending position on field in feet.
-                    //     19.0_ft,				// Y ending position on field in feet.
-                    //     Rotation2d(0_deg)		// Ending rotation on field in degrees.
-                    // }
+                    }
                 };
+
+                m_bIsReversed = false;
+                break;
+
+            case eAllianceTrench2 :
+                m_StartPoint = 
+                {
+                    Pose2d
+                    {
+                        26.0_ft,				// X of point 2 on field in feet.
+                        24.5_ft,				// Y of point 2 on field in feet.
+                        Rotation2d(0_deg)       // Rotation at point 2 in degrees.
+                    }
+                };
+
+                m_Waypoints = 
+                {
+                    m_StartPoint,
+                    Pose2d
+                    {
+                        27.0_ft,				// X of point 3 on field in feet.
+                        24.5_ft,				// Y of point 3 on field in feet.
+                        Rotation2d(0_deg)       // Rotation at point 3 in degrees.
+                    }
+                };
+
+                m_bIsReversed = true;
                 break;
 
             case eFrontShieldGenerator :
@@ -79,14 +108,35 @@ public:
                         18.5_ft,				    // X of point 1 on field in feet.
                         13.5_ft,				    // Y of point 1 on field in feet.
                         Rotation2d(20_deg)     // Rotation at point 1 in degrees.
-                    },
+                    }
+                };
+
+                m_bIsReversed = false;
+                break;
+
+            case eFrontShieldGenerator2 :
+                m_StartPoint = 
+                {
+                    Pose2d
+                    {
+                        18.5_ft,				    // X of point 1 on field in feet.
+                        13.5_ft,				    // Y of point 1 on field in feet.
+                        Rotation2d(0_deg)     // Rotation at point 1 in degrees.
+                    }
+                };
+
+                m_Waypoints = 
+                {
+                    m_StartPoint,
                     Pose2d
                     {
                         8.0_ft,				    // X ending position on field in feet.
                         19.0_ft,				// Y ending position on field in feet.
-                        Rotation2d(0_deg)		// Ending rotation on field in degrees.
+                        Rotation2d(-20_deg)		// Ending rotation on field in degrees.
                     }
                 };
+
+                m_bIsReversed = true;
                 break;
 
             case eSideShieldGenerator :
@@ -125,6 +175,8 @@ public:
                         Rotation2d(0_deg)		// Ending rotation on field in degrees.
                     }
                 };
+
+                m_bIsReversed = false;
                 break;
 
             case eOpposingTrench :
@@ -157,6 +209,8 @@ public:
                         Rotation2d(140_deg)		// Ending rotation on field in degrees.
                     }
                 };
+
+                m_bIsReversed = false;
                 break;
 
             case ePowerPort :
@@ -183,6 +237,8 @@ public:
                         Rotation2d(-40_deg)		// Ending rotation on field in degrees.
                     }
                 };
+
+                m_bIsReversed = false;
                 break;
 
             case eTakePowerCells :
@@ -209,6 +265,8 @@ public:
                         Rotation2d(-90_deg)		// Ending rotation on field in degrees.
                     }
                 };
+
+                m_bIsReversed = false;
                 break;
 
             case eDoNothing :
@@ -229,6 +287,8 @@ public:
                         Rotation2d(0_deg)		// Ending rotation on field in degrees.
                     }
                 };
+
+                m_bIsReversed = false;
                 break;
 
             case eTestPath :
@@ -255,6 +315,8 @@ public:
                         Rotation2d(0_deg)
                     },
                 };
+
+                m_bIsReversed = false;
                 break;
 
             default :
@@ -275,21 +337,24 @@ public:
                         Rotation2d(0_deg)		// Ending rotation on field in degrees.
                     }
                 };
+
+                m_bIsReversed = false;
                 break;
         }
     }
 
     // One-line methods.
-    vector<Pose2d> GetSelectedTrajectory()      {   return m_Waypoints;     };
     Pose2d GetSelectedTrajectoryStartPoint()    {   return m_StartPoint;    };
+    vector<Pose2d> GetSelectedTrajectory()      {   return m_Waypoints;     };
+    bool GetIsTrajectoryReversed()              {   return m_bIsReversed;   };
 
     // Configure trajectory properties.
-    const meters_per_second_t kMaxSpeed = 2.0_mps;
-    const meters_per_second_squared_t kMaxAcceleration = 1.0_mps_sq;
-
-    enum TrajectoryList {eAllianceTrench = 1, eFrontShieldGenerator, eSideShieldGenerator, eOpposingTrench, ePowerPort, eTakePowerCells, eDoNothing, eTestPath};
+    const meters_per_second_t kMaxSpeed = 2_mps;
+    const meters_per_second_squared_t kMaxAcceleration = 3_mps_sq;
 
 private:
+    bool m_bIsReversed = false;
+
     Pose2d m_StartPoint
     {
         0.0_ft,

@@ -28,6 +28,9 @@ CLift::CLift()
     m_bIsReady  = false;
     m_dActual   = m_pWinchMotorLeft->GetEncoder().GetPosition() / dLiftWinchPPR / dLiftWinchRPU;
     m_dSetpoint = dLiftWinchSetpoint;
+
+    m_pWinchMotorLeft->SetInverted(true);
+    m_pWinchMotorRight->SetInverted(false);
 }
 
 /****************************************************************************
@@ -75,10 +78,10 @@ void CLift::Tick()
 
     if (m_bIsIdling)
     {
-        m_pWinchMotorLeft->SetSmartCurrentLimit(1.5);
-        m_pWinchMotorRight->SetSmartCurrentLimit(1.5);
-        m_pWinchMotorLeft->Set(-0.05);
-        m_pWinchMotorRight->Set(-0.05);
+        m_pWinchMotorLeft->SetSmartCurrentLimit(1.0);
+        m_pWinchMotorRight->SetSmartCurrentLimit(1.0);
+        m_pWinchMotorLeft->Set(-0.12);
+        m_pWinchMotorRight->Set(-0.12);
     }
     else
     {
