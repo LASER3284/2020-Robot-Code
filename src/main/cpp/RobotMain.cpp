@@ -764,7 +764,7 @@ void CRobotMain::TeleopPeriodic()
             // m_pLift->ReverseIdle(true);
             // Idle the Hood, Turret, and Hopper.
             m_pHood->SetState(eHoodStopped);
-            m_pTurret->Stop();
+            // m_pTurret->Stop();
             m_pHopper->Feed(false);
             m_pHopper->Preload(false);
             // Set robot color.
