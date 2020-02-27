@@ -20,6 +20,7 @@
 #include "Hopper.h"
 #include "Lift.h"
 #include "Blinkin.h"
+#include "TrajectoryConstants.h"
 
 using namespace frc;
 using namespace std;
@@ -65,18 +66,6 @@ private:
         eTeleopClimbing,
         eTeleopUnjam,
         eTeleopFollowing
-    };
-
-    enum AutoStates
-    {
-        eAllianceTrench = 1, 
-        eFrontShieldGenerator, 
-        eSideShieldGenerator, 
-        eOpposingTrench, 
-        ePowerPort, 
-        eTakePowerCells, 
-        eDoNothing, 
-        eTestPath
     };
 
     // Object pointers.

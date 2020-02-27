@@ -112,6 +112,8 @@ void CRobotMain::RobotPeriodic()
 ****************************************************************************/
 void CRobotMain::DisabledInit()
 {
+    // Set joystick control.
+    m_pDrive->SetJoystickControl(false);
     // Disable LEDs
     m_pShooter->SetVisionLED(false);
 }
@@ -136,6 +138,9 @@ void CRobotMain::AutonomousInit()
 {
     // Disable joystick control to prevent issues during Autonomous.
     m_pDrive->SetJoystickControl(false);
+
+    // Get Auto start time.
+    m_dStartTime = m_pTimer->Get();
 
     // Get the select auto mode from SmartDashboard.
     string m_strAutonomousSelected = m_pAutonomousChooser->GetSelected();
@@ -194,7 +199,8 @@ void CRobotMain::AutonomousInit()
 ******************************************************************************/
 void CRobotMain::AutonomousPeriodic()
 {
-    static double dStartTime = m_pTimer->Get();
+    m_pLift->ExtendArm(false);
+    static int nCount = 0;
     switch (m_nAutoState)
     {
         case eDoNothing :
@@ -207,8 +213,8 @@ void CRobotMain::AutonomousPeriodic()
             break;
 
         case eAllianceTrench :
-            std::cout << "ALLIANCE TRENCH" << std::endl;
-            if (m_pTimer->Get() - dStartTime < 7.00)
+            // Fire the 3 balls.
+            if (fabs(m_pTimer->Get() - m_dStartTime) < 6.00)
             {
                 // Set the Turret to tracking mode.
                 m_pTurret->SetVision();
@@ -216,6 +222,84 @@ void CRobotMain::AutonomousPeriodic()
                 m_pShooter->SetVisionLED(true);
                 // Set robot color.
                 m_pBlinkin->SetState(m_pBlinkin->eLarsonScanner1);
+                // Set the Shooter setpoint.
+                m_pShooter->SetShooterSetpoint(4000);
+                // Start shooting when ready.
+                if (m_pShooter->IsShooterAtSetpoint())
+                {
+                    // Start preloading into the shooter.
+                    m_pHopper->Feed(true);
+                    m_pHopper->Preload(true);
+                    m_pIntake->RetentionMotor(true);
+                }
+            }
+            else
+            {
+                if (nCount == 0)
+                {
+                    nCount = 1;
+                    m_pDrive->SetSelectedTrajectory(eAllianceTrench);
+                }
+            }
+
+            // Intake trench balls.
+            if (nCount == 1)
+            {
+                // Set the Shooter setpoint.
+                m_pShooter->SetShooterSetpoint(4000);
+                // Set the Turret to tracking mode.
+                m_pTurret->Stop();
+                // Disable LEDs
+                m_pShooter->SetVisionLED(false);
+                // Start intake, Follow Trajectory.
+                m_pHopper->Feed(false);
+                m_pHopper->Preload(false);
+                m_pIntake->Extend(true);
+                m_pIntake->IntakeMotor(true);
+                m_pIntake->RetentionMotor(true);
+                m_pDrive->FollowTrajectory();
+
+                if (m_pDrive->TrajectoryIsFinished())
+                {
+                    nCount = 2;
+                    m_pDrive->SetSelectedTrajectory(eAllianceTrench2);
+                }
+            }
+            
+            // Back out of trench.
+            if (nCount == 2)
+            {
+                // Set the Shooter setpoint.
+                m_pShooter->SetShooterSetpoint(dShooterFiringVelocity);
+                // Set the Turret to tracking mode.
+                m_pTurret->Stop();
+                // Disable LEDs
+                m_pShooter->SetVisionLED(false);
+                // Start intake, Follow Trajectory.
+                m_pHopper->Feed(false);
+                m_pHopper->Preload(false);
+                m_pIntake->Extend(false);
+                m_pIntake->IntakeMotor(false);
+                m_pIntake->RetentionMotor(false);
+                m_pDrive->FollowTrajectory();
+
+                if (m_pDrive->TrajectoryIsFinished())
+                {
+                    nCount = 3;
+                }
+            }
+
+            // Shoot 5 balls.
+            if (nCount == 3 && fabs(m_pTimer->Get() - m_dStartTime) < 15.0)
+            {
+                // Set the Turret to tracking mode.
+                m_pTurret->SetVision();
+                // Enabled LEDs
+                m_pShooter->SetVisionLED(true);
+                // Set robot color.
+                m_pBlinkin->SetState(m_pBlinkin->eLarsonScanner1);
+                // Set the Hood to tracking mode.
+                m_pShooter->SetHoodSetpoint(SmartDashboard::GetNumber("Target Distance", 0.0));
                 // Set the Shooter setpoint.
                 m_pShooter->SetShooterSetpoint(dShooterFiringVelocity);
                 // Start shooting when ready.
@@ -227,21 +311,31 @@ void CRobotMain::AutonomousPeriodic()
                     m_pIntake->RetentionMotor(true);
                 }
             }
-            // Follow Trajectory after given time to shoot.
-            if ((m_pTimer->Get() - dStartTime) >= 7.00)
+            else
             {
-                // Set the Shooter setpoint.
-                m_pShooter->SetShooterSetpoint(dShooterIdleVelocity);
-                // Disable LEDs
-                m_pShooter->SetVisionLED(false);
-                // Start intake, Follow Trajectory.
-                m_pIntake->Extend(true);
-                m_pIntake->IntakeMotor(true);
-                m_pIntake->RetentionMotor(true);
-                m_pDrive->FollowTrajectory();
+                if (nCount == 3)
+                {
+                    // Start preloading into the shooter.
+                    m_pShooter->Stop();
+                    m_pShooter->SetVisionLED(false);
+                    m_pTurret->Stop();
+                    m_pHopper->Feed(false);
+                    m_pHopper->Preload(false);
+                    m_pIntake->RetentionMotor(false);
+                }
             }
+             
+            break;
+
+        case eFrontShieldGenerator :
+            
             break;
     }
+
+    SmartDashboard::PutNumber("Robot Timer", m_pTimer->Get());
+    SmartDashboard::PutNumber("Elapsed Time", fabs(m_pTimer->Get() - m_dStartTime));
+    SmartDashboard::PutNumber("Start Time", m_dStartTime);
+    SmartDashboard::PutNumber("IS DONE", m_pDrive->TrajectoryIsFinished());
 
     // Call all subsystem Ticks.
     m_pDrive->Tick();
@@ -258,6 +352,12 @@ void CRobotMain::TeleopInit()
 {
     // Enable joystick control for Teleop use.
     m_pDrive->SetJoystickControl(true);
+
+    // Clean-up from auto.
+    m_pIntake->Init();
+    m_pTurret->Init();
+    m_pShooter->Init();
+    m_pLift->Init();
 }
 
 /******************************************************************************

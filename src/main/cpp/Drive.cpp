@@ -148,6 +148,7 @@ void CDrive::Tick()
     SmartDashboard::PutNumber("Odometry Field Position X", double(inch_t(m_pOdometry->GetPose().Translation().X())));
     SmartDashboard::PutNumber("Odometry Field Position Y", double(inch_t(m_pOdometry->GetPose().Translation().Y())));
     SmartDashboard::PutNumber("Odometry Field Position Rotation", double(m_pOdometry->GetPose().Rotation().Degrees()));
+    SmartDashboard::PutNumber("Total Trajectory Time", double(m_Trajectory.TotalTime()));
 }
 
 /****************************************************************************
@@ -169,8 +170,21 @@ void CDrive::SetJoystickControl(bool bJoystickControl)
 ****************************************************************************/
 void CDrive::GenerateTrajectory(vector<Pose2d> pWaypoints, meters_per_second_t MaxSpeed, meters_per_second_squared_t MaxAcceleration)
 {
+    // Create the trajectory config.
+    auto m_Config = TrajectoryConfig(MaxSpeed, MaxAcceleration);
+
+    // Set trajectory parameters.
+    if (m_pTrajectoryConstants.GetIsTrajectoryReversed())
+    {
+        m_Config.SetReversed(true);
+    }
+    else
+    {
+        m_Config.SetReversed(false);
+    }
+
     // Generate the trajectory.
-    m_Trajectory = TrajectoryGenerator::GenerateTrajectory(pWaypoints, TrajectoryConfig(MaxSpeed, MaxAcceleration));
+    m_Trajectory = TrajectoryGenerator::GenerateTrajectory(pWaypoints, m_Config);
     
     // Setup the RamseteCommand with new trajectory.
     m_pRamseteCommand = new frc2::RamseteCommand(
@@ -202,9 +216,6 @@ void CDrive::FollowTrajectory()
 
     // Update RamseteCommand.
     m_pRamseteCommand->Execute();
-
-    // Put trajectory info on SmartDashboard.
-    SmartDashboard::PutNumber("Total Trajectory Time", double(m_Trajectory.TotalTime()));
 }
 
 /****************************************************************************
@@ -289,9 +300,19 @@ void CDrive::Stop()
     Arguments: 		None
     Returns: 		bool bTrajectoryIsFinished
 ****************************************************************************/
-bool CDrive::GetIsTrajectoryFinished()
+bool CDrive::TrajectoryIsFinished()
 {
     return m_pRamseteCommand->IsFinished();
+}
+
+/****************************************************************************
+    Description:	GetTotalTrajectoryTime - Returns the trajectory time.
+    Arguments: 		None
+    Returns: 		INT nTotalTime
+****************************************************************************/
+int CDrive::GetTotalTrajectoryTime()
+{   
+    return int(m_Trajectory.TotalTime());
 }
 
 /****************************************************************************
