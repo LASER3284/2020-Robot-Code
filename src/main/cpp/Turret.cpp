@@ -98,6 +98,11 @@ void CTurret::Tick()
 
     if (m_dActual >= dTurretMaxPosition || m_dActual <= dTurretMinPosition)
     {
+        std::cout << "FINDING OVERRUN" << std::endl;
+    }
+
+    if (m_dFakeActual >= dTurretMaxPosition || m_dFakeActual <= dTurretMinPosition)
+    {
         std::cout << "TRACKING OVERRUN" << std::endl;
     }
 
@@ -105,12 +110,26 @@ void CTurret::Tick()
     {
         case eTurretIdle :
             // Idle - Do nothing.
+            // Set state on SmartDashboard.
+            SmartDashboard::PutString("Turret State", "Idle");
             m_pPIDController->Reset();
             m_pTurretMotor->Set(ControlMode::PercentOutput, 0.0);
             break;
 
+        case eTurretStopped :
+            // Stopped - Do nothing, but also set the speed to zero.
+            // Set state on SmartDashboard.
+            SmartDashboard::PutString("Turret State", "Stopped");
+            m_pPIDController->Reset();
+            m_pTurretMotor->Set(ControlMode::PercentOutput, 0.0);
+            // Move back to Idle since everything should be stopped.
+            m_nState = eTurretIdle;
+            break;
+
         case eTurretFinding :
             // Finding - Go to a given setpoint on the Turret.
+            // Set state on SmartDashboard.
+            SmartDashboard::PutString("Turret State", "Finding");
             m_pTurretMotor->Set(ControlMode::PercentOutput, m_pPIDController->Calculate(m_dActual));
             if (IsAtSetpoint())
             {
@@ -121,25 +140,31 @@ void CTurret::Tick()
 
         case eTurretTracking :
             // Tracking - Uses a setpoint of zero and an actual from the Camera to center on the target.
+            // Set state on SmartDashboard.
+            SmartDashboard::PutString("Turret State", "Tracking");
             m_pTurretMotor->Set(ControlMode::PercentOutput, m_pPIDController->Calculate(-m_dFakeActual));
             break;
             
         case eTurretManualFwd :
             // ManualFwd - Manually move the motor forward at a constant speed.
+            // Set state on SmartDashboard.
+            SmartDashboard::PutString("Turret State", "Manual Fwd");
             m_pTurretMotor->Set(ControlMode::PercentOutput, dTurretManualFwdSpeed);
             break;
         
         case eTurretManualRev :
             // ManualRev - Manually move the motor backwards at a constant speed.
+            // Set state on SmartDashboard.
+            SmartDashboard::PutString("Turret State", "Manual Rev");
             m_pTurretMotor->Set(ControlMode::PercentOutput, dTurretManualRevSpeed);
             break;
 
         default :
-            m_nState = eTurretIdle;
+            // Set state on SmartDashboard.
+            SmartDashboard::PutString("Turret State", "ERROR");
             break;
     }
 
-    SmartDashboard::PutNumber("Turret State", m_nState);
     SmartDashboard::PutNumber("Turret Encoder", m_pTurretMotor->GetSelectedSensorPosition());
     SmartDashboard::PutNumber("Turret Actual", m_dActual);
     SmartDashboard::PutNumber("Turret Setpoint", m_dSetpoint);
@@ -189,8 +214,6 @@ void CTurret::SetSetpoint(double dSetpoint)
 
     // Set Turret state to finding.
     SetState(eTurretFinding);
-
-    std::cout << "Setpoint - " << m_dSetpoint << std::endl;
 }
 
 /****************************************************************************
@@ -199,13 +222,21 @@ void CTurret::SetSetpoint(double dSetpoint)
     Arguments: 		double dSetpoint - Units in degrees
     Returns: 		Nothing
 ****************************************************************************/
-void CTurret::SetVision()
+void CTurret::SetVision(bool bEnabled)
 {
-    // Set the setpoint to zero.
-    m_pPIDController->SetSetpoint(0.0);
+    if (bEnabled)
+    {
+        // Set the setpoint to zero.
+        m_pPIDController->SetSetpoint(0.0);
 
-    // Set Turret state to Tracking.
-    SetState(eTurretTracking);
+        // Set Turret state to Tracking.
+        SetState(eTurretTracking);
+    }
+    else
+    {
+        // Return to Stopped.
+        SetState(eTurretStopped);
+    }
 }
 
 /****************************************************************************

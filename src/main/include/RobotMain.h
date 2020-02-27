@@ -17,6 +17,7 @@
 #include "Intake.h"
 #include "Turret.h"
 #include "Shooter.h"
+#include "Hood.h"
 #include "Hopper.h"
 #include "Lift.h"
 #include "Blinkin.h"
@@ -76,6 +77,7 @@ private:
     CIntake*                    m_pIntake;
     CTurret*                    m_pTurret;
     CShooter*                   m_pShooter;
+    CHood*                      m_pHood;
     CHopper*                    m_pHopper;
     CLift*                      m_pLift;
     Blinkin*                    m_pBlinkin;

@@ -27,6 +27,7 @@ CRobotMain::CRobotMain()
     m_pIntake				= new CIntake();
     m_pTurret				= new CTurret();
     m_pShooter				= new CShooter();
+    m_pHood                 = new CHood();
     m_pHopper               = new CHopper();
     m_pLift                 = new CLift();
     m_pBlinkin				= new Blinkin(nBlinkinID);
@@ -52,6 +53,7 @@ CRobotMain::~CRobotMain()
     delete m_pIntake;
     delete m_pTurret;
     delete m_pShooter;
+    delete m_pHood;
     delete m_pHopper;
     delete m_pLift;
     delete m_pBlinkin;
@@ -65,6 +67,7 @@ CRobotMain::~CRobotMain()
     m_pIntake			 = nullptr;
     m_pTurret			 = nullptr;
     m_pShooter			 = nullptr;
+    m_pHood              = nullptr;
     m_pHopper            = nullptr;
     m_pLift              = nullptr;
     m_pBlinkin			 = nullptr;
@@ -217,15 +220,15 @@ void CRobotMain::AutonomousPeriodic()
             if (fabs(m_pTimer->Get() - m_dStartTime) < 6.00)
             {
                 // Set the Turret to tracking mode.
-                m_pTurret->SetVision();
+                m_pTurret->SetVision(true);
                 // Enabled LEDs
                 m_pShooter->SetVisionLED(true);
                 // Set robot color.
                 m_pBlinkin->SetState(m_pBlinkin->eLarsonScanner1);
                 // Set the Shooter setpoint.
-                m_pShooter->SetShooterSetpoint(4000);
+                m_pShooter->SetSetpoint(4000);
                 // Start shooting when ready.
-                if (m_pShooter->IsShooterAtSetpoint())
+                if (m_pShooter->IsAtSetpoint())
                 {
                     // Start preloading into the shooter.
                     m_pHopper->Feed(true);
@@ -246,7 +249,7 @@ void CRobotMain::AutonomousPeriodic()
             if (nCount == 1)
             {
                 // Set the Shooter setpoint.
-                m_pShooter->SetShooterSetpoint(4000);
+                m_pShooter->SetSetpoint(4000);
                 // Set the Turret to tracking mode.
                 m_pTurret->Stop();
                 // Disable LEDs
@@ -270,7 +273,7 @@ void CRobotMain::AutonomousPeriodic()
             if (nCount == 2)
             {
                 // Set the Shooter setpoint.
-                m_pShooter->SetShooterSetpoint(dShooterFiringVelocity);
+                m_pShooter->SetSetpoint(dShooterFiringVelocity);
                 // Set the Turret to tracking mode.
                 m_pTurret->Stop();
                 // Disable LEDs
@@ -293,17 +296,17 @@ void CRobotMain::AutonomousPeriodic()
             if (nCount == 3 && fabs(m_pTimer->Get() - m_dStartTime) < 15.0)
             {
                 // Set the Turret to tracking mode.
-                m_pTurret->SetVision();
+                m_pTurret->SetVision(true);
                 // Enabled LEDs
                 m_pShooter->SetVisionLED(true);
                 // Set robot color.
                 m_pBlinkin->SetState(m_pBlinkin->eLarsonScanner1);
                 // Set the Hood to tracking mode.
-                m_pShooter->SetHoodSetpoint(SmartDashboard::GetNumber("Target Distance", 0.0));
+                m_pHood->SetSetpoint(SmartDashboard::GetNumber("Target Distance", 0.0));
                 // Set the Shooter setpoint.
-                m_pShooter->SetShooterSetpoint(dShooterFiringVelocity);
+                m_pShooter->SetSetpoint(dShooterFiringVelocity);
                 // Start shooting when ready.
-                if (m_pShooter->IsShooterAtSetpoint())
+                if (m_pShooter->IsAtSetpoint())
                 {
                     // Start preloading into the shooter.
                     m_pHopper->Feed(true);
@@ -405,7 +408,7 @@ void CRobotMain::TeleopPeriodic()
         if (bHasFired)
         {
             // Has been fired, return to idle.
-            m_pShooter->SetShooterState(eShooterStopped);
+            m_pShooter->SetState(eShooterStopped);
             m_nTeleopState = eTeleopIdle;
             bHasFired = false;
         }
@@ -509,7 +512,7 @@ void CRobotMain::TeleopPeriodic()
     ********************************************************************/
     if (m_pAuxController->GetRawButtonPressed(eButtonB))
     {
-        m_pShooter->SetShooterState(m_pShooter->GetShooterState() == eShooterIdle ? eShooterStopped : eShooterIdle);
+        m_pShooter->SetState(m_pShooter->GetState() == eShooterIdle ? eShooterStopped : eShooterIdle);
     }
 
     /********************************************************************
@@ -590,9 +593,8 @@ void CRobotMain::TeleopPeriodic()
             m_pLift->ExtendArm(false);
             // Idle the arm.
             m_pLift->ReverseIdle(true);
-            // Idle Shooter, stop Turret, and stop Hood.
-//          m_pShooter->Stop();
-            m_pShooter->SetHoodState(eHoodIdle);
+            // Idle the Hood, Turret, and Hopper.
+            m_pHood->SetState(eHoodStopped);
             m_pTurret->Stop();
             m_pHopper->Feed(false);
             m_pHopper->Preload(false);
@@ -637,11 +639,11 @@ void CRobotMain::TeleopPeriodic()
             // Idle the arm.
             m_pLift->ReverseIdle(true);
             // Set the Turret to tracking mode.
-            m_pTurret->SetVision();
+            m_pTurret->SetVision(true);
             // Enabled LEDs
             m_pShooter->SetVisionLED(true);
             // Set the Hood to tracking mode.
-            m_pShooter->SetHoodSetpoint(SmartDashboard::GetNumber("Target Distance", 0.0));
+            m_pHood->SetSetpoint(SmartDashboard::GetNumber("Target Distance", 0.0));
             // Set robot color.
             m_pBlinkin->SetState(m_pBlinkin->eLarsonScanner1);
             break;
@@ -659,8 +661,8 @@ void CRobotMain::TeleopPeriodic()
             // Set the Turret to idle, we don't want it to move.
             m_pTurret->SetState(eTurretIdle);
             // Set the Shooter to firing speed.
-            m_pShooter->SetShooterSetpoint(dShooterFiringVelocity);
-            if (m_pShooter->IsShooterAtSetpoint())
+            m_pShooter->SetSetpoint(dShooterFiringVelocity);
+            if (m_pShooter->IsAtSetpoint())
             {
                 // Start preloading into the shooter.
                 m_pHopper->Feed(true);
@@ -685,8 +687,8 @@ void CRobotMain::TeleopPeriodic()
             // Set the Turret to Tracking mode.
             m_pTurret->SetState(eTurretTracking);
             // Set the Shooter to firing speed.
-            m_pShooter->SetShooterSetpoint(dShooterFiringVelocity);
-            if (m_pShooter->IsShooterAtSetpoint()) 
+            m_pShooter->SetSetpoint(dShooterFiringVelocity);
+            if (m_pShooter->IsAtSetpoint()) 
             {
                 // Start preloading into the shooter.
                 m_pHopper->Feed();
@@ -744,8 +746,7 @@ void CRobotMain::TeleopPeriodic()
     m_pTurret->Tick();
     m_pShooter->Tick();
 
-    SmartDashboard::PutNumber("Shooter State", m_pShooter->GetShooterState());
-    SmartDashboard::PutNumber("Shooter At Setpoint", m_pShooter->IsShooterAtSetpoint());
+    SmartDashboard::PutNumber("Shooter At Setpoint", m_pShooter->IsAtSetpoint());
     SmartDashboard::PutNumber("Retention Amperage", m_pIntake->GetRetentionCurrent());
     SmartDashboard::PutNumber("Intake Amperage", m_pIntake->GetIntakeCurrent());
     SmartDashboard::PutNumber("State", m_nTeleopState);
@@ -868,11 +869,11 @@ void CRobotMain::TestPeriodic()
     {
         if (m_pDriveController->GetRawButton(eStart))
         {
-            m_pShooter->SetShooterSetpoint(dShooterFiringVelocity);
+            m_pShooter->SetSetpoint(dShooterFiringVelocity);
         }
         else
         {
-            m_pShooter->SetShooterSetpoint(dShooterIdleVelocity);
+            m_pShooter->SetSetpoint(dShooterIdleVelocity);
         }
     }
     else
@@ -882,11 +883,11 @@ void CRobotMain::TestPeriodic()
     ********************************************************************/
         if (m_pDriveController->GetRawAxis(eLeftTrigger) >= 0.65)
         {
-            m_pShooter->SetShooterState(eShooterManualRev);
+            m_pShooter->SetState(eShooterManualRev);
         }
         else
         {
-            m_pShooter->SetShooterState(eShooterStopped);
+            m_pShooter->SetState(eShooterStopped);
         }
     }
 
@@ -895,7 +896,7 @@ void CRobotMain::TestPeriodic()
     ********************************************************************/
     if (m_pDriveController->GetRawButton(eButtonRB))
     {
-        m_pShooter->SetHoodState(eHoodManualFwd);
+        m_pHood->SetState(eHoodManualFwd);
     }
     else
     {
@@ -904,11 +905,11 @@ void CRobotMain::TestPeriodic()
     ********************************************************************/
         if (m_pDriveController->GetRawButton(eButtonLB))
         {
-            m_pShooter->SetHoodState(eHoodManualRev);
+            m_pHood->SetState(eHoodManualRev);
         }
         else
         {
-            m_pShooter->SetHoodState(eHoodIdle);
+            m_pHood->SetState(eHoodIdle);
         }
     }
 
@@ -932,6 +933,7 @@ void CRobotMain::TestPeriodic()
     m_pDrive->Tick();
     m_pTurret->Tick();
     m_pShooter->Tick();
+    m_pHood->Tick();
     m_pLift->SetState(999);
     m_pLift->Tick();
 }
