@@ -78,8 +78,6 @@ private:
     bool			m_bIsReady;
     bool			m_bVisionTracking;
     bool			m_bMotionMagic;
-
-    // Shooter variables.
     double 			m_dProportional;
     double 			m_dIntegral;
     double 			m_dDerivative;
@@ -90,7 +88,6 @@ private:
     double			m_dMaxFindingTime;
     double			m_dFindingStartTime;
     ShooterState	m_nState;
-    bool			m_bIsReady;
 };
 /////////////////////////////////////////////////////////////////////////////
 #endif

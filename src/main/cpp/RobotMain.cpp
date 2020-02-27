@@ -261,7 +261,7 @@ void CRobotMain::AutonomousPeriodic()
         case eAutoAllianceTrench2 :
             // Drive through the trench and intake balls.
             // Set the Shooter setpoint.
-            m_pShooter->SetShooterSetpoint(4000);
+            m_pShooter->SetSetpoint(4000);
             // Set the Turret to tracking mode.
             m_pTurret->Stop();
             // Disable LEDs
@@ -286,7 +286,7 @@ void CRobotMain::AutonomousPeriodic()
         case eAutoAllianceTrench3 :
             // Back out of trench.
             // Set the Shooter setpoint.
-            m_pShooter->SetShooterSetpoint(dShooterFiringVelocity);
+            m_pShooter->SetSetpoint(dShooterFiringVelocity);
             // Set the Turret to tracking mode.
             m_pTurret->Stop();
             // Disable LEDs
@@ -311,17 +311,17 @@ void CRobotMain::AutonomousPeriodic()
             if (fabs(m_pTimer->Get() - m_dStartTime) < 15.0)
             {
                 // Set the Turret to tracking mode.
-                m_pTurret->SetVision();
+                m_pTurret->SetVision(true);
                 // Enabled LEDs
                 m_pShooter->SetVisionLED(true);
                 // Set robot color.
                 m_pBlinkin->SetState(m_pBlinkin->eLarsonScanner1);
                 // Set the Hood to tracking mode.
-                m_pShooter->SetHoodSetpoint(SmartDashboard::GetNumber("Target Distance", 0.0));
+                m_pHood->SetSetpoint(SmartDashboard::GetNumber("Target Distance", 0.0));
                 // Set the Shooter setpoint.
-                m_pShooter->SetShooterSetpoint(dShooterFiringVelocity);
+                m_pShooter->SetSetpoint(dShooterFiringVelocity);
                 // Start shooting when ready.
-                if (m_pShooter->IsShooterAtSetpoint())
+                if (m_pShooter->IsAtSetpoint())
                 {
                     // Start preloading into the shooter.
                     m_pHopper->Feed(true);
@@ -375,17 +375,17 @@ void CRobotMain::AutonomousPeriodic()
             if (fabs(m_pTimer->Get() - m_dStartTime) < 15.0)
             {
                 // Set the Turret to tracking mode.
-                m_pTurret->SetVision();
+                m_pTurret->SetVision(true);
                 // Enabled LEDs
                 m_pShooter->SetVisionLED(true);
                 // Set robot color.
                 m_pBlinkin->SetState(m_pBlinkin->eLarsonScanner1);
                 // Set the Hood to tracking mode.
-                m_pShooter->SetHoodSetpoint(SmartDashboard::GetNumber("Target Distance", 0.0));
+                m_pHood->SetSetpoint(SmartDashboard::GetNumber("Target Distance", 0.0));
                 // Set the Shooter setpoint.
-                m_pShooter->SetShooterSetpoint(dShooterFiringVelocity);
+                m_pShooter->SetSetpoint(dShooterFiringVelocity);
                 // Start shooting when ready.
-                if (m_pShooter->IsShooterAtSetpoint())
+                if (m_pShooter->IsAtSetpoint())
                 {
                     // Start preloading into the shooter.
                     m_pHopper->Feed(true);
@@ -479,17 +479,17 @@ void CRobotMain::AutonomousPeriodic()
             if (fabs(m_pTimer->Get() - m_dStartTime) < 15.0)
             {
                 // Set the Turret to tracking mode.
-                m_pTurret->SetVision();
+                m_pTurret->SetVision(true);
                 // Enabled LEDs
                 m_pShooter->SetVisionLED(true);
                 // Set robot color.
                 m_pBlinkin->SetState(m_pBlinkin->eLarsonScanner1);
                 // Set the Hood to tracking mode.
-                m_pShooter->SetHoodSetpoint(SmartDashboard::GetNumber("Target Distance", 0.0));
+                m_pHood->SetSetpoint(SmartDashboard::GetNumber("Target Distance", 0.0));
                 // Set the Shooter setpoint.
-                m_pShooter->SetShooterSetpoint(dShooterFiringVelocity);
+                m_pShooter->SetSetpoint(dShooterFiringVelocity);
                 // Start shooting when ready.
-                if (m_pShooter->IsShooterAtSetpoint())
+                if (m_pShooter->IsAtSetpoint())
                 {
                     // Start preloading into the shooter.
                     m_pHopper->Feed(true);
@@ -593,67 +593,67 @@ void CRobotMain::TeleopPeriodic()
     }
     // Other states related to this button will set state back to Idle.
 
-    // /********************************************************************
-    //     Drive Controller - Manual Move Turret Left (Left POV)
-    // ********************************************************************/
-    // if (m_pAuxController->GetPOV() == 270)
-    // {
-    //     // Manually move left.
-    //     m_pTurret->SetState(eTurretManualRev);
-    //     bTurretMoving = true;
-    // }
-    // else
-    // {
-    // /********************************************************************
-    //     Drive Controller - Manual Move Turret Right (Right POV)
-    // ********************************************************************/
-    //     if (m_pAuxController->GetPOV() == 90)
-    //     {
-    //         // Manually move right.
-    //         m_pTurret->SetState(eTurretManualFwd);
-    //         bTurretMoving = true;
-    //     }
-    //     else
-    //     {
-    //         if (bTurretMoving)
-    //         {
-    //             // No longer pressing any buttons, move to Idle.
-    //             m_pTurret->SetState(eTurretIdle);
-    //             bTurretMoving = false;
-    //         }
-    //     }
-    // }
+    /********************************************************************
+        Drive Controller - Manual Move Turret Left (Left POV)
+    ********************************************************************/
+    if (m_pAuxController->GetPOV() == 270)
+    {
+        // Manually move left.
+        m_pTurret->SetState(eTurretManualRev);
+        bTurretMoving = true;
+    }
+    else
+    {
+    /********************************************************************
+        Drive Controller - Manual Move Turret Right (Right POV)
+    ********************************************************************/
+        if (m_pAuxController->GetPOV() == 90)
+        {
+            // Manually move right.
+            m_pTurret->SetState(eTurretManualFwd);
+            bTurretMoving = true;
+        }
+        else
+        {
+            if (bTurretMoving)
+            {
+                // No longer pressing any buttons, move to Idle.
+                m_pTurret->SetState(eTurretIdle);
+                bTurretMoving = false;
+            }
+        }
+    }
 
-    // /********************************************************************
-    //     Drive Controller - Manual Move Hood Up (Up POV)
-    // ********************************************************************/
-    // if (m_pAuxController->GetPOV() == 0)
-    // {
-    //     // Manual move up.
-    //     m_pShooter->SetHoodState(eHoodManualFwd);
-    //     bHoodMoving = true;
-    // }
-    // else
-    // {
-    // /********************************************************************
-    //     Drive Controller - Manual Move Hood Down (Down POV)
-    // ********************************************************************/
-    //     if (m_pAuxController->GetPOV() == 180)
-    //     {
-    //         // Manual move down.
-    //         m_pShooter->SetHoodState(eHoodManualRev);
-    //         bHoodMoving = true;
-    //     }
-    //     else
-    //     {
-    //         if (bHoodMoving)
-    //         {
-    //             // No longer moving, set to idle.
-    //             m_pShooter->SetHoodState(eHoodIdle);
-    //             bHoodMoving = false;
-    //         }
-    //     }
-    // }
+    /********************************************************************
+        Drive Controller - Manual Move Hood Up (Up POV)
+    ********************************************************************/
+    if (m_pAuxController->GetPOV() == 0)
+    {
+        // Manual move up.
+        m_pHood->SetState(eHoodManualFwd);
+        bHoodMoving = true;
+    }
+    else
+    {
+    /********************************************************************
+        Drive Controller - Manual Move Hood Down (Down POV)
+    ********************************************************************/
+        if (m_pAuxController->GetPOV() == 180)
+        {
+            // Manual move down.
+            m_pHood->SetState(eHoodManualRev);
+            bHoodMoving = true;
+        }
+        else
+        {
+            if (bHoodMoving)
+            {
+                // No longer moving, set to idle.
+                m_pHood->SetState(eHoodIdle);
+                bHoodMoving = false;
+            }
+        }
+    }
 
     /********************************************************************
         Aux Controller - Vision Aiming (Left Trigger)
