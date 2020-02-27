@@ -30,7 +30,7 @@ const int	 nTurretPulsesPerRev	=      4096;
 const double dTurretRevsPerUnit		= 	1.0/360;
 
 // Turret enum.
-enum TurretState {eTurretIdle = 0, eTurretFinding, eTurretTracking, eTurretManualFwd, eTurretManualRev};
+enum TurretState {eTurretIdle = 0, eTurretStopped, eTurretFinding, eTurretTracking, eTurretManualFwd, eTurretManualRev};
 /////////////////////////////////////////////////////////////////////////////
 
 
@@ -50,7 +50,7 @@ public:
     void 		Tick();
     void		SetPID(double dProportional, double dIntegral, double dDerivative);
     void 		SetSetpoint(double dSetpoint);
-    void        SetVision();
+    void        SetVision(bool bEnabled);
     void 		SetState(TurretState nState);
     void 		SetTolerance(double dTolerance);
     void 		Stop();

@@ -8,10 +8,8 @@
 #define Shooter_h
 
 #include <frc/Solenoid.h>
-#include <frc/Servo.h>
-#include <frc/Encoder.h>
 #include <rev/CANSparkMax.h>
-#include <frc/controller/PIDController.h>
+#include <frc/Timer.h>
 #include <frc/smartdashboard/SmartDashboard.h>
 #include <frc/DigitalOutput.h>
 #include "IOMap.h"
@@ -32,26 +30,9 @@ const double dShooterIntegral           =       0.0;
 const double dShooterDerivative         =       0.0;
 const double dShooterFeedForward        =     17e-5;
 const double dShooterTolerance          =     180.0;
-// Hood Constants.
-const double dHoodMaxPosition			=    3750.0;
-const double dHoodMinPosition			=      60.0;
-const double dHoodManualFwdSpeed 		=     1.000;
-const double dHoodManualRevSpeed		=    -1.000;
-const double dHoodOpenLoopRamp			=     0.250;
-const double dHoodClosedLoopRamp		=     0.250;
-const int	 dHoodPulsesPerRev			=      1024;
-const double dHoodRevsPerUnit			= 	1.0/360;
-const double dHoodProportional          =      3e-3;
-const double dHoodIntegral              =       0.0;
-const double dHoodDerivative            =       0.0;
-const double dHoodFeedForward           =       0.0;
-const double dHoodTolerance             =       0.5;
-const double dHoodFindingTime           =       0.0;
 
 // Shooter enum.
 enum ShooterState	{eShooterStopped, eShooterIdle, eShooterFinding, eShooterManualFwd, eShooterManualRev};
-// Hood enum.
-enum HoodState 		{eHoodIdle, eHoodTracking, eHoodFinding, eHoodManualFwd, eHoodManualRev};
 /////////////////////////////////////////////////////////////////////////////
 
 
@@ -69,43 +50,28 @@ public:
     // Public methods.
     void 			Init();
     void 			Tick();
-    bool			IsReady()															{	return (m_bHoodIsReady && m_bShooterIsReady);		};
+    bool			IsReady()													{	return m_bIsReady;		                        };
     void 			Stop();
 
     // Shooter methods.
-    void			SetShooterPID(double dProportional, double dIntegral, double dDerivative, double dFeedForward);
-    void 			SetShooterSetpoint(double dSetpoint);
-    void 			SetShooterState(ShooterState nState)								{	m_nShooterState = nState;							};
-    void 			SetShooterTolerance(double dTolerance);
-    bool			IsShooterAtSetpoint();
-    double			GetShooterActual()													{	return m_pLeftShooter->GetEncoder().GetVelocity();	};
-    double 			GetShooterSetpoint()												{	return m_dShooterSetpoint;							};
-    double			GetShooterTolerance()												{	return m_dShooterTolerance;							};
-    ShooterState 	GetShooterState()													{	return m_nShooterState;								};		
-    
-    // Hood methods.
-    void			SetHoodPID(double dProportional, double dIntegral, double dDerivative);
-    void 			SetHoodSetpoint(double dSetpoint);
-    void			SetHoodSpeed(double dSpeed);
-    void 			SetHoodState(HoodState nState)										{	m_nHoodState = nState;								};
-    void 			SetHoodTolerance(double dTolerance);
-    bool			IsHoodAtSetpoint();
-    double			GetHoodActual()														{	return m_pHoodEncoder->GetDistance();				};
-    double 			GetHoodSetpoint()													{	return m_dHoodSetpoint;								};
-    double			GetHoodTolerance()													{	return m_dHoodTolerance;							};
-    HoodState		GetHoodState()														{	return m_nHoodState;								};
+    void			SetPID(double dProportional, double dIntegral, double dDerivative, double dFeedForward);
+    void 			SetSetpoint(double dSetpoint);
+    void 			SetState(ShooterState nState)								{	m_nState = nState;							        };
+    void 			SetTolerance(double dTolerance);
+    bool			IsAtSetpoint();
+    double			GetActual()													{	return m_pLeftShooter->GetEncoder().GetVelocity();	};
+    double 			GetSetpoint()												{	return m_dSetpoint;							        };
+    double			GetTolerance()												{	return m_dTolerance;							    };
+    ShooterState 	GetState()													{	return m_nState;								    };		
 
     void            SetVisionLED(bool bEnabled = true);
 
 private:
     // Object pointers.
-    Servo*					m_pHoodServo;
     rev::CANSparkMax*		m_pLeftShooter;
     rev::CANSparkMax*		m_pRightShooter;
     rev::CANPIDController*	m_pShooterPID;
     DigitalOutput*          m_pVisionSwitch;
-    Encoder*				m_pHoodEncoder;
-    frc2::PIDController*	m_pHoodPID;
     Timer*					m_pTimer;
 
     // Declare variables.
@@ -114,30 +80,17 @@ private:
     bool			m_bMotionMagic;
 
     // Shooter variables.
-    double 			m_dShooterProportional;
-    double 			m_dShooterIntegral;
-    double 			m_dShooterDerivative;
-    double 			m_dShooterFeedForward;
-    double 			m_dShooterTolerance;
-    double 			m_dShooterSetpoint;
-    double			m_dShooterActual;
-    double			m_dShooterMaxFindingTime;
-    double			m_dShooterFindingStartTime;
-    ShooterState	m_nShooterState;
-    bool			m_bShooterIsReady;
-
-    // Hood variables.
-    double 			m_dHoodProportional;
-    double 			m_dHoodTrackingP;
-    double 			m_dHoodIntegral;
-    double 			m_dHoodDerivative;
-    double 			m_dHoodTolerance;
-    double 			m_dHoodSetpoint;
-    double			m_dHoodActual;
-    double			m_dHoodMaxFindingTime;
-    double			m_dHoodFindingStartTime;
-    HoodState		m_nHoodState;
-    bool			m_bHoodIsReady;
+    double 			m_dProportional;
+    double 			m_dIntegral;
+    double 			m_dDerivative;
+    double 			m_dFeedForward;
+    double 			m_dTolerance;
+    double 			m_dSetpoint;
+    double			m_dActual;
+    double			m_dMaxFindingTime;
+    double			m_dFindingStartTime;
+    ShooterState	m_nState;
+    bool			m_bIsReady;
 };
 /////////////////////////////////////////////////////////////////////////////
 #endif

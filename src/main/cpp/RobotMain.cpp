@@ -27,6 +27,7 @@ CRobotMain::CRobotMain()
     m_pIntake				= new CIntake();
     m_pTurret				= new CTurret();
     m_pShooter				= new CShooter();
+    m_pHood                 = new CHood();
     m_pHopper               = new CHopper();
     m_pLift                 = new CLift();
     m_pBlinkin				= new Blinkin(nBlinkinID);
@@ -52,6 +53,7 @@ CRobotMain::~CRobotMain()
     delete m_pIntake;
     delete m_pTurret;
     delete m_pShooter;
+    delete m_pHood;
     delete m_pHopper;
     delete m_pLift;
     delete m_pBlinkin;
@@ -65,6 +67,7 @@ CRobotMain::~CRobotMain()
     m_pIntake			 = nullptr;
     m_pTurret			 = nullptr;
     m_pShooter			 = nullptr;
+    m_pHood              = nullptr;
     m_pHopper            = nullptr;
     m_pLift              = nullptr;
     m_pBlinkin			 = nullptr;
@@ -231,15 +234,15 @@ void CRobotMain::AutonomousPeriodic()
             if (fabs(m_pTimer->Get() - m_dStartTime) < 6.00)
             {
                 // Set the Turret to tracking mode.
-                m_pTurret->SetVision();
+                m_pTurret->SetVision(true);
                 // Enabled LEDs
                 m_pShooter->SetVisionLED(true);
                 // Set robot color.
                 m_pBlinkin->SetState(m_pBlinkin->eLarsonScanner1);
                 // Set the Shooter setpoint.
-                m_pShooter->SetShooterSetpoint(4000);
+                m_pShooter->SetSetpoint(4000);
                 // Start shooting when ready.
-                if (m_pShooter->IsShooterAtSetpoint())
+                if (m_pShooter->IsAtSetpoint())
                 {
                     // Start preloading into the shooter.
                     m_pHopper->Feed(true);
@@ -274,11 +277,12 @@ void CRobotMain::AutonomousPeriodic()
             // Move to the next state when the robot is done path following.
             if (m_pDrive->TrajectoryIsFinished())
             {
+
                 m_pDrive->SetSelectedTrajectory(eAllianceTrench2);
                 m_nAutoState = eAutoAllianceTrench3;
             }
             break;
-
+        
         case eAutoAllianceTrench3 :
             // Back out of trench.
             // Set the Shooter setpoint.
@@ -435,17 +439,17 @@ void CRobotMain::AutonomousPeriodic()
             if (fabs(m_pTimer->Get() - m_dStartTime) < 15.0)
             {
                 // Set the Turret to tracking mode.
-                m_pTurret->SetVision();
+                m_pTurret->SetVision(true);
                 // Enabled LEDs
                 m_pShooter->SetVisionLED(true);
                 // Set robot color.
                 m_pBlinkin->SetState(m_pBlinkin->eLarsonScanner1);
                 // Set the Hood to tracking mode.
-                m_pShooter->SetHoodSetpoint(SmartDashboard::GetNumber("Target Distance", 0.0));
+                m_pHood->SetSetpoint(SmartDashboard::GetNumber("Target Distance", 0.0));
                 // Set the Shooter setpoint.
-                m_pShooter->SetShooterSetpoint(dShooterFiringVelocity);
+                m_pShooter->SetSetpoint(dShooterFiringVelocity);
                 // Start shooting when ready.
-                if (m_pShooter->IsShooterAtSetpoint())
+                if (m_pShooter->IsAtSetpoint())
                 {
                     // Start preloading into the shooter.
                     m_pHopper->Feed(true);
@@ -560,27 +564,6 @@ void CRobotMain::TeleopPeriodic()
     }
 
     /********************************************************************
-        Drive Controller - Vision Aiming (Left Bumper)
-    ********************************************************************/
-    if ((m_pDriveController->GetRawButton(eButtonLB)) && !(m_pDriveController->GetRawAxis(eRightTrigger) >= 0.65))
-    {
-        // Set state to Aiming.
-        m_nTeleopState = eTeleopAiming;
-    }
-    if (!(m_pDriveController->GetRawButton(eButtonLB)) && !(m_pDriveController->GetRawAxis(eRightTrigger) >= 0.65))
-    {
-        // If released while still in aiming...
-        if (m_nTeleopState == eTeleopAiming)
-        {
-            // Go back to idle.
-            m_nTeleopState = eTeleopIdle;
-        }
-        // If the button was released but we didn't change states
-        // yet, do nothing to prevent it from leaving it's current
-        // state.
-    }
-
-    /********************************************************************
         Drive Controller - Fire (Right Trigger)
     ********************************************************************/
     if (m_pDriveController->GetRawAxis(eRightTrigger) >= 0.65 && !m_pDriveController->GetRawButton(eButtonRB))
@@ -594,99 +577,172 @@ void CRobotMain::TeleopPeriodic()
         if (bHasFired)
         {
             // Has been fired, return to idle.
-            m_pShooter->SetShooterState(eShooterStopped);
+            m_pShooter->SetState(eShooterStopped);
             m_nTeleopState = eTeleopIdle;
             bHasFired = false;
         }
     }
 
     /********************************************************************
-        Drive Controller - AutoFire (Right Trigger + Left Bumper)
+        Drive Controller - AutoFire (Right Trigger + Aux Right Trigger)
     ********************************************************************/
-    if (m_pDriveController->GetRawButton(eButtonLB) && m_pDriveController->GetRawAxis(eRightTrigger) >= 0.65)
+    if ((m_pDriveController->GetRawAxis(eRightTrigger) > 0.65) && m_pDriveController->GetRawAxis(eRightTrigger) >= 0.65)
     {
         // Set the state to AutoFire.
         m_nTeleopState = eTeleopAutoFiring;
     }
     // Other states related to this button will set state back to Idle.
 
+    // /********************************************************************
+    //     Drive Controller - Manual Move Turret Left (Left POV)
+    // ********************************************************************/
+    // if (m_pAuxController->GetPOV() == 270)
+    // {
+    //     // Manually move left.
+    //     m_pTurret->SetState(eTurretManualRev);
+    //     bTurretMoving = true;
+    // }
+    // else
+    // {
+    // /********************************************************************
+    //     Drive Controller - Manual Move Turret Right (Right POV)
+    // ********************************************************************/
+    //     if (m_pAuxController->GetPOV() == 90)
+    //     {
+    //         // Manually move right.
+    //         m_pTurret->SetState(eTurretManualFwd);
+    //         bTurretMoving = true;
+    //     }
+    //     else
+    //     {
+    //         if (bTurretMoving)
+    //         {
+    //             // No longer pressing any buttons, move to Idle.
+    //             m_pTurret->SetState(eTurretIdle);
+    //             bTurretMoving = false;
+    //         }
+    //     }
+    // }
+
+    // /********************************************************************
+    //     Drive Controller - Manual Move Hood Up (Up POV)
+    // ********************************************************************/
+    // if (m_pAuxController->GetPOV() == 0)
+    // {
+    //     // Manual move up.
+    //     m_pShooter->SetHoodState(eHoodManualFwd);
+    //     bHoodMoving = true;
+    // }
+    // else
+    // {
+    // /********************************************************************
+    //     Drive Controller - Manual Move Hood Down (Down POV)
+    // ********************************************************************/
+    //     if (m_pAuxController->GetPOV() == 180)
+    //     {
+    //         // Manual move down.
+    //         m_pShooter->SetHoodState(eHoodManualRev);
+    //         bHoodMoving = true;
+    //     }
+    //     else
+    //     {
+    //         if (bHoodMoving)
+    //         {
+    //             // No longer moving, set to idle.
+    //             m_pShooter->SetHoodState(eHoodIdle);
+    //             bHoodMoving = false;
+    //         }
+    //     }
+    // }
+
     /********************************************************************
-        Drive Controller - Manual Move Turret Left (Left POV)
+        Aux Controller - Vision Aiming (Left Trigger)
     ********************************************************************/
-    if (m_pDriveController->GetPOV() == 270)
+    if ((m_pAuxController->GetRawAxis(eRightTrigger) > 0.65) && !(m_pDriveController->GetRawAxis(eRightTrigger) >= 0.65))
     {
-        // Manually move left.
-        m_pTurret->SetState(eTurretManualRev);
-        bTurretMoving = true;
+        // Set state to Aiming.
+        m_nTeleopState = eTeleopAiming;
     }
-    else
+    if (!(m_pAuxController->GetRawAxis(eRightTrigger) > 0.65) && !(m_pDriveController->GetRawAxis(eRightTrigger) >= 0.65))
     {
-    /********************************************************************
-        Drive Controller - Manual Move Turret Right (Right POV)
-    ********************************************************************/
-        if (m_pDriveController->GetPOV() == 90)
+        // If released while still in aiming...
+        if (m_nTeleopState == eTeleopAiming)
         {
-            // Manually move right.
-            m_pTurret->SetState(eTurretManualFwd);
-            bTurretMoving = true;
+            // Go back to idle.
+            m_nTeleopState = eTeleopIdle;
         }
-        else
-        {
-            if (bTurretMoving)
-            {
-                // No longer pressing any buttons, move to Idle.
-                m_pTurret->SetState(eTurretIdle);
-                bTurretMoving = false;
-            }
-        }
+        // If the button was released but we didn't change states
+        // yet, do nothing to prevent it from leaving it's current
+        // state.
     }
 
     /********************************************************************
-        Drive Controller - Toggle Shooter "Idle" speed (Button B)
+        Aux Controller - Toggle Shooter "Idle" speed (Button B)
     ********************************************************************/
-    if (m_pDriveController->GetRawButtonPressed(eButtonB))
+    if (m_pAuxController->GetRawButtonPressed(eButtonB))
     {
-        m_pShooter->SetShooterState(m_pShooter->GetShooterState() == eShooterIdle ? eShooterStopped : eShooterIdle);
+        m_pShooter->SetState(m_pShooter->GetState() == eShooterIdle ? eShooterStopped : eShooterIdle);
     }
 
     /********************************************************************
-        Drive Controller - Manual Move Hood Up (Up POV)
-    ********************************************************************/
-    if (m_pDriveController->GetPOV() == 1)
-    {
-        // Manual move up.
-        m_pShooter->SetHoodState(eHoodManualFwd);
-        bHoodMoving = true;
-    }
-    else
-    {
-    /********************************************************************
-        Drive Controller - Manual Move Hood Down (Down POV)
-    ********************************************************************/
-        if (m_pDriveController->GetPOV() == 180)
-        {
-            // Manual move down.
-            m_pShooter->SetHoodState(eHoodManualRev);
-            bHoodMoving = true;
-        }
-        else
-        {
-            if (bHoodMoving)
-            {
-                // No longer moving, set to idle.
-                m_pShooter->SetHoodState(eHoodIdle);
-                bHoodMoving = false;
-            }
-        }
-    }
-
-    /********************************************************************
-        Drive Controller - Bump Retention backwards (Aux Button A)
+        Aux Controller - Bump Retention backwards (Button A)
     ********************************************************************/
     if (m_pAuxController->GetRawButtonPressed(eButtonA))
     {
         m_nPreviousState = m_nTeleopState;
         m_nTeleopState = eTeleopUnjam;
+    }
+
+    /********************************************************************
+        Aux Controller - Right Winch Up (Left Stick Y)
+    ********************************************************************/
+    if (m_pAuxController->GetRawAxis(eLeftAxisY) > 0.2)
+    {
+        m_pLift->TestRightWinch(-1.0);
+    }
+    else
+    {
+    /********************************************************************
+        Aux Controller - Right Winch Down (Left Stick Y)
+    ********************************************************************/
+        if (m_pAuxController->GetRawAxis(eLeftAxisY) < -0.2)
+        {
+            m_pLift->TestRightWinch(1.0);
+        }
+        else
+        {
+            m_pLift->TestRightWinch(0.0);
+        }
+    }
+    
+    /********************************************************************
+        Aux Controller - Left Winch Up (Right Stick Y)
+    ********************************************************************/
+    if (m_pAuxController->GetRawAxis(eRightAxisY) > 0.2)
+    {
+        m_pLift->TestLeftWinch(0.5);
+    }
+    else
+    {
+    /********************************************************************
+        Aux Controller - Left Winch Down (Right Stick Y)
+    ********************************************************************/
+        if (m_pAuxController->GetRawAxis(eRightAxisY) < -0.2)
+        {
+            m_pLift->TestLeftWinch(-0.5);
+        }
+        else
+        {
+            m_pLift->TestLeftWinch(0.0);
+        }
+    }
+
+    /********************************************************************
+        Aux Controller - Actuate Lift (Start Button)
+    ********************************************************************/
+    if (m_pDriveController->GetRawButtonPressed(eStart))
+    {
+        m_pLift->ExtendArm(!m_pLift->IsExtended());
     }
 
     switch(m_nTeleopState)
@@ -706,9 +762,8 @@ void CRobotMain::TeleopPeriodic()
             m_pLift->ExtendArm(false);
             // Idle the arm.
             m_pLift->ReverseIdle(true);
-            // Idle Shooter, stop Turret, and stop Hood.
-//          m_pShooter->Stop();
-            m_pShooter->SetHoodState(eHoodIdle);
+            // Idle the Hood, Turret, and Hopper.
+            m_pHood->SetState(eHoodStopped);
             m_pTurret->Stop();
             m_pHopper->Feed(false);
             m_pHopper->Preload(false);
@@ -753,11 +808,11 @@ void CRobotMain::TeleopPeriodic()
             // Idle the arm.
             m_pLift->ReverseIdle(true);
             // Set the Turret to tracking mode.
-            m_pTurret->SetVision();
+            m_pTurret->SetVision(true);
             // Enabled LEDs
             m_pShooter->SetVisionLED(true);
             // Set the Hood to tracking mode.
-            m_pShooter->SetHoodSetpoint(SmartDashboard::GetNumber("Target Distance", 0.0));
+            m_pHood->SetSetpoint(SmartDashboard::GetNumber("Target Distance", 0.0));
             // Set robot color.
             m_pBlinkin->SetState(m_pBlinkin->eLarsonScanner1);
             break;
@@ -775,8 +830,8 @@ void CRobotMain::TeleopPeriodic()
             // Set the Turret to idle, we don't want it to move.
             m_pTurret->SetState(eTurretIdle);
             // Set the Shooter to firing speed.
-            m_pShooter->SetShooterSetpoint(dShooterFiringVelocity);
-            if (m_pShooter->IsShooterAtSetpoint())
+            m_pShooter->SetSetpoint(dShooterFiringVelocity);
+            if (m_pShooter->IsAtSetpoint())
             {
                 // Start preloading into the shooter.
                 m_pHopper->Feed(true);
@@ -801,8 +856,8 @@ void CRobotMain::TeleopPeriodic()
             // Set the Turret to Tracking mode.
             m_pTurret->SetState(eTurretTracking);
             // Set the Shooter to firing speed.
-            m_pShooter->SetShooterSetpoint(dShooterFiringVelocity);
-            if (m_pShooter->IsShooterAtSetpoint()) 
+            m_pShooter->SetSetpoint(dShooterFiringVelocity);
+            if (m_pShooter->IsAtSetpoint()) 
             {
                 // Start preloading into the shooter.
                 m_pHopper->Feed();
@@ -817,14 +872,14 @@ void CRobotMain::TeleopPeriodic()
             /********************************************************************
                 Climbing - Robot is beginning to climb for Endgame.
             ********************************************************************/
-            // Stop idling the arm.
-            m_pLift->ReverseIdle(false);
-            // Disable LEDs
-            m_pShooter->SetVisionLED(false);
-            // Start the Lift state machine.
-            m_pLift->SetState(eLiftExtend);
-            // Set robot color.
-            m_pBlinkin->SetState(m_pBlinkin->eOrange);
+            // // Stop idling the arm.
+            // m_pLift->ReverseIdle(false);
+            // // Disable LEDs
+            // m_pShooter->SetVisionLED(false);
+            // // Start the Lift state machine.
+            // m_pLift->SetState(eLiftExtend);
+            // // Set robot color.
+            // m_pBlinkin->SetState(m_pBlinkin->eOrange);
             break;
 
         case eTeleopUnjam :
@@ -860,8 +915,7 @@ void CRobotMain::TeleopPeriodic()
     m_pTurret->Tick();
     m_pShooter->Tick();
 
-    SmartDashboard::PutNumber("Shooter State", m_pShooter->GetShooterState());
-    SmartDashboard::PutNumber("Shooter At Setpoint", m_pShooter->IsShooterAtSetpoint());
+    SmartDashboard::PutNumber("Shooter At Setpoint", m_pShooter->IsAtSetpoint());
     SmartDashboard::PutNumber("Retention Amperage", m_pIntake->GetRetentionCurrent());
     SmartDashboard::PutNumber("Intake Amperage", m_pIntake->GetIntakeCurrent());
     SmartDashboard::PutNumber("State", m_nTeleopState);
@@ -984,11 +1038,11 @@ void CRobotMain::TestPeriodic()
     {
         if (m_pDriveController->GetRawButton(eStart))
         {
-            m_pShooter->SetShooterSetpoint(dShooterFiringVelocity);
+            m_pShooter->SetSetpoint(dShooterFiringVelocity);
         }
         else
         {
-            m_pShooter->SetShooterSetpoint(dShooterIdleVelocity);
+            m_pShooter->SetSetpoint(dShooterIdleVelocity);
         }
     }
     else
@@ -998,11 +1052,11 @@ void CRobotMain::TestPeriodic()
     ********************************************************************/
         if (m_pDriveController->GetRawAxis(eLeftTrigger) >= 0.65)
         {
-            m_pShooter->SetShooterState(eShooterManualRev);
+            m_pShooter->SetState(eShooterManualRev);
         }
         else
         {
-            m_pShooter->SetShooterState(eShooterStopped);
+            m_pShooter->SetState(eShooterStopped);
         }
     }
 
@@ -1011,7 +1065,7 @@ void CRobotMain::TestPeriodic()
     ********************************************************************/
     if (m_pDriveController->GetRawButton(eButtonRB))
     {
-        m_pShooter->SetHoodState(eHoodManualFwd);
+        m_pHood->SetState(eHoodManualFwd);
     }
     else
     {
@@ -1020,11 +1074,11 @@ void CRobotMain::TestPeriodic()
     ********************************************************************/
         if (m_pDriveController->GetRawButton(eButtonLB))
         {
-            m_pShooter->SetHoodState(eHoodManualRev);
+            m_pHood->SetState(eHoodManualRev);
         }
         else
         {
-            m_pShooter->SetHoodState(eHoodIdle);
+            m_pHood->SetState(eHoodIdle);
         }
     }
 
@@ -1048,6 +1102,7 @@ void CRobotMain::TestPeriodic()
     m_pDrive->Tick();
     m_pTurret->Tick();
     m_pShooter->Tick();
+    m_pHood->Tick();
     m_pLift->SetState(999);
     m_pLift->Tick();
 }
