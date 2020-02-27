@@ -545,9 +545,9 @@ void CRobotMain::TeleopPeriodic()
     static bool bHoodMoving     = false;
     
     /********************************************************************
-        Drive Controller - Toggle Intake (Button A)
+        Drive Controller - Toggle Intake (Right Bumper)
     ********************************************************************/
-    if (m_pDriveController->GetRawButtonPressed(eButtonA))
+    if (m_pDriveController->GetRawButtonPressed(eButtonRB))
     {
         if (m_nTeleopState == eTeleopIntake)
         {
