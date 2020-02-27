@@ -586,7 +586,7 @@ void CRobotMain::TeleopPeriodic()
     /********************************************************************
         Drive Controller - AutoFire (Right Trigger + Aux Right Trigger)
     ********************************************************************/
-    if ((m_pDriveController->GetRawAxis(eRightTrigger) > 0.65) && m_pDriveController->GetRawAxis(eRightTrigger) >= 0.65)
+    if ((m_pDriveController->GetRawAxis(eRightTrigger) > 0.65) && (m_pDriveController->GetRawAxis(eRightTrigger) >= 0.65))
     {
         // Set the state to AutoFire.
         m_nTeleopState = eTeleopAutoFiring;
@@ -694,18 +694,18 @@ void CRobotMain::TeleopPeriodic()
     }
 
     /********************************************************************
-        Aux Controller - Right Winch Up (Left Stick Y)
+        Aux Controller - Right Winch Up (Right Stick Y)
     ********************************************************************/
-    if (m_pAuxController->GetRawAxis(eLeftAxisY) > 0.2)
+    if (m_pAuxController->GetRawAxis(eRightAxisY) > 0.2)
     {
         m_pLift->TestRightWinch(-1.0);
     }
     else
     {
     /********************************************************************
-        Aux Controller - Right Winch Down (Left Stick Y)
+        Aux Controller - Right Winch Down (Right Stick Y)
     ********************************************************************/
-        if (m_pAuxController->GetRawAxis(eLeftAxisY) < -0.2)
+        if (m_pAuxController->GetRawAxis(eRightAxisY) < -0.2)
         {
             m_pLift->TestRightWinch(1.0);
         }
@@ -716,20 +716,20 @@ void CRobotMain::TeleopPeriodic()
     }
     
     /********************************************************************
-        Aux Controller - Left Winch Up (Right Stick Y)
+        Aux Controller - Left Winch Up (Left Stick Y)
     ********************************************************************/
-    if (m_pAuxController->GetRawAxis(eRightAxisY) > 0.2)
+    if (m_pAuxController->GetRawAxis(eLeftAxisY) > 0.2)
     {
-        m_pLift->TestLeftWinch(0.5);
+        m_pLift->TestLeftWinch(-1.0);
     }
     else
     {
     /********************************************************************
-        Aux Controller - Left Winch Down (Right Stick Y)
+        Aux Controller - Left Winch Down (Left Stick Y)
     ********************************************************************/
-        if (m_pAuxController->GetRawAxis(eRightAxisY) < -0.2)
+        if (m_pAuxController->GetRawAxis(eLeftAxisY) < -0.2)
         {
-            m_pLift->TestLeftWinch(-0.5);
+            m_pLift->TestLeftWinch(1.0);
         }
         else
         {
@@ -740,7 +740,7 @@ void CRobotMain::TeleopPeriodic()
     /********************************************************************
         Aux Controller - Actuate Lift (Start Button)
     ********************************************************************/
-    if (m_pDriveController->GetRawButtonPressed(eStart))
+    if (m_pAuxController->GetRawButtonPressed(eStart))
     {
         m_pLift->ExtendArm(!m_pLift->IsExtended());
     }
@@ -759,9 +759,9 @@ void CRobotMain::TeleopPeriodic()
             m_pIntake->IntakeMotor(false);
             m_pIntake->RetentionMotor(false);
             // Return Lift arm to it's lower position.
-            m_pLift->ExtendArm(false);
+            // m_pLift->ExtendArm(false);
             // Idle the arm.
-            m_pLift->ReverseIdle(true);
+            // m_pLift->ReverseIdle(true);
             // Idle the Hood, Turret, and Hopper.
             m_pHood->SetState(eHoodStopped);
             m_pTurret->Stop();
@@ -778,9 +778,9 @@ void CRobotMain::TeleopPeriodic()
             // Disable LEDs
             m_pShooter->SetVisionLED(false);
             // Return Lift arm to it's lower position.
-            m_pLift->ExtendArm(false);
+            // m_pLift->ExtendArm(false);
             // Idle the arm.
-            m_pLift->ReverseIdle(true);
+            // m_pLift->ReverseIdle(true);
             // Extend intake.
             m_pIntake->Extend(true);
             // Start intake on a half second delay.
@@ -804,9 +804,9 @@ void CRobotMain::TeleopPeriodic()
                          using the Vision points determined.
             ********************************************************************/
             // Return Lift arm to it's lower position.
-            m_pLift->ExtendArm(false);
+            // m_pLift->ExtendArm(false);
             // Idle the arm.
-            m_pLift->ReverseIdle(true);
+            // m_pLift->ReverseIdle(true);
             // Set the Turret to tracking mode.
             m_pTurret->SetVision(true);
             // Enabled LEDs
@@ -822,9 +822,9 @@ void CRobotMain::TeleopPeriodic()
                 Firing - Robot simply fires wherever it is currently aiming.
             ********************************************************************/
             // Return Lift arm to it's lower position.
-            m_pLift->ExtendArm(false);
+            // m_pLift->ExtendArm(false);
             // Idle the arm.
-            m_pLift->ReverseIdle(true);
+            // m_pLift->ReverseIdle(true);
             // Enabled LEDs
             m_pShooter->SetVisionLED(false);
             // Set the Turret to idle, we don't want it to move.
@@ -848,9 +848,9 @@ void CRobotMain::TeleopPeriodic()
                              while tracking the goal actively.
             ********************************************************************/
             // Return Lift arm to it's lower position.
-            m_pLift->ExtendArm(false);
+            // m_pLift->ExtendArm(false);
             // Idle the arm.
-            m_pLift->ReverseIdle(true);
+            // m_pLift->ReverseIdle(true);
             // Enabled LEDs
             m_pShooter->SetVisionLED(true);
             // Set the Turret to Tracking mode.
