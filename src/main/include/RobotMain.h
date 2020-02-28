@@ -59,6 +59,7 @@ private:
     // State machines.
     enum TeleopStates
     {
+        eTeleopStopped,
         eTeleopIdle,
         eTeleopIntake,
         eTeleopAiming,

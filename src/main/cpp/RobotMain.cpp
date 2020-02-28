@@ -33,10 +33,10 @@ CRobotMain::CRobotMain()
     m_pBlinkin				= new Blinkin(nBlinkinID);
     m_pAutonomousChooser	= new SendableChooser<string>();
 
-    m_nTeleopState      = eTeleopIdle;
+    m_nTeleopState      = eTeleopStopped;
     m_nAutoState        = eAutoIdle;
     m_dStartTime        = 0.0;
-    m_nPreviousState    = eTeleopIdle;
+    m_nPreviousState    = eTeleopStopped;
 }
 
 /******************************************************************************
@@ -596,7 +596,7 @@ void CRobotMain::TeleopInit()
     m_pDrive->SetJoystickControl(true);
 
     // Clean-up from auto.
-    m_nTeleopState = eTeleopIdle;
+    m_nTeleopState = eTeleopStopped;
     m_pDrive->Init();
     m_pIntake->Init();
     m_pHood->Init();
@@ -625,7 +625,7 @@ void CRobotMain::TeleopPeriodic()
         if (m_nTeleopState == eTeleopIntake)
         {
             // Leave to idle.
-            m_nTeleopState = eTeleopIdle;
+            m_nTeleopState = eTeleopStopped;
         }
         else
         {
@@ -651,7 +651,7 @@ void CRobotMain::TeleopPeriodic()
         {
             // Has been fired, return to idle.
             m_pShooter->SetState(eShooterStopped);
-            m_nTeleopState = eTeleopIdle;
+            m_nTeleopState = eTeleopStopped;
             bHasFired = false;
         }
     }
@@ -721,7 +721,7 @@ void CRobotMain::TeleopPeriodic()
             if (bHoodMoving)
             {
                 // No longer moving, set to idle.
-                m_pHood->SetState(eHoodIdle);
+                m_pHood->Stop();
                 bHoodMoving = false;
             }
         }
@@ -741,7 +741,7 @@ void CRobotMain::TeleopPeriodic()
         if (m_nTeleopState == eTeleopAiming)
         {
             // Go back to idle.
-            m_nTeleopState = eTeleopIdle;
+            m_nTeleopState = eTeleopStopped;
         }
         // If the button was released but we didn't change states
         // yet, do nothing to prevent it from leaving it's current
@@ -756,14 +756,20 @@ void CRobotMain::TeleopPeriodic()
         m_pShooter->SetState(m_pShooter->GetState() == eShooterIdle ? eShooterStopped : eShooterIdle);
     }
 
-    // /********************************************************************
-    //     Aux Controller - Bump Retention backwards (Button A)
-    // ********************************************************************/
-    // if (m_pAuxController->GetRawButtonPressed(eButtonA))
-    // {
-    //     m_nPreviousState = m_nTeleopState;
-    //     m_nTeleopState = eTeleopUnjam;
-    // }
+    /********************************************************************
+        Aux Controller - Bump Retention backwards (Button A)
+    ********************************************************************/
+    if (m_pAuxController->GetRawButton(eButtonA))
+    {
+        m_nTeleopState = eTeleopUnjam;
+    }
+    else
+    {
+        if (m_pAuxController->GetRawButtonReleased(eButtonA))
+        {
+            m_nTeleopState = eTeleopStopped;
+        }
+    }
 
     /********************************************************************
         Aux Controller - Right Winch Up (Left Stick Y)
@@ -819,10 +825,10 @@ void CRobotMain::TeleopPeriodic()
 
     switch(m_nTeleopState)
     {
-        case eTeleopIdle :
+        case eTeleopStopped :
             /********************************************************************
-                Idle - Robot is not currently doing anything.
-                       May or may not be driving as well.
+                Stopped - Robot is not currently doing anything. Reset everything.
+                          May or may not be driving as well.
             ********************************************************************/
             // Disable LEDs
             m_pShooter->SetVisionLED(false);
@@ -842,6 +848,16 @@ void CRobotMain::TeleopPeriodic()
             m_pHopper->Preload(false);
             // Set robot color.
             m_pBlinkin->SetState(m_pBlinkin->eTwinkle);
+            // Move back to TeleopIdle.
+            m_nTeleopState = eTeleopIdle;
+            break;
+        
+        case eTeleopIdle :
+            /********************************************************************
+                Idle - Robot is currently Idling, nothing is returning to rested
+                       state either.
+            ********************************************************************/
+            // Do nothing.
             break;
 
         case eTeleopIntake :
@@ -964,14 +980,6 @@ void CRobotMain::TeleopPeriodic()
             ********************************************************************/
             // Unjam the intake.
             m_pIntake->Unjam();
-            // Run for a second.
-            if ((m_pTimer->Get() - m_dStartTime) == 1.0)
-            {
-                // Stop motor.
-                m_pIntake->RetentionMotor(false);
-                // Go back to previous state.
-                m_nTeleopState = m_nPreviousState;
-            }
             break;
 
         case eTeleopFollowing :

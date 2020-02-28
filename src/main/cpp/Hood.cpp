@@ -239,7 +239,7 @@ void CHood::Stop()
     // Disable the PID controller to stop any movement.
     m_pHoodPID->Reset();
     // Set state to stopped.
-    SetState(eHoodIdle);
+    SetState(eHoodStopped);
 }
 
 /****************************************************************************
