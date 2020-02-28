@@ -83,6 +83,8 @@ private:
         eAutoSideShieldGenerator2,
         eAutoSideShieldGenerator3,
         eAutoOpposingTrench1,
+        eAutoOpposingTrench2,
+        eAutoOpposingTrench3,
         eAutoPowerPort1,
         eAutoPowerPort2,
         eAutoTakePowerCells1,

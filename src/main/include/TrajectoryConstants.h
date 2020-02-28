@@ -24,7 +24,8 @@ enum TrajectoryList
     eFrontShieldGenerator2,
     eSideShieldGenerator1, 
     eSideShieldGenerator2,
-    eOpposingTrench1, 
+    eOpposingTrench1,
+    eOpposingTrench2, 
     ePowerPort1, 
     eTakePowerCells1, 
     eDoNothing, 
@@ -178,6 +179,7 @@ public:
 
                 m_Waypoints = 
                 {
+                    m_StartPoint,
                     Pose2d
                     {
                         14.0_ft,				// X of point 3 on field in feet.
@@ -199,7 +201,7 @@ public:
                 m_StartPoint =
                 {
                     10.0_ft,				// X starting position on field in feet.
-                    3.5_ft,					// Y starting position on field in feet.
+                    6.5_ft,					// Y starting position on field in feet.
                     Rotation2d(0_deg)		// Starting rotation on field in degrees.
                 };
 
@@ -208,25 +210,50 @@ public:
                     m_StartPoint,
                     Pose2d
                     {
-                        21.0_ft,				// X of point 1 on field in feet.
-                        2.5_ft,				    // Y of point 1 on field in feet.
-                        Rotation2d(-90_deg)     // Rotation at point 1 in degrees.
+                        16.0_ft,				// X of point 1 on field in feet.
+                        6.5_ft,				    // Y of point 1 on field in feet.
+                        Rotation2d(0_deg)     // Rotation at point 1 in degrees.
                     },
                     Pose2d
                     {
-                        8.5_ft,				    // X of point 2 on field in feet.
-                        10.5_ft,				// Y of point 2 on field in feet.
-                        Rotation2d(90_deg)      // Rotation at point 2 in degrees.
-                    },
-                    Pose2d
-                    {
-                        6.5_ft,				    // X ending position on field in feet.
-                        17.0_ft,				// Y ending position on field in feet.
-                        Rotation2d(140_deg)		// Ending rotation on field in degrees.
+                        20.5_ft,				// X of point 1 on field in feet.
+                        5.5_ft,				    // Y of point 1 on field in feet.
+                        Rotation2d(-30_deg)     // Rotation at point 1 in degrees.
                     }
                 };
 
                 m_bIsReversed = false;
+                break;
+
+            case eOpposingTrench2 :
+                m_StartPoint = 
+                {
+                    Pose2d
+                    {
+                        20.5_ft,				// X of point 1 on field in feet.
+                        5.5_ft,				    // Y of point 1 on field in feet.
+                        Rotation2d(0_deg)     // Rotation at point 1 in degrees.
+                    },
+                };
+
+                m_Waypoints = 
+                {
+                    m_StartPoint,
+                    Pose2d
+                    {
+                        10.5_ft,				    // X of point 2 on field in feet.
+                        10.5_ft,				// Y of point 2 on field in feet.
+                        Rotation2d(-60_deg)      // Rotation at point 2 in degrees.
+                    },
+                    Pose2d
+                    {
+                        6.5_ft,				    // X ending position on field in feet.
+                        16.5_ft,				// Y ending position on field in feet.
+                        Rotation2d(-40_deg)		// Ending rotation on field in degrees.
+                    }
+                };
+                
+                m_bIsReversed = true;
                 break;
 
             case ePowerPort1 :

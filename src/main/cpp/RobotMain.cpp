@@ -92,6 +92,9 @@ void CRobotMain::RobotInit()
     m_pAutonomousChooser->SetDefaultOption("Autonomous Idle", "Autonomous Idle");
     m_pAutonomousChooser->AddOption("Alliance Trench", "Alliance Trench");
     m_pAutonomousChooser->AddOption("Front Shield Generator", "Front Shield Generator");
+    m_pAutonomousChooser->AddOption("Side Shield Generator", "Side Sheild Generator");
+    m_pAutonomousChooser->AddOption("Opposing Trench", "Opposing Trench");
+    m_pAutonomousChooser->AddOption("Power Port", "Power Port");
     m_pAutonomousChooser->AddOption("Test Path", "Test Path");
     SmartDashboard::PutData(m_pAutonomousChooser);
     // Start the Timer.
@@ -435,6 +438,70 @@ void CRobotMain::AutonomousPeriodic()
             break;
         
         case eAutoSideShieldGenerator3 :
+            // Shoot the 5 balls.
+            if (fabs(m_pTimer->Get() - m_dStartTime) < 15.0)
+            {
+                // Set the Turret to tracking mode.
+                m_pTurret->SetVision(true);
+                // Enabled LEDs
+                m_pShooter->SetVisionLED(true);
+                // Set robot color.
+                m_pBlinkin->SetState(m_pBlinkin->eLarsonScanner1);
+                // Set the Hood to tracking mode.
+                m_pHood->SetSetpoint(SmartDashboard::GetNumber("Target Distance", 0.0));
+                // Set the Shooter setpoint.
+                m_pShooter->SetSetpoint(dShooterFiringVelocity);
+                // Start shooting when ready.
+                if (m_pShooter->IsAtSetpoint())
+                {
+                    // Start preloading into the shooter.
+                    m_pHopper->Feed(true);
+                    m_pHopper->Preload(true);
+                    m_pIntake->RetentionMotor(true);
+                }
+            }
+            else
+            {
+                // Move to auto idle.
+                m_nAutoState = eAutoIdle;
+            }
+            break;
+
+        case eAutoOpposingTrench1 :
+            // Follow path to the opposing trench while intaking.
+            // Start intake, Follow Trajectory.
+            m_pHopper->Feed(false);
+            m_pHopper->Preload(false);
+            m_pIntake->Extend(true);
+            m_pIntake->IntakeMotor(true);
+            m_pIntake->RetentionMotor(true);
+            m_pDrive->FollowTrajectory();
+
+            // Move to the next state when the robot is done path following.
+            if (m_pDrive->TrajectoryIsFinished())
+            {
+                m_pDrive->SetSelectedTrajectory(eOpposingTrench2);
+                m_nAutoState = eAutoOpposingTrench2;
+            }
+            break;
+
+        case eAutoOpposingTrench2 :
+            // Stop intaking and drive backwards to the Power Port.
+            m_pHopper->Feed(false);
+            m_pHopper->Preload(false);
+            m_pIntake->Extend(false);
+            m_pIntake->IntakeMotor(false);
+            m_pIntake->RetentionMotor(false);
+            m_pDrive->FollowTrajectory();
+
+            // Move to the next state when the robot is done path following.
+            if (m_pDrive->TrajectoryIsFinished())
+            {
+                m_nAutoState = eAutoOpposingTrench3;
+            }
+            break;
+
+        case eAutoOpposingTrench3 : 
             // Shoot the 5 balls.
             if (fabs(m_pTimer->Get() - m_dStartTime) < 15.0)
             {
