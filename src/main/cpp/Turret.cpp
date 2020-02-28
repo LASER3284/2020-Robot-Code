@@ -53,7 +53,7 @@ void CTurret::Init()
     m_nState						= eTurretIdle;
     m_bIsReady						= true;
     m_bMotionMagic					= false;
-    m_dActual						= m_pTurretMotor->GetSelectedSensorPosition();
+    m_dActual						= (m_pTurretMotor->GetSelectedSensorPosition() + nTurretZeroOffset) / nTurretPulsesPerRev / dTurretRevsPerUnit;
     m_dFakeActual                   = 0.00;
     m_dSetpoint						= 0.00;
     m_dTolerance					= 5.00;

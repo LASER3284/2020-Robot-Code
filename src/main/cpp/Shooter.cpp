@@ -69,6 +69,8 @@ CShooter::~CShooter()
 ****************************************************************************/
 void CShooter::Init()
 {
+    // Disable the LEDs
+    m_pVisionSwitch->Set(false);
     // Set the shooter motors inverted from each other.
     m_pLeftShooter->SetInverted(false);
     m_pRightShooter->SetInverted(true);
@@ -227,7 +229,8 @@ void CShooter::SetTolerance(double dTolerance)
 void CShooter::Stop()
 {
     // Stop the motor.
-    m_pShooterPID->SetReference(0.0, ControlType::kDutyCycle);
+    m_pShooterPID->SetReference(0.0, ControlType::kCurrent);
+    m_pLeftShooter->StopMotor();
     // Set the state to idle.
     SetState(eShooterStopped);
 }

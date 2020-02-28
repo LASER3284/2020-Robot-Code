@@ -20,6 +20,7 @@ CHood::CHood()
     m_pHoodServo		= new Servo(nHoodServo);
     m_pHoodEncoder		= new Encoder(nHoodEncoderChannelA, nHoodEncoderChannelB);
     m_pHoodPID			= new frc2::PIDController(dHoodProportional, dHoodIntegral, dHoodDerivative);
+    m_pTimer            = new Timer();
 
     // Initialize member variables.
     m_dProportional			= dHoodProportional;
@@ -48,11 +49,13 @@ CHood::~CHood()
     delete m_pHoodServo;
     delete m_pHoodEncoder;
     delete m_pHoodPID;
+    delete m_pTimer;
 
     // Set objects to nullptrs.
     m_pHoodServo		= nullptr;
     m_pHoodEncoder		= nullptr;
     m_pHoodPID			= nullptr;
+    m_pTimer            = nullptr;
 }
 
 /****************************************************************************
@@ -62,6 +65,8 @@ CHood::~CHood()
 ****************************************************************************/
 void CHood::Init()
 {
+    // Set the state back to Idle.
+    m_nState = eHoodIdle;
     // Set the Tolerance of the PID controller.
     SetTolerance(m_dTolerance);
     // Set the PID of the controller.
