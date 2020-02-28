@@ -251,4 +251,14 @@ bool CHood::IsAtSetpoint()
 {
     return m_pHoodPID->AtSetpoint();
 }
+
+/****************************************************************************
+    Description:	Rezero - Zero the encoder running the Hood.
+    Arguments:		None
+    Returns:		Nothing
+****************************************************************************/
+void CHood::Rezero()
+{
+    m_pHoodEncoder->Reset();
+}
 ///////////////////////////////////////////////////////////////////////////////

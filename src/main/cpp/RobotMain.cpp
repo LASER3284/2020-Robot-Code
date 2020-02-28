@@ -665,10 +665,11 @@ void CRobotMain::TeleopPeriodic()
         m_nTeleopState = eTeleopAutoFiring;
     }
     // Other states related to this button will set state back to Idle.
+
     /********************************************************************
-        Drive Controller - Manual Move Turret Left (Left POV)
+        Drive Controller - Manual Move Turret Left (Left Bumper)
     ********************************************************************/
-    if (m_pAuxController->GetPOV() == 270)
+    if (m_pAuxController->GetRawButton(eButtonLB))
     {
         // Manually move left.
         m_pTurret->SetState(eTurretManualRev);
@@ -677,9 +678,9 @@ void CRobotMain::TeleopPeriodic()
     else
     {
     /********************************************************************
-        Drive Controller - Manual Move Turret Right (Right POV)
+        Drive Controller - Manual Move Turret Right (Right Bumper)
     ********************************************************************/
-        if (m_pAuxController->GetPOV() == 90)
+        if (m_pAuxController->GetRawButton(eButtonRB))
         {
             // Manually move right.
             m_pTurret->SetState(eTurretManualFwd);
@@ -769,6 +770,14 @@ void CRobotMain::TeleopPeriodic()
         {
             m_nTeleopState = eTeleopStopped;
         }
+    }
+
+    /********************************************************************
+        Aux Controller - Zero Hood Encoder (Button X)
+    ********************************************************************/
+    if (m_pAuxController->GetRawButtonPressed(eButtonX))
+    {
+        m_pHood->Rezero();
     }
 
     /********************************************************************

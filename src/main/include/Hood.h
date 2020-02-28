@@ -50,6 +50,7 @@ public:
     void 	        Tick();
     bool            IsReady();
     void            Stop();
+    void            Rezero();
     void			SetPID(double dProportional, double dIntegral, double dDerivative);
     void 			SetSetpoint(double dSetpoint);
     void			SetSpeed(double dSpeed);
