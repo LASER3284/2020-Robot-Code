@@ -762,14 +762,8 @@ void CRobotMain::TeleopPeriodic()
     ********************************************************************/
     if (m_pAuxController->GetRawButton(eButtonA))
     {
-        m_nTeleopState = eTeleopUnjam;
-    }
-    else
-    {
-        if (m_pAuxController->GetRawButtonReleased(eButtonA))
-        {
-            m_nTeleopState = eTeleopStopped;
-        }
+            // Unjam the intake.
+            m_pIntake->Unjam();
     }
 
     /********************************************************************
@@ -981,14 +975,6 @@ void CRobotMain::TeleopPeriodic()
             // m_pLift->SetState(eLiftExtend);
             // // Set robot color.
             // m_pBlinkin->SetState(m_pBlinkin->eOrange);
-            break;
-
-        case eTeleopUnjam :
-            /********************************************************************
-                Unjam - Intake is jammed, attempt unjamming.
-            ********************************************************************/
-            // Unjam the intake.
-            m_pIntake->Unjam();
             break;
 
         case eTeleopFollowing :
