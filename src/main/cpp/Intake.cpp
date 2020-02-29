@@ -160,9 +160,16 @@ double CIntake::GetIntakeCurrent()
     Arguments: 		None
     Returns: 		Nothing
 ****************************************************************************/
-void CIntake::Unjam()
+void CIntake::Unjam(bool bEnabled)
 {
-    m_pRetentionMotor->Set(dRetentionRevSpeed);
+    if (bEnabled)
+    {
+        m_pRetentionMotor->Set(dRetentionRevSpeed);
+    }
+    else
+    {
+        m_pRetentionMotor->Set(0.0);
+    }
 }
 
 /////////////////////////////////////////////////////////////////////////////

@@ -40,7 +40,7 @@ public:
     bool GetExtended();
     void IntakeMotor(bool bEnabled);
     void RetentionMotor(bool bEnabled);
-    void Unjam();
+    void Unjam(bool bEnabled);
     bool IsJammed();
     double GetRetentionCurrent();
     double GetIntakeCurrent();

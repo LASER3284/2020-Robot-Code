@@ -760,10 +760,15 @@ void CRobotMain::TeleopPeriodic()
     /********************************************************************
         Aux Controller - Bump Retention backwards (Button A)
     ********************************************************************/
-    if (m_pAuxController->GetRawButton(eButtonA))
+    if (m_pAuxController->GetRawButtonPressed(eButtonA))
     {
-            // Unjam the intake.
-            m_pIntake->Unjam();
+        // Unjam the intake.
+        m_pIntake->Unjam(true);
+    }
+    if (m_pAuxController->GetRawButtonReleased(eButtonA))
+    {
+        // Stop the Unjamming sequence.
+        m_pIntake->Unjam(false);
     }
 
     /********************************************************************
