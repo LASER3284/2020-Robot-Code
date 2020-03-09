@@ -123,7 +123,7 @@ void CRobotMain::DisabledInit()
     // Set joystick control.
     m_pDrive->SetJoystickControl(false);
     // Disable LEDs
-    m_pShooter->SetVisionLED(false);
+    m_pShooter->SetVisionLED(true);
 }
 
 /******************************************************************************
@@ -146,6 +146,9 @@ void CRobotMain::AutonomousInit()
 {
     // Disable joystick control to prevent issues during Autonomous.
     m_pDrive->SetJoystickControl(false);
+
+    // Enable hood safety.
+    m_pHood->SetHoodSafety(true);
 
     // Get Auto start time.
     m_dStartTime = m_pTimer->Get();
@@ -216,18 +219,21 @@ void CRobotMain::AutonomousInit()
 ******************************************************************************/
 void CRobotMain::AutonomousPeriodic()
 {
+    // Check if the turret had overrun.
+    m_pTurret->CheckOverrun();
+
     m_pLift->ExtendArm(false);
     switch (m_nAutoState)
     {
         case eAutoIdle :
             // Do nothing.
-            // m_pHood->Stop();
-            // m_pShooter->Stop();
-            // m_pShooter->SetVisionLED(false);
-            // m_pTurret->Stop();
-            // m_pHopper->Feed(false);
-            // m_pHopper->Preload(false);
-            // m_pIntake->RetentionMotor(false);
+            m_pHood->Stop();
+            m_pShooter->Stop();
+            m_pShooter->SetVisionLED(false);
+            m_pTurret->Stop();
+            m_pHopper->Feed(false);
+            m_pHopper->Preload(false);
+            m_pIntake->RetentionMotor(false);
             break;
 
         case eAutoTestPath1 :
@@ -272,6 +278,8 @@ void CRobotMain::AutonomousPeriodic()
             m_pTurret->Stop();
             // Disable LEDs
             m_pShooter->SetVisionLED(false);
+            // Set the Hood to tracking mode.
+            m_pHood->SetSetpoint(2524);
             // Start intake, Follow Trajectory.
             m_pHopper->Feed(false);
             m_pHopper->Preload(false);
@@ -323,7 +331,7 @@ void CRobotMain::AutonomousPeriodic()
                 // Set robot color.
                 m_pBlinkin->SetState(m_pBlinkin->eLarsonScanner1);
                 // Set the Hood to tracking mode.
-                m_pHood->SetSetpoint(SmartDashboard::GetNumber("Target Distance", 0.0));
+                //m_pHood->SetSetpoint(2524);
                 // Set the Shooter setpoint.
                 m_pShooter->SetSetpoint(dShooterFiringVelocity);
                 // Start shooting when ready.
@@ -534,18 +542,8 @@ void CRobotMain::AutonomousPeriodic()
             break;
 
         case eAutoPowerPort1 :
-            // Follow the path to the power port.
-            m_pDrive->FollowTrajectory();
-
-            if (m_pDrive->TrajectoryIsFinished())
-            {
-                m_nAutoState = eAutoPowerPort2;
-            }
-            break;
-
-        case eAutoPowerPort2 :
-            // Shoot the 3 balls into the power port.
-            if (fabs(m_pTimer->Get() - m_dStartTime) < 15.0)
+            // Fire the 3 balls.
+            if (fabs(m_pTimer->Get() - m_dStartTime) < 6.00)
             {
                 // Set the Turret to tracking mode.
                 m_pTurret->SetVision(true);
@@ -553,10 +551,10 @@ void CRobotMain::AutonomousPeriodic()
                 m_pShooter->SetVisionLED(true);
                 // Set robot color.
                 m_pBlinkin->SetState(m_pBlinkin->eLarsonScanner1);
-                // Set the Hood to tracking mode.
+                // Use vision to set the hood angle.
                 m_pHood->SetSetpoint(SmartDashboard::GetNumber("Target Distance", 0.0));
                 // Set the Shooter setpoint.
-                m_pShooter->SetSetpoint(dShooterFiringVelocity);
+                m_pShooter->SetSetpoint(4000);
                 // Start shooting when ready.
                 if (m_pShooter->IsAtSetpoint())
                 {
@@ -568,7 +566,17 @@ void CRobotMain::AutonomousPeriodic()
             }
             else
             {
-                // Move to auto idle.
+                m_pDrive->SetSelectedTrajectory(ePowerPort1);
+                m_nAutoState = eAutoPowerPort2;
+            }
+            break;
+
+        case eAutoPowerPort2 :
+            // Follow the path to the power port.
+            m_pDrive->FollowTrajectory();
+
+            if (m_pDrive->TrajectoryIsFinished())
+            {
                 m_nAutoState = eAutoIdle;
             }
             break;
@@ -594,6 +602,9 @@ void CRobotMain::TeleopInit()
 {
     // Enable joystick control for Teleop use.
     m_pDrive->SetJoystickControl(true);
+
+    // Enable hood safety.
+    m_pHood->SetHoodSafety(true);
 
     // Clean-up from auto.
     m_nTeleopState = eTeleopStopped;
@@ -729,6 +740,20 @@ void CRobotMain::TeleopPeriodic()
     }
 
     /********************************************************************
+        Aux Controller - Unjam belts (Back)
+    ********************************************************************/
+    if (m_pAuxController->GetRawButtonPressed(eBack))
+    {
+        // Reverse the belts.
+        m_pHopper->Unjam(true);
+    }
+    if (m_pAuxController->GetRawButtonReleased(eBack))
+    {
+        // Stop the belts.
+        m_pHopper->Unjam(false);
+    }
+    
+    /********************************************************************
         Aux Controller - Vision Aiming (Left Trigger)
     ********************************************************************/
     if ((m_pAuxController->GetRawAxis(eRightTrigger) > 0.65) && !(m_pDriveController->GetRawAxis(eRightTrigger) > 0.65))
@@ -850,7 +875,7 @@ void CRobotMain::TeleopPeriodic()
             // Idle the arm.
             // m_pLift->ReverseIdle(true);
             // Idle the Hood, Turret, and Hopper.
-            m_pHood->Stop();
+            m_pHood->SetState(eHoodReset);
             // m_pTurret->Stop();
             m_pHopper->Feed(false);
             m_pHopper->Preload(false);
@@ -1015,6 +1040,9 @@ void CRobotMain::TestInit()
 {
     // Enable joystick control for Test use.
     m_pDrive->SetJoystickControl(true);
+
+    // disable hood safety.
+    m_pHood->SetHoodSafety(false);
 }
 
 /******************************************************************************

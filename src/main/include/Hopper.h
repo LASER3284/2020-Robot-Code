@@ -36,13 +36,12 @@ public:
     void Init();
     void Feed(bool bEnabled = true);
     void Preload(bool bEnabled = true);
+    void Unjam(bool bEnabled = true);
 
 private:
     // Object pointers.
     WPI_TalonSRX*		m_pMainBelt;
     CANSparkMax*        m_pShooterFeeder;
-
-    // Declare variables.
 };
 /////////////////////////////////////////////////////////////////////////////
 #endif

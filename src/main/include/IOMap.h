@@ -26,9 +26,8 @@ const int nColorWheelMotor				=  10;		// Spark MAX ID for Color Wheel motor
 const int nClimberMotorLeft				=  11;		// Spark MAX ID for left climber winch
 const int nClimberMotorRight			=  12;		// Spark MAX ID for right climber winch
 const int nHopperBeltMotor				=  13;		// Talon SRX ID for belts in the hopper
-const int nGondolaMotor					=  14;		// Talon SRX ID for the Gondola motor
+const int nHoodMotor   					=  14;		// Talon SRX ID for the turret hood motor
 const int nIntakeRetentionMotor         =  15;      // Spark MAX ID for retention in intake
-
 
 // PWM Channels.
 const int nBlinkinID					=	1;		// PWM channel for Blinkin LED driver

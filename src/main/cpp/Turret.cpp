@@ -53,6 +53,7 @@ void CTurret::Init()
     m_nState						= eTurretIdle;
     m_bIsReady						= true;
     m_bMotionMagic					= false;
+    m_bHasOverrun                   = false;
     m_dActual						= (m_pTurretMotor->GetSelectedSensorPosition() + nTurretZeroOffset) / nTurretPulsesPerRev / dTurretRevsPerUnit;
     m_dFakeActual                   = 0.00;
     m_dSetpoint						= 0.00;
@@ -93,18 +94,8 @@ void CTurret::Init()
 ****************************************************************************/
 void CTurret::Tick()
 {
-    m_dActual = (m_pTurretMotor->GetSelectedSensorPosition() + nTurretZeroOffset) / nTurretPulsesPerRev / dTurretRevsPerUnit;
+    m_dActual = (m_pTurretMotor->GetSelectedSensorPosition() + (double)nTurretZeroOffset) / nTurretPulsesPerRev / dTurretRevsPerUnit;
     m_dFakeActual = (SmartDashboard::GetNumber("Target Angle", 0.0));
-
-    if (m_dActual >= dTurretMaxPosition || m_dActual <= dTurretMinPosition)
-    {
-        std::cout << "FINDING OVERRUN" << std::endl;
-    }
-
-    if (m_dFakeActual >= dTurretMaxPosition || m_dFakeActual <= dTurretMinPosition)
-    {
-        std::cout << "TRACKING OVERRUN" << std::endl;
-    }
 
     switch(m_nState)
     {
@@ -142,7 +133,10 @@ void CTurret::Tick()
             // Tracking - Uses a setpoint of zero and an actual from the Camera to center on the target.
             // Set state on SmartDashboard.
             SmartDashboard::PutString("Turret State", "Tracking");
-            m_pTurretMotor->Set(ControlMode::PercentOutput, m_pPIDController->Calculate(-m_dFakeActual));
+            if (!m_bHasOverrun)
+            {
+                m_pTurretMotor->Set(ControlMode::PercentOutput, m_pPIDController->Calculate(-m_dFakeActual));
+            }
             break;
             
         case eTurretManualFwd :
@@ -168,7 +162,7 @@ void CTurret::Tick()
     SmartDashboard::PutNumber("Turret Encoder", m_pTurretMotor->GetSelectedSensorPosition());
     SmartDashboard::PutNumber("Turret Actual", m_dActual);
     SmartDashboard::PutNumber("Turret Setpoint", m_dSetpoint);
-
+    SmartDashboard::PutBoolean("Has Turret Overran", m_bHasOverrun);
 }
 
 /****************************************************************************
@@ -224,18 +218,25 @@ void CTurret::SetSetpoint(double dSetpoint)
 ****************************************************************************/
 void CTurret::SetVision(bool bEnabled)
 {
-    if (bEnabled)
+    if (m_bHasOverrun)
     {
-        // Set the setpoint to zero.
-        m_pPIDController->SetSetpoint(0.0);
-
-        // Set Turret state to Tracking.
-        SetState(eTurretTracking);
+        SetSetpoint(0.0);
     }
     else
     {
-        // Return to Stopped.
-        SetState(eTurretStopped);
+        if (bEnabled)
+        {
+            // Set the setpoint to zero.
+            m_pPIDController->SetSetpoint(0.0);
+
+            // Set Turret state to Tracking.
+            SetState(eTurretTracking);
+        }
+        else
+        {
+            // Return to Stopped.
+            SetState(eTurretStopped);
+        } 
     }
 }
 
@@ -285,5 +286,36 @@ void CTurret::Stop()
 bool CTurret::IsAtSetpoint()
 {
     return (m_pPIDController->AtSetpoint());
+}
+
+/****************************************************************************
+    Description:	Checks to see if Turret is outside of the zone, and resets
+                    to zero.
+    Arguments: 		None
+    Returns: 		Nothing
+****************************************************************************/
+bool CTurret::CheckOverrun()
+{
+    // If the turret has overran past the maximums and minimums
+    if (m_dActual < dTurretMinPosition)
+    {
+//      m_nState = eTurretManualFwd;
+        m_bHasOverrun = true;
+    }
+    else
+    {
+        if (m_dActual > dTurretMaxPosition)
+        {
+//          m_nState = eTurretManualRev;
+            m_bHasOverrun = true;
+        }
+        else
+        {
+//          m_nState = eTurretIdle;
+            m_bHasOverrun = false;
+        }
+    }
+
+    return m_bHasOverrun;
 }
 /////////////////////////////////////////////////////////////////////////////

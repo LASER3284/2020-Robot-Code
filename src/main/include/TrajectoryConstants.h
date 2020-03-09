@@ -210,13 +210,13 @@ public:
                     m_StartPoint,
                     Pose2d
                     {
-                        16.0_ft,				// X of point 1 on field in feet.
-                        6.5_ft,				    // Y of point 1 on field in feet.
+                        13.0_ft,				// X of point 1 on field in feet.
+                        5.5_ft,				    // Y of point 1 on field in feet.
                         Rotation2d(0_deg)     // Rotation at point 1 in degrees.
                     },
                     Pose2d
                     {
-                        20.5_ft,				// X of point 1 on field in feet.
+                        19.5_ft,				// X of point 1 on field in feet.
                         5.5_ft,				    // Y of point 1 on field in feet.
                         Rotation2d(-30_deg)     // Rotation at point 1 in degrees.
                     }
@@ -230,7 +230,7 @@ public:
                 {
                     Pose2d
                     {
-                        20.5_ft,				// X of point 1 on field in feet.
+                        19.5_ft,				// X of point 1 on field in feet.
                         5.5_ft,				    // Y of point 1 on field in feet.
                         Rotation2d(0_deg)     // Rotation at point 1 in degrees.
                     },
@@ -260,7 +260,7 @@ public:
                 m_StartPoint =
                 {
                     10.0_ft,				// X starting position on field in feet.
-                    3.5_ft,					// Y starting position on field in feet.
+                    5_ft,					// Y starting position on field in feet.
                     Rotation2d(0_deg)		// Starting rotation on field in degrees.
                 };
 
@@ -269,16 +269,10 @@ public:
                     m_StartPoint,
                     Pose2d
                     {
-                        5.0_ft,				    // X of point 1 on field in feet.
-                        8.0_ft,				    // Y of point 1 on field in feet.
-                        Rotation2d(-90_deg)     // Rotation at point 1 in degrees.
+                        13.5_ft,				    // X of point 1 on field in feet.
+                        5_ft,				    // Y of point 1 on field in feet.
+                        Rotation2d(0_deg)     // Rotation at point 1 in degrees.
                     },
-                    Pose2d
-                    {
-                        5.0_ft,				    // X ending position on field in feet.
-                        17.5_ft,				// Y ending position on field in feet.
-                        Rotation2d(-40_deg)		// Ending rotation on field in degrees.
-                    }
                 };
 
                 m_bIsReversed = false;

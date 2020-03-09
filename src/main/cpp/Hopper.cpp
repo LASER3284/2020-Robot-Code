@@ -90,4 +90,24 @@ void CHopper::Preload(bool bEnabled)
         m_pShooterFeeder->Set(0.00);
     }
 }
+
+/****************************************************************************
+    Description:	Unjam - Run the belts backwards to unjam.
+    Arugments: 		bool - True for start, false for stop.
+    Returns: 		Nothing
+****************************************************************************/
+void CHopper::Unjam(bool bEnabled)
+{
+    if (bEnabled)
+    {
+        // Run the belts in reverse.
+        m_pMainBelt->Set(0.5);
+    }
+    else
+    {
+        // Stop the belts.
+        m_pMainBelt->Set(0.0);
+    }
+    
+}
 /////////////////////////////////////////////////////////////////////////////

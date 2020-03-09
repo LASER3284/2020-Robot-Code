@@ -16,16 +16,16 @@ using namespace frc;
 using namespace ctre;
 
 // Turret Constants.
-const double dTurretMaxPosition		=      90.0;
-const double dTurretMinPosition		=     -90.0;
-const double dTurretProportional	=	  0.012;
-const double dTurretIntegral		=	  0.024;
+const double dTurretMaxPosition		=       2.0;
+const double dTurretMinPosition		=     -25.0;
+const double dTurretProportional	=	  0.017;
+const double dTurretIntegral		=	  0.020;
 const double dTurretDerivative		=     0.027;
 const double dTurretManualFwdSpeed 	=     0.250;
 const double dTurretManualRevSpeed	=    -0.250;
 const double dTurretOpenLoopRamp	=     0.250;
 const double dTurretClosedLoopRamp	=     0.250;
-const int	 nTurretZeroOffset		=	  -1494;
+const int	 nTurretZeroOffset		=	  -3496;
 const int	 nTurretPulsesPerRev	=      4096;
 const double dTurretRevsPerUnit		= 	1.0/360;
 
@@ -59,6 +59,7 @@ public:
     double		GetTolerance()							{	return m_dTolerance;	};
     TurretState GetState()								{	return m_nState;		};		
     bool		IsReady()								{	return m_bIsReady;		};
+    bool        CheckOverrun();
 
 private:
     // Object pointers.
@@ -80,6 +81,7 @@ private:
     TurretState	m_nState;
     bool		m_bIsReady;
     bool		m_bMotionMagic;
+    bool        m_bHasOverrun;
 };
 /////////////////////////////////////////////////////////////////////////////
 #endif

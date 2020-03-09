@@ -17,12 +17,15 @@ using namespace frc;
 CHood::CHood()
 {
     // Create object pointers.
-    m_pHoodServo		= new Servo(nHoodServo);
-    m_pHoodEncoder		= new Encoder(nHoodEncoderChannelA, nHoodEncoderChannelB);
+    m_pHoodMotor        = new CANSparkMax(nHoodMotor, CANSparkMax::MotorType::kBrushless);
     m_pHoodPID			= new frc2::PIDController(dHoodProportional, dHoodIntegral, dHoodDerivative);
     m_pTimer            = new Timer();
 
     // Initialize member variables.
+    m_pHoodMotor->SetIdleMode(CANSparkMax::IdleMode::kBrake);
+    m_pHoodPID->SetIntegratorRange(-0.35, 0.35);
+    m_pHoodMotor->SetOpenLoopRampRate(0.0);
+    m_pHoodMotor->DisableVoltageCompensation();
     m_dProportional			= dHoodProportional;
     m_dIntegral				= dHoodIntegral;
     m_dDerivative			= dHoodDerivative;
@@ -46,14 +49,12 @@ CHood::CHood()
 CHood::~CHood()
 {
     // Delete objects.
-    delete m_pHoodServo;
-    delete m_pHoodEncoder;
+    delete m_pHoodMotor;
     delete m_pHoodPID;
     delete m_pTimer;
 
     // Set objects to nullptrs.
-    m_pHoodServo		= nullptr;
-    m_pHoodEncoder		= nullptr;
+    m_pHoodMotor		= nullptr;
     m_pHoodPID			= nullptr;
     m_pTimer            = nullptr;
 }
@@ -65,6 +66,10 @@ CHood::~CHood()
 ****************************************************************************/
 void CHood::Init()
 {
+    SmartDashboard::PutNumber("Proportional", dHoodProportional);
+    SmartDashboard::PutNumber("Integral", dHoodIntegral);
+    SmartDashboard::PutNumber("Derivative", dHoodDerivative);
+
     // Set the state back to Idle.
     m_nState = eHoodIdle;
     // Set the Tolerance of the PID controller.
@@ -84,8 +89,10 @@ void CHood::Init()
 ****************************************************************************/
 void CHood::Tick()
 {
+    // Set the PID
+    SetPID(SmartDashboard::GetNumber("Proportional", dHoodProportional), SmartDashboard::GetNumber("Integral", dHoodIntegral), SmartDashboard::GetNumber("Derivative", dHoodDerivative));
     // Get the Hood actual position.
-    m_dActual	 = m_pHoodEncoder->Get() / (20.0 / 310.0) + dHoodMinPosition;
+    m_dActual = m_pHoodMotor->GetEncoder().GetPosition() / (20.0 / 310.0) + dHoodMinPosition;
     // Hood state machine.
     switch(m_nState)
     {
@@ -93,6 +100,7 @@ void CHood::Tick()
             // Idle - Servo is off and ready to move again.
             // Put state on SmartDashboard.
             SmartDashboard::PutString("Hood State", "Idle");
+            m_pHoodPID->Reset();
             // Set servo to ready.
             m_bIsReady = true;
             break;
@@ -105,6 +113,14 @@ void CHood::Tick()
             SetSpeed(0.0);
             // Move to Idle.
             SetState(eHoodIdle);
+            break;
+
+        case eHoodReset :
+            // Reset - Resets the mechanism back to zero.
+            // Put the state on SmartDashboard.
+            SmartDashboard::PutString("Hood State", "Reset");
+            // Move to zero.
+            SetSetpoint(0.0);
             break;
             
         case eHoodTracking :
@@ -187,13 +203,54 @@ void CHood::SetSpeed(double dSpeed)
     {
         dSpeed = -1.0;
     }
-    // Convert a -1 -> 1 value to a 0 -> 1 value.
-    double dFakeSpeed = dSpeed + 1.0;
-    dFakeSpeed /= 2.0;
-    // Set the "Speed" of the continuous rotation servo.
-    m_pHoodServo->Set(dFakeSpeed);
 
-    SmartDashboard::PutNumber("Servo Output", dFakeSpeed);
+    // Enable or Disable soft limits for the hood.
+    if (m_bHoodSafety)
+    {
+        // Soft limits for the hood.
+        if ((m_dActual <= dHoodMaxPosition) && (m_dActual >= dHoodMinPosition))
+        {
+            // Set the "Speed" of the continuous rotation servo.
+            m_pHoodMotor->Set(dSpeed);
+        }
+        else
+        {
+            if ((m_dActual >= dHoodMaxPosition) && (dSpeed < 0.0))
+            {
+                // Set the "Speed" of the continuous rotation servo.
+                m_pHoodMotor->Set(dSpeed);
+            }
+            else
+            {
+                if ((m_dActual <= dHoodMinPosition) && (dSpeed > 0.0))
+                {
+                    // Set the "Speed" of the continuous rotation servo.
+                    m_pHoodMotor->Set(dSpeed);
+                }
+                else
+                {
+                    m_pHoodMotor->Set(0);
+                }            
+            }
+        }
+    }
+    else
+    {
+        // Cap values.
+        if (dSpeed > 1.0)
+        {
+            dSpeed = 1.0;
+        }
+        if (dSpeed < -1.0)
+        {
+            dSpeed = -1.0;
+        }
+        // Set the "Speed" of the continuous rotation servo.
+        m_pHoodMotor->Set(dSpeed);
+    }
+    
+
+    SmartDashboard::PutNumber("Hood Output", dSpeed);
 }
 
 /****************************************************************************
@@ -259,6 +316,6 @@ bool CHood::IsAtSetpoint()
 ****************************************************************************/
 void CHood::Rezero()
 {
-    m_pHoodEncoder->Reset();
+    m_pHoodMotor->GetEncoder().SetPosition(0);
 }
 ///////////////////////////////////////////////////////////////////////////////
