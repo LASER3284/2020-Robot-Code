@@ -661,7 +661,7 @@ void CRobotMain::TeleopPeriodic()
         if (bHasFired)
         {
             // Has been fired, return to idle.
-            m_pShooter->SetState(eShooterStopped);
+            m_pShooter->SetState(eShooterIdle);
             m_nTeleopState = eTeleopStopped;
             bHasFired = false;
         }
@@ -934,6 +934,11 @@ void CRobotMain::TeleopPeriodic()
             m_pTurret->SetVision(true);
             // Enabled LEDs
             m_pShooter->SetVisionLED(true);
+            // Idle shooter.
+            m_pShooter->SetSetpoint(dShooterIdleVelocity);
+            // Stop Preloader.
+            m_pHopper->Preload(false);
+            m_pHopper->Feed(false);
             // Set the Hood to tracking mode.
             m_pHood->SetSetpoint(SmartDashboard::GetNumber("Target Distance", 0.0));
             // Set robot color.
