@@ -17,7 +17,7 @@
 #include <wpi/json.h>
 #include <wpi/raw_istream.h>
 #include <wpi/raw_ostream.h>
-#include "cameraserver/CameraServer.h"
+#include <cameraserver/CameraServer.h>
 
 using namespace cv;
 using namespace cs;
@@ -29,43 +29,43 @@ using namespace std;
 /*
    JSON format:
    {
-       "team": <team number>,
-       "ntmode": <"client" or "server", "client" if unspecified>
-       "cameras": [
-           {
-               "name": <camera name>
-               "path": <path, e.g. "/dev/video0">
-               "pixel format": <"MJPEG", "YUYV", etc>   // optional
-               "width": <video mode width>              // optional
-               "height": <video mode height>            // optional
-               "fps": <video mode fps>                  // optional
-               "brightness": <percentage brightness>    // optional
-               "white balance": <"auto", "hold", value> // optional
-               "exposure": <"auto", "hold", value>      // optional
-               "properties": [                          // optional
-                   {
-                       "name": <property name>
-                       "value": <property value>
-                   }
-               ],
-               "stream": {                              // optional
-                   "properties": [
-                       {
-                           "name": <stream property name>
-                           "value": <stream property value>
-                       }
-                   ]
-               }
-           }
-       ]
-       "switched cameras": [
-           {
-               "name": <virtual camera name>
-               "key": <network table key used for selection>
-               // if NT value is a string, it's treated as a name
-               // if NT value is a double, it's treated as an integer index
-           }
-       ]
+	   "team": <team number>,
+	   "ntmode": <"client" or "server", "client" if unspecified>
+	   "cameras": [
+		   {
+			   "name": <camera name>
+			   "path": <path, e.g. "/dev/video0">
+			   "pixel format": <"MJPEG", "YUYV", etc>   // optional
+			   "width": <video mode width>			  // optional
+			   "height": <video mode height>			// optional
+			   "fps": <video mode fps>				  // optional
+			   "brightness": <percentage brightness>	// optional
+			   "white balance": <"auto", "hold", value> // optional
+			   "exposure": <"auto", "hold", value>	  // optional
+			   "properties": [						  // optional
+				   {
+					   "name": <property name>
+					   "value": <property value>
+				   }
+			   ],
+			   "stream": {							  // optional
+				   "properties": [
+					   {
+						   "name": <stream property name>
+						   "value": <stream property value>
+					   }
+				   ]
+			   }
+		   }
+	   ]
+	   "switched cameras": [
+		   {
+			   "name": <virtual camera name>
+			   "key": <network table key used for selection>
+			   // if NT value is a string, it's treated as a name
+			   // if NT value is a double, it's treated as an integer index
+		   }
+	   ]
    }
  */
 
@@ -266,7 +266,7 @@ namespace
 			return false;
 		}
 
-		// Check is the top level is an object.
+		// Check if the top level is an object.
 		if (!m_fParseFile.is_object()) 
 		{
 			ParseError() << "Must be JSON object!" << "\n";
@@ -284,7 +284,7 @@ namespace
 			return false;
 		}
 
-		// Get NetworkTable mode. (optional)
+		// Get NetworkTable mode.
 		if (m_fParseFile.count("ntmode") != 0) 
 		{
 			try 
@@ -362,7 +362,7 @@ namespace
 
 		// Store the camera video in a vector. (so we can access it later)
 		CvSink m_cvSink = m_Inst->GetVideo();
-		CvSource m_cvSource = m_Inst->PutVideo(fConfig.name + "Processed", 320, 240);
+		CvSource m_cvSource = m_Inst->PutVideo(fConfig.name + "Processed", 640, 480);
 		m_vCameraSinks.emplace_back(m_cvSink);
 		m_vCameraSources.emplace_back(m_cvSource);
 	}
@@ -505,7 +505,6 @@ namespace
 	private:
 		// Create objects and variables.
 		FPS*					m_pFPS;
-
 		int						m_nFPS;
 	};
 
@@ -540,11 +539,10 @@ namespace
 			m_nOrangeBlurRadius						= 3;
 			m_nHorizontalAspect						= 4;
 			m_nVerticalAspect						= 3;
-			m_dDiagonalAspect						= hypot(m_nHorizontalAspect, m_nVerticalAspect);
-			m_dDiagonalView							= 2 * PI * (m_dCameraFOV / 360);
-			m_dHorizontalView						= atan(atan(m_dDiagonalView / 2) * (m_nHorizontalAspect / m_dDiagonalAspect)) * 2;
-			m_dVerticalView							= atan(atan(m_dDiagonalView / 2) * (m_nVerticalAspect / m_dDiagonalAspect)) * 2;
-			m_dCameraFOV							= 68.5;
+			m_dCameraFOV							= 75;
+			m_nScreenWidth							= 640;
+			m_nScreenHeight							= 480;
+			m_dFocalLength							= (m_nScreenWidth / 2.0) / tan((m_dCameraFOV * PI / 180.0) / 2.0);
 			m_bIsStopping							= false;
 			m_bIsStopped							= false;
 		}
@@ -572,12 +570,8 @@ namespace
 	
 				Returns: 		Nothing
 		****************************************************************************/
-		void Process(Mat &m_pFrame, Mat &m_pFinalImg, int &m_nTargetCenterX, int &m_nTargetCenterY, double &m_dTargetDistance, bool &m_bDrivingMode, bool &m_bTrackingMode, vector<int> &m_vTrackbarValues, VideoGet &pVideoGetter, shared_timed_mutex &m_pMutexGet, shared_timed_mutex &m_pMutexShow)
+		void Process(Mat &m_pFrame, Mat &m_pFinalImg, int &m_nTargetCenterX, int &m_nTargetCenterY, double &m_dTargetDistance, double &m_dTargetAngle, bool &m_bDrivingMode, bool &m_bTrackingMode, vector<int> &m_vTrackbarValues, VideoGet &pVideoGetter, shared_timed_mutex &m_pMutexGet, shared_timed_mutex &m_pMutexShow)
 		{
-			// Get size of image.
-			m_nScreenHeight = m_pFinalImg.size().height;
-			m_nScreenWidth = m_pFinalImg.size().width;
-
 			// Give other threads some time.
 			this_thread::sleep_for(std::chrono::milliseconds(800));
 
@@ -628,20 +622,13 @@ namespace
 								if (m_pContours.size() > 0)
 								{
 									// Sort contours from biggest to smallest.
-									sort(m_pContours.begin(), m_pContours.end(), [](const vector<Point>& c1, const vector<Point>& c2) {	return contourArea(c1, false) < contourArea(c2, false); });
+									sort(m_pContours.begin(), m_pContours.end(), [](const vector<Point>& c1, const vector<Point>& c2) {	return fabs(contourArea(c1, false)) < fabs(contourArea(c2, false)); });
 
+									// Loop through detected contours.
 									for (vector<Point> m_pContour: m_pContours)
 									{
-										// Get convex hull. (Bounding polygon on contour.)
-										vector<Point> m_pHull;
-										convexHull(m_pContour, m_pHull, false);
-										// Calculate contour area.
-										double m_dContourArea = contourArea(m_pContour);
-										// Calculate hull area.
-										double m_dHullArea = contourArea(m_pHull);
-
 										// Limit number of objects to do calculations for.
-										if (vBiggestContours.size() < 5)
+										if (vBiggestContours.size() < 50)
 										{
 											// Gets the (x, y) and radius of the enclosing circle of contour.
 											Point2f pCenter;
@@ -653,8 +640,15 @@ namespace
 											rectangle(m_pFinalImg, rCoordinates, Scalar(23, 184, 80), 1, LINE_4, 0);
 											circle(m_pFinalImg, pCenter, dRadius, Scalar(23, 184, 80), 1, LINE_4, 0);
 
+											// Find convex hull. (Bounding polygon on contour.)
+											vector<Point> m_pHull;
+											convexHull(m_pContour, m_pHull, false);
+											// Calculate hull area.
+											double dHullArea = fabs(contourArea(m_pHull));
+
 											// Calculate contour's distance from the camera.
-											double dDistance = CalculateDistance(rCoordinates.width);
+											double dAngle = CalculateXAngle(pCenter.x);
+											double dDistance = CalculateHood(pCenter.y);
 
 											// Approximate contour with accuracy proportional to contour perimeter.
 											vector<Point> vApprox;
@@ -665,15 +659,16 @@ namespace
 											points.emplace_back(double(pCenter.x));
 											points.emplace_back(double(pCenter.y));
 											points.emplace_back(dDistance);
+											points.emplace_back(dAngle);
 											points.emplace_back(vApprox.size());
-											points.emplace_back(dRadius);
+											points.emplace_back(dHullArea);
 	
 											vBiggestContours.emplace_back(points);
 										}
 									}
 
 									// Sort array based on coordinates (leftmost to rightmost) to make sure contours are adjacent.
-									sort(vBiggestContours.begin(), vBiggestContours.end(), [](const vector<double>& points1, const vector<double>& points2) { return points1[0] < points2[0]; }); 		// Sorts using nCX location.
+									//sort(vBiggestContours.begin(), vBiggestContours.end(), [](const vector<double>& points1, const vector<double>& points2) { return points1[0] < points2[0]; }); 		// Sorts using nCX location.
 
 									// Target checking.
 									for (int i = 0; i < int(vBiggestContours.size()); i++)
@@ -684,72 +679,80 @@ namespace
 
 										// Distance of contour from camera.
 										double dDistance = vBiggestContours[i][2];
+										// Angle of contour from camera.
+										double dAngle = vBiggestContours[i][3];
 										// Radius of contour.
-										double dRadius = vBiggestContours[i][4];
+										double dArea = vBiggestContours[i][5];
 
 										// Skip small or non convex contours that don't have more than 4 vertices.
-										if (int(vBiggestContours[i][3]) >= 6)
+										if (int(vBiggestContours[i][4]) >= 6)
 										{
 											// Appends contour data to arrays after checking for duplicates.
 											vector<double> points;
 											points.emplace_back(double(nCX1));
 											points.emplace_back(double(nCY1));
 											points.emplace_back(dDistance);
-											points.emplace_back(dRadius);
+											points.emplace_back(dAngle);
+											points.emplace_back(dArea);
 
 											vTapeTargets.emplace_back(points);
 										}
 									}
 
 									// Draw how many targets are detected on screen.
-									putText(m_pFinalImg, ("Targets Detected: " + to_string(vTapeTargets.size())), Point(10, m_pFinalImg.rows - 40), FONT_HERSHEY_DUPLEX, 0.3, Scalar(200, 200, 200), 1);
+									putText(m_pFinalImg, ("Targets Detected: " + to_string(vTapeTargets.size())), Point(10, m_pFinalImg.rows - 40), FONT_HERSHEY_DUPLEX, 0.65, Scalar(200, 200, 200), 1);
 								}
-
+								
 								// Check if there are targets seen.
 								if (int(vTapeTargets.size()) > 0)
 								{
 									// Track the biggest target closest to center.
-									int nClosestTargetPosition = 1000;
-									int nBiggestContour = 0;
+									int nTargetPositionX = 0;
 									int nTargetPositionY = 0;
 									double dDistance = 0.0;
+									double dAngle = 0.0;
+									double dBiggestContour = 0;
+
 									for (int i = 0; i < int(vTapeTargets.size()); i++)
 									{
 										// Check the object size and distance from center.
-										if ((abs(nClosestTargetPosition) > abs(vTapeTargets[i][0] - (m_nScreenWidth / 2))) && (vTapeTargets[i][3] > nBiggestContour))
+										if (vTapeTargets[i][4] > dBiggestContour)
 										{
 											// Store the object location and distance.
-											nClosestTargetPosition = vTapeTargets[i][0];
+											nTargetPositionX = vTapeTargets[i][0];
 											nTargetPositionY = vTapeTargets[i][1];
 											dDistance = vTapeTargets[i][2];
+											dAngle = vTapeTargets[i][3];
 
-											// Store new biggest contour radius.
-											nBiggestContour = int(vTapeTargets[i][3]);
+
+											// Store new biggest contour.
+											dBiggestContour = vTapeTargets[i][4];
 										}
 									}
 
 									// Push position of tracked target.
-									m_nTargetCenterX = nClosestTargetPosition - (m_nScreenWidth / 2);
-									m_nTargetCenterY = nTargetPositionY - (m_nScreenHeight / 2);
+									m_nTargetCenterX = nTargetPositionX - (m_nScreenWidth / 2);
+									m_nTargetCenterY = -(nTargetPositionY - (m_nScreenHeight / 2));
 									m_dTargetDistance = dDistance;
+									m_dTargetAngle = dAngle;
 
 									// Draw target distance and target crosshairs with error line.
-									putText(m_pFinalImg, ("Distance: " + to_string(m_dTargetDistance) + " inches"), Point(10, m_pFinalImg.rows - 15), FONT_HERSHEY_DUPLEX, 0.4, Scalar(200, 200, 200), 1);	
-									line(m_pFinalImg, Point(nClosestTargetPosition, m_nScreenHeight), Point(nClosestTargetPosition, 0), Scalar(0, 0, 200), 1, LINE_4, 0);
+									putText(m_pFinalImg, ("size:" + to_string(dBiggestContour)), Point(10, m_pFinalImg.rows - 100), FONT_HERSHEY_DUPLEX, 0.65, Scalar(200, 200, 200), 1);
+									line(m_pFinalImg, Point(nTargetPositionX, m_nScreenHeight), Point(nTargetPositionX, 0), Scalar(0, 0, 200), 1, LINE_4, 0);
 									line(m_pFinalImg, Point(0, nTargetPositionY), Point(m_nScreenWidth, nTargetPositionY), Scalar(0, 0, 200), 1, LINE_4, 0);
-									line(m_pFinalImg, Point((m_nScreenWidth / 2), (m_nScreenHeight / 2)), Point(nClosestTargetPosition, nTargetPositionY), Scalar(200, 0, 0), 2, LINE_4, 0);
+									line(m_pFinalImg, Point((m_nScreenWidth / 2), (m_nScreenHeight / 2)), Point(nTargetPositionX, nTargetPositionY), Scalar(200, 0, 0), 2, LINE_4, 0);
 								}
 							}
 							else
 							{
-								// Code for a second tracking mode will go here.
+
 							}
 						}
 
 						// Put FPS on image.
 						m_nFPS = m_pFPS->FramesPerSec();
-						putText(m_pFinalImg, ("Camera FPS: " + to_string(pVideoGetter.GetFPS())), Point(215, m_pFinalImg.rows - 40), FONT_HERSHEY_DUPLEX, 0.3, Scalar(200, 200, 200), 1);
-						putText(m_pFinalImg, ("Processor FPS: " + to_string(m_nFPS)), Point(215, m_pFinalImg.rows - 20), FONT_HERSHEY_DUPLEX, 0.3, Scalar(200, 200, 200), 1);
+						putText(m_pFinalImg, ("Camera FPS: " + to_string(pVideoGetter.GetFPS())), Point(420, m_pFinalImg.rows - 40), FONT_HERSHEY_DUPLEX, 0.65, Scalar(200, 200, 200), 1);
+						putText(m_pFinalImg, ("Processor FPS: " + to_string(m_nFPS)), Point(420, m_pFinalImg.rows - 20), FONT_HERSHEY_DUPLEX, 0.65, Scalar(200, 200, 200), 1);
 
 						// Release garbage.
 						mHSVImg.release();
@@ -789,33 +792,55 @@ namespace
 
 		/****************************************************************************
 				Description:	Calculate the Z distance of object with the focal 
-								length of the camera and width of contour.
+								length of the camera and Y location of contour. Then,
+								use that distance to interpolate the hood angle.
 
 				Arguments: 		INT
 	
 				Returns: 		DOUBLE
 		****************************************************************************/
-		double CalculateDistance(int nWidthX)
+		double CalculateHood(int nObjectY)
 		{
 			// Create instance variables.
-			double dObjectWidthInPixelsAtPremeasuredDistance = 42.0;
-			double dDistanceFromCamera = 239.0;
-			double dObjectWidthInInches = 39.5;
-			double dFocalLength = 0.0;
-			double dDistance = 0.0;
+			double dCameraCenterY = (m_nScreenHeight - 1) / 2.0;
+			double dTargetHeight = 98.25;
+			double dTurretHeight = 16.75;
+			double dCameraAngleOffset = 22 * (PI / 180);	// Convert to radians.
+			double dBallExitOffsetX = 4.0;					// X offset in inches of the ball exiting the shooter from the camera.
+			double dBallExitOffsetY = 7.0;					// Y offset in inches of the ball exiting the shooter from the camera.
 
-			// Calculations for distance measuring.	
-			// FOCAL_LENGTH = (OBJECT_WIDTH_IN_PIXELS_AT_PREMEASURED_DISTANCE * PREMEASURED_DISTANCE_FROM_CAMERA) / OBJECT_WIDTH_IN_INCHES
-			// OBJECT_DISTANCE = (OBJECT_WIDTH_IN_INCHES * FOCAL_LENGTH) / OBJECT_WIDTH_IN_PIXELS
-			
-			// Print object width for debug.
-			//cout << int(nWidthX) << " ";
+			// // Calculate the angle of the robot from the robot.
+			// double dAngle = atan(-(nObjectY - dCameraCenterY) / m_dFocalLength);
+			// // Account for camera offset.
+			// dAngle += dCameraAngleOffset;
 
-			// Precalculated focal length of camera. 
-			dFocalLength = (dObjectWidthInPixelsAtPremeasuredDistance * dDistanceFromCamera) / dObjectWidthInInches;
-			dDistance = (dObjectWidthInInches * dFocalLength) / nWidthX;
+			// // Find the distance of the camera to the target.
+			// double dDistance = (dTargetHeight - dTurretHeight) / tan(dAngle);
 
-			return dDistance;
+			double nObjectCenter = -(nObjectY - dCameraCenterY);
+
+			double dHoodAngle = (1e-11 * pow(nObjectCenter, 6)) - (4e-9 * pow(nObjectCenter, 5)) + (2e-7 * pow(nObjectCenter, 4)) + (7e-5 * pow(nObjectCenter, 3)) - (0.0065 * pow(nObjectCenter, 2)) - (0.7871 * nObjectCenter) + 234.35;
+
+			return dHoodAngle;
+		}
+
+		/****************************************************************************
+				Description:	Calculate the X angle of object with the focal 
+								length of the camera and X location of contour.
+
+				Arguments: 		INT
+	
+				Returns: 		DOUBLE
+		****************************************************************************/
+		double CalculateXAngle(int nObjectX)
+		{
+			// Create instance variables.
+			double dCameraCenterX = (m_nScreenWidth - 1) / 2.0;
+
+			// Calculate the angle of the robot from the object.
+			double dAngle = atan((nObjectX - dCameraCenterX) / m_dFocalLength) * (180.0 / PI);
+
+			return dAngle;
 		}
 
 		/****************************************************************************
@@ -872,11 +897,8 @@ namespace
 		int						m_nOrangeBlurRadius;
 		int						m_nHorizontalAspect;
 		int						m_nVerticalAspect;
-		double					m_dDiagonalAspect;
-		double					m_dDiagonalView;
-		double					m_dHorizontalView;
-		double					m_dVerticalView;
 		double					m_dCameraFOV;
+		double					m_dFocalLength;
 		const double			PI = 3.14159265358979323846;
 		bool					m_bIsStopping;
 		bool					m_bIsStopped;
@@ -1075,12 +1097,12 @@ int main(int argc, char* argv[])
 	// Populate NetworkTables.
 	NetworkTable->PutBoolean("Driving Mode", false);
 	NetworkTable->PutBoolean("Tape Tracking Mode", true);
-	NetworkTable->PutNumber("HMN", 38.2);
-	NetworkTable->PutNumber("HMX", 180);
-	NetworkTable->PutNumber("SMN", 157.7);
+	NetworkTable->PutNumber("HMN", 157);
+	NetworkTable->PutNumber("HMX", 255);
+	NetworkTable->PutNumber("SMN", 119);
 	NetworkTable->PutNumber("SMX", 255);
 	NetworkTable->PutNumber("VMN", 0);
-	NetworkTable->PutNumber("VMX", 20.2);
+	NetworkTable->PutNumber("VMX", 110);
 
 	/**************************************************************************
 	 			Start Cameras
@@ -1101,8 +1123,8 @@ int main(int argc, char* argv[])
 		VideoShow m_pVideoShower;
 
 		// Preallocate image objects.
-		Mat	m_pFrame(240, 320, CV_8U, 1);
-		Mat m_pFinalImg(240, 320, CV_8U, 1);
+		Mat	m_pFrame(480, 640, CV_8U, 1);
+		Mat m_pFinalImg(480, 640, CV_8U, 1);
 
 		// Create a global instance of mutex to protect it.
 		shared_timed_mutex m_pMutexGet;
@@ -1112,13 +1134,14 @@ int main(int argc, char* argv[])
 		int m_nTargetCenterX = 0;
 		int m_nTargetCenterY = 0;
 		double m_dTargetDistance = 0;
+		double m_dTargetAngle = 0;
 		bool m_bDrivingMode = false;
 		bool m_bTrackingMode = true;
 		vector<int> m_vTrackbarValues {1, 255, 1, 255, 1, 255};
 
 		// Start multi-threading.
 		thread m_pVideoGetThread(&VideoGet::StartCapture, &m_pVideoGetter, ref(m_pFrame), ref(m_pMutexGet));
-		thread m_pVideoProcessThread(&VideoProcess::Process, &m_pVideoProcessor, ref(m_pFrame), ref(m_pFinalImg), ref(m_nTargetCenterX), ref(m_nTargetCenterY), ref(m_dTargetDistance), ref(m_bDrivingMode), ref(m_bTrackingMode), ref(m_vTrackbarValues), ref(m_pVideoGetter), ref(m_pMutexGet), ref(m_pMutexShow));
+		thread m_pVideoProcessThread(&VideoProcess::Process, &m_pVideoProcessor, ref(m_pFrame), ref(m_pFinalImg), ref(m_nTargetCenterX), ref(m_nTargetCenterY), ref(m_dTargetDistance), ref(m_dTargetAngle), ref(m_bDrivingMode), ref(m_bTrackingMode), ref(m_vTrackbarValues), ref(m_pVideoGetter), ref(m_pMutexGet), ref(m_pMutexShow));
 		thread m_pVideoShowerThread(&VideoShow::ShowFrame, &m_pVideoShower, ref(m_pFinalImg), ref(m_pMutexShow));
 
 		while (1)
@@ -1142,6 +1165,7 @@ int main(int argc, char* argv[])
 					NetworkTable->PutNumber("Target Center X", m_nTargetCenterX);
 					NetworkTable->PutNumber("Target Center Y", m_nTargetCenterY);
 					NetworkTable->PutNumber("Target Distance", m_dTargetDistance);
+					NetworkTable->PutNumber("Target Angle", m_dTargetAngle);
 
 					// Sleep.
 					this_thread::sleep_for(std::chrono::milliseconds(20));
