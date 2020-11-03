@@ -77,9 +77,9 @@ static const char* m_cConfigFile = "/boot/frc.json";
 
 		Classes:		FPS
 
-		Project:		2019 DeepSpace Vision Code
+		Project:		2020 DeepSpace Vision Code
 
-		Copyright 2019 First Team 3284 - Camdenton LASER Robotics.
+		Copyright 2020 First Team 3284 - Camdenton LASER Robotics.
 ****************************************************************************/
 class FPS
 {
@@ -372,9 +372,9 @@ namespace
 
 			Classes:		VideoGet
 
-			Project:		2019 DeepSpace Vision Code
+			Project:		2020 DeepSpace Vision Code
 
-			Copyright 2019 First Team 3284 - Camdenton LASER Robotics.
+			Copyright 2020 First Team 3284 - Camdenton LASER Robotics.
 	****************************************************************************/
 	class VideoGet
 	{
@@ -513,9 +513,9 @@ namespace
 
 			Classes:		VideoProcess
 
-			Project:		2019 DeepSpace Vision Code
+			Project:		2020 DeepSpace Vision Code
 
-			Copyright 2019 First Team 3284 - Camdenton LASER Robotics.
+			Copyright 2020 First Team 3284 - Camdenton LASER Robotics.
 	****************************************************************************/
 	class VideoProcess
 	{
@@ -545,6 +545,23 @@ namespace
 			m_dFocalLength							= (m_nScreenWidth / 2.0) / tan((m_dCameraFOV * PI / 180.0) / 2.0);
 			m_bIsStopping							= false;
 			m_bIsStopped							= false;
+
+			////
+			// Setup SolvePNP data.
+			////
+
+			// Reference object points.
+			m_pObjectPoints.emplace_back(Point3f());
+
+			// Precalibated camera matrix values.
+			double mtx[3][3] = {{700.4178771192215, 0.0, 323.3391386812556},
+								{0.0, 699.1701795469227, 232.428813933943},
+								{0.0, 0.0, 1.0}};
+			m_pCameraMatrix = Mat(3, 3, CV_64FC1, mtx);
+
+			// Precalibration distance/distortion values.
+			double dist[5] = {0.32376580532500226, -1.852588223166456, -0.0008142808002410602, 0.0018634708027606384, 3.0524527683705562};
+			m_pDistanceCoefficients = Mat(5, 1, CV_64FC1, dist);
 		}
 
 		/****************************************************************************
@@ -570,9 +587,9 @@ namespace
 	
 				Returns: 		Nothing
 		****************************************************************************/
-		void Process(Mat &m_pFrame, Mat &m_pFinalImg, int &m_nTargetCenterX, int &m_nTargetCenterY, double &m_dTargetDistance, double &m_dTargetAngle, bool &m_bDrivingMode, bool &m_bTrackingMode, vector<int> &m_vTrackbarValues, VideoGet &pVideoGetter, shared_timed_mutex &m_pMutexGet, shared_timed_mutex &m_pMutexShow)
+		void Process(Mat &m_pFrame, Mat &m_pFinalImg, int &m_nTargetCenterX, int &m_nTargetCenterY, double &m_dHoodPosition, double &m_dTargetAngle, bool &m_bDrivingMode, bool &m_bTrackingMode, bool &m_bSolvePNPEnabled, vector<int> &m_vTrackbarValues, vector<double> &m_vSolvePNPValues, VideoGet &pVideoGetter, shared_timed_mutex &m_pMutexGet, shared_timed_mutex &m_pMutexShow)
 		{
-			// Give other threads some time.
+			// Give other threads enough time to start before processing camera frames.
 			this_thread::sleep_for(std::chrono::milliseconds(800));
 
 			while (1)
@@ -602,12 +619,12 @@ namespace
 						dilate(mFilterImg, mDilateImg, mKernel);
 
 						// Find countours of image.
-						findContours(mDilateImg, m_pContours, m_pHierarchy, RETR_EXTERNAL, CHAIN_APPROX_TC89_KCOS);
+						findContours(mDilateImg, m_pContours, m_pHierarchy, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);		//// Not sure what this method of detection does, but it worked before: CHAIN_APPROX_TC89_KCOS
 
 						// Driving mode.
 						if (!m_bDrivingMode)
 						{
-							// Tracking mode.
+							// Tracking mode. (Tape or PowerCells)
 							if (m_bTrackingMode)
 							{
 								// Create variables and arrays.
@@ -648,7 +665,7 @@ namespace
 
 											// Calculate contour's distance from the camera.
 											double dAngle = CalculateXAngle(pCenter.x);
-											double dDistance = CalculateHood(pCenter.y);
+											double dHoodPosition = CalculateHood(pCenter.y);
 
 											// Approximate contour with accuracy proportional to contour perimeter.
 											vector<Point> vApprox;
@@ -658,10 +675,11 @@ namespace
 											vector<double> points;
 											points.emplace_back(double(pCenter.x));
 											points.emplace_back(double(pCenter.y));
-											points.emplace_back(dDistance);
+											points.emplace_back(dHoodPosition);
 											points.emplace_back(dAngle);
 											points.emplace_back(vApprox.size());
 											points.emplace_back(dHullArea);
+											points.emplace_back(m_pContour);				//// Use CHAIN_SPPROX_SIMPLE and pass through m_pContour with only corner points? Need to test CHAIN_APPROX_SIMPLE on RPI to find out!
 	
 											vBiggestContours.emplace_back(points);
 										}
@@ -678,11 +696,14 @@ namespace
 										int nCY1 = vBiggestContours[i][1];
 
 										// Distance of contour from camera.
-										double dDistance = vBiggestContours[i][2];
+										double dHoodPosition = vBiggestContours[i][2];
 										// Angle of contour from camera.
 										double dAngle = vBiggestContours[i][3];
 										// Radius of contour.
 										double dArea = vBiggestContours[i][5];
+
+										// Get SolvePNP data from the contour.
+										vector<Point> vContour = vBiggestContours[i][6];
 
 										// Skip small or non convex contours that don't have more than 4 vertices.
 										if (int(vBiggestContours[i][4]) >= 6)
@@ -691,9 +712,10 @@ namespace
 											vector<double> points;
 											points.emplace_back(double(nCX1));
 											points.emplace_back(double(nCY1));
-											points.emplace_back(dDistance);
+											points.emplace_back(dHoodPosition);
 											points.emplace_back(dAngle);
 											points.emplace_back(dArea);
+											points.emplace_back(vContour);
 
 											vTapeTargets.emplace_back(points);
 										}
@@ -709,7 +731,7 @@ namespace
 									// Track the biggest target closest to center.
 									int nTargetPositionX = 0;
 									int nTargetPositionY = 0;
-									double dDistance = 0.0;
+									double dHoodPosition = 0.0;
 									double dAngle = 0.0;
 									double dBiggestContour = 0;
 
@@ -721,19 +743,27 @@ namespace
 											// Store the object location and distance.
 											nTargetPositionX = vTapeTargets[i][0];
 											nTargetPositionY = vTapeTargets[i][1];
-											dDistance = vTapeTargets[i][2];
+											dHoodPosition = vTapeTargets[i][2];
 											dAngle = vTapeTargets[i][3];
 
+											// Store this objects raw contour points for SolvePNP calculation.
+											m_pImagePoints = vTapeTargets[i][5];
 
 											// Store new biggest contour.
 											dBiggestContour = vTapeTargets[i][4];
 										}
 									}
 
+									// If SolvePNP toggle is enabled, then estimate the object pose using the raw contour points.
+									if (m_bSolvePNPEnabled)
+									{
+										
+									}
+
 									// Push position of tracked target.
 									m_nTargetCenterX = nTargetPositionX - (m_nScreenWidth / 2);
 									m_nTargetCenterY = -(nTargetPositionY - (m_nScreenHeight / 2));
-									m_dTargetDistance = dDistance;
+									m_dHoodPosition = dHoodPosition;
 									m_dTargetAngle = dAngle;
 
 									// Draw target distance and target crosshairs with error line.
@@ -745,7 +775,11 @@ namespace
 							}
 							else
 							{
+								/*
+								
+								 This section serves as a placeholder for future code used to track the power cells. This may or may not actually be implemented... 
 
+								*/ 
 							}
 						}
 
@@ -754,7 +788,7 @@ namespace
 						putText(m_pFinalImg, ("Camera FPS: " + to_string(pVideoGetter.GetFPS())), Point(420, m_pFinalImg.rows - 40), FONT_HERSHEY_DUPLEX, 0.65, Scalar(200, 200, 200), 1);
 						putText(m_pFinalImg, ("Processor FPS: " + to_string(m_nFPS)), Point(420, m_pFinalImg.rows - 20), FONT_HERSHEY_DUPLEX, 0.65, Scalar(200, 200, 200), 1);
 
-						// Release garbage.
+						// Release garbage mats.
 						mHSVImg.release();
 						mBlurImg.release();
 						mFilterImg.release();
@@ -844,6 +878,23 @@ namespace
 		}
 
 		/****************************************************************************
+				Description:	Use the detected object points and real world reference
+								points to estimated the 3D pose of the object.
+
+				Arguments: 		INPUT VECTOR, OUTPUT VECTOR
+	
+				Returns: 		OUTPUT VECTOR (6 values)
+		****************************************************************************/
+		vector<double> SolveObjectPose(vector<double> InputVector, vector<double>OutputVector)
+		{
+			// Create instance variables.
+			vector<vector<double>>	vRotationVectors;
+			vector<vector<double>>	vTranslateVectors;
+
+			// 
+		}
+
+		/****************************************************************************
 				Description:	Signals the thread to stop.
 
 				Arguments: 		BOOL
@@ -886,6 +937,10 @@ namespace
 		Mat						mFilterImg;
 		Mat						mDilateImg;
 		Mat						mKernel;
+		Mat						m_pCameraMatrix;
+		Mat						m_pDistanceCoefficients;
+		vector<Point3f>			m_pObjectPoints;
+		vector<Point2f>			m_pImagePoints;
 		vector<vector<Point>>	m_pContours;
 		vector<Vec4i>			m_pHierarchy;
 		FPS*					m_pFPS;
@@ -909,9 +964,9 @@ namespace
 
 			Classes:		VideoShow
 
-			Project:		2019 DeepSpace Vision Code
+			Project:		2020 DeepSpace Vision Code
 
-			Copyright 2019 First Team 3284 - Camdenton LASER Robotics.
+			Copyright 2020 First Team 3284 - Camdenton LASER Robotics.
 	****************************************************************************/
 	class VideoShow
 	{
@@ -926,7 +981,7 @@ namespace
 		VideoShow()
 		{
 			// Create objects.
-			m_pFPS											= new FPS();
+			m_pFPS									= new FPS();
 
 			// Initialize member variables.
 			m_bIsStopping							= false;
@@ -1097,6 +1152,7 @@ int main(int argc, char* argv[])
 	// Populate NetworkTables.
 	NetworkTable->PutBoolean("Driving Mode", false);
 	NetworkTable->PutBoolean("Tape Tracking Mode", true);
+	NetworkTable->PutBoolean("Enable SolvePNP", false);
 	NetworkTable->PutNumber("HMN", 157);
 	NetworkTable->PutNumber("HMX", 255);
 	NetworkTable->PutNumber("SMN", 119);
@@ -1133,15 +1189,17 @@ int main(int argc, char* argv[])
 		// Vision options and values.
 		int m_nTargetCenterX = 0;
 		int m_nTargetCenterY = 0;
-		double m_dTargetDistance = 0;
+		double m_dHoodPosition = 0;
 		double m_dTargetAngle = 0;
 		bool m_bDrivingMode = false;
 		bool m_bTrackingMode = true;
+		bool m_bEnableSolvePNP = false;
 		vector<int> m_vTrackbarValues {1, 255, 1, 255, 1, 255};
+		vector<double> m_vSolvePNPValues {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
 		// Start multi-threading.
 		thread m_pVideoGetThread(&VideoGet::StartCapture, &m_pVideoGetter, ref(m_pFrame), ref(m_pMutexGet));
-		thread m_pVideoProcessThread(&VideoProcess::Process, &m_pVideoProcessor, ref(m_pFrame), ref(m_pFinalImg), ref(m_nTargetCenterX), ref(m_nTargetCenterY), ref(m_dTargetDistance), ref(m_dTargetAngle), ref(m_bDrivingMode), ref(m_bTrackingMode), ref(m_vTrackbarValues), ref(m_pVideoGetter), ref(m_pMutexGet), ref(m_pMutexShow));
+		thread m_pVideoProcessThread(&VideoProcess::Process, &m_pVideoProcessor, ref(m_pFrame), ref(m_pFinalImg), ref(m_nTargetCenterX), ref(m_nTargetCenterY), ref(m_dHoodPosition), ref(m_dTargetAngle), ref(m_bDrivingMode), ref(m_bTrackingMode), ref(m_bEnableSolvePNP), ref(m_vTrackbarValues), ref(m_vSolvePNPValues), ref(m_pVideoGetter), ref(m_pMutexGet), ref(m_pMutexShow));
 		thread m_pVideoShowerThread(&VideoShow::ShowFrame, &m_pVideoShower, ref(m_pFinalImg), ref(m_pMutexShow));
 
 		while (1)
@@ -1154,6 +1212,7 @@ int main(int argc, char* argv[])
 					// Get NetworkTables data.
 					m_bDrivingMode = NetworkTable->GetBoolean("Driving Mode", false);
 					m_bTrackingMode = NetworkTable->GetBoolean("Tape Tracking Mode", true);
+					m_bEnableSolvePNP = NetworkTable->GetBoolean("Enable SolvePNP", false);
 					m_vTrackbarValues[0] = int(NetworkTable->GetNumber("HMN", 1));
 					m_vTrackbarValues[1] = int(NetworkTable->GetNumber("HMX", 255));
 					m_vTrackbarValues[2] = int(NetworkTable->GetNumber("SMN", 1));
@@ -1164,8 +1223,14 @@ int main(int argc, char* argv[])
 					// Put NetworkTables data.
 					NetworkTable->PutNumber("Target Center X", m_nTargetCenterX);
 					NetworkTable->PutNumber("Target Center Y", m_nTargetCenterY);
-					NetworkTable->PutNumber("Target Distance", m_dTargetDistance);
+					NetworkTable->PutNumber("Target Distance", m_dHoodPosition);
 					NetworkTable->PutNumber("Target Angle", m_dTargetAngle);
+					NetworkTable->PutNumber("SPNP X Dist", m_vSolvePNPValues[0]);
+					NetworkTable->PutNumber("SPNP Y Dist", m_vSolvePNPValues[1]);
+					NetworkTable->PutNumber("SPNP Z Dist", m_vSolvePNPValues[2]);
+					NetworkTable->PutNumber("SPNP Roll", m_vSolvePNPValues[3]);
+					NetworkTable->PutNumber("SPNP Pitch", m_vSolvePNPValues[4]);
+					NetworkTable->PutNumber("SPNP Yaw", m_vSolvePNPValues[5]);
 
 					// Sleep.
 					this_thread::sleep_for(std::chrono::milliseconds(20));
