@@ -553,7 +553,7 @@ namespace
 			// Reference object points.
 			m_pObjectPoints.emplace_back(Point3f());
 
-			// Precalibated camera matrix values.
+			// Precalibrated camera matrix values.
 			double mtx[3][3] = {{700.4178771192215, 0.0, 323.3391386812556},
 								{0.0, 699.1701795469227, 232.428813933943},
 								{0.0, 0.0, 1.0}};
@@ -632,6 +632,9 @@ namespace
 								int nCY = 0;
 								vector<vector<double>> vTapeTargets;
 								vector<vector<double>> vBiggestContours;
+								vector<vector<Point>> vContourStorageArray;
+								vector<vector<Point>> vFilteredContourStorageArray;
+								vector<Point> vImagePoints;
 
 								// Draw all contours in white.
 								drawContours(m_pFinalImg, m_pContours, -1, Scalar(255, 255, 210), 1, LINE_4, m_pHierarchy);
@@ -679,9 +682,11 @@ namespace
 											points.emplace_back(dAngle);
 											points.emplace_back(vApprox.size());
 											points.emplace_back(dHullArea);
-											points.emplace_back(m_pContour);				//// Use CHAIN_SPPROX_SIMPLE and pass through m_pContour with only corner points? Need to test CHAIN_APPROX_SIMPLE on RPI to find out!
 	
 											vBiggestContours.emplace_back(points);
+
+											// Store the raw contour data for each object detected.
+											vContourStorageArray.emplace_back(m_pContour); 									//// Use CHAIN_SPPROX_SIMPLE and pass through m_pContour with only corner points? Need to test CHAIN_APPROX_SIMPLE on RPI to find out!
 										}
 									}
 
@@ -702,9 +707,6 @@ namespace
 										// Radius of contour.
 										double dArea = vBiggestContours[i][5];
 
-										// Get SolvePNP data from the contour.
-										vector<Point> vContour = vBiggestContours[i][6];
-
 										// Skip small or non convex contours that don't have more than 4 vertices.
 										if (int(vBiggestContours[i][4]) >= 6)
 										{
@@ -715,9 +717,11 @@ namespace
 											points.emplace_back(dHoodPosition);
 											points.emplace_back(dAngle);
 											points.emplace_back(dArea);
-											points.emplace_back(vContour);
 
 											vTapeTargets.emplace_back(points);
+
+											// Store the raw contour data of the filtered object. 
+											vFilteredContourStorageArray.emplace_back(vContourStorageArray[i]);
 										}
 									}
 
@@ -747,7 +751,7 @@ namespace
 											dAngle = vTapeTargets[i][3];
 
 											// Store this objects raw contour points for SolvePNP calculation.
-											m_pImagePoints = vTapeTargets[i][5];
+											vImagePoints = vFilteredContourStorageArray[i];
 
 											// Store new biggest contour.
 											dBiggestContour = vTapeTargets[i][4];
@@ -757,7 +761,8 @@ namespace
 									// If SolvePNP toggle is enabled, then estimate the object pose using the raw contour points.
 									if (m_bSolvePNPEnabled)
 									{
-										
+										// Go SolvePNP!
+										m_vSolvePNPValues = SolveObjectPose();
 									}
 
 									// Push position of tracked target.
@@ -885,7 +890,7 @@ namespace
 	
 				Returns: 		OUTPUT VECTOR (6 values)
 		****************************************************************************/
-		vector<double> SolveObjectPose(vector<double> InputVector, vector<double>OutputVector)
+		vector<double> SolveObjectPose(vector<Point> m_pImagePoints);
 		{
 			// Create instance variables.
 			vector<vector<double>>	vRotationVectors;
@@ -940,7 +945,6 @@ namespace
 		Mat						m_pCameraMatrix;
 		Mat						m_pDistanceCoefficients;
 		vector<Point3f>			m_pObjectPoints;
-		vector<Point2f>			m_pImagePoints;
 		vector<vector<Point>>	m_pContours;
 		vector<Vec4i>			m_pHierarchy;
 		FPS*					m_pFPS;
