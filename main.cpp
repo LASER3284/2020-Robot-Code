@@ -27,46 +27,46 @@ using namespace wpi;
 using namespace std;
 
 /*
-   JSON format:
-   {
-	   "team": <team number>,
-	   "ntmode": <"client" or "server", "client" if unspecified>
-	   "cameras": [
-		   {
-			   "name": <camera name>
-			   "path": <path, e.g. "/dev/video0">
-			   "pixel format": <"MJPEG", "YUYV", etc>   // optional
-			   "width": <video mode width>			  // optional
-			   "height": <video mode height>			// optional
-			   "fps": <video mode fps>				  // optional
-			   "brightness": <percentage brightness>	// optional
-			   "white balance": <"auto", "hold", value> // optional
-			   "exposure": <"auto", "hold", value>	  // optional
-			   "properties": [						  // optional
-				   {
-					   "name": <property name>
-					   "value": <property value>
-				   }
-			   ],
-			   "stream": {							  // optional
-				   "properties": [
-					   {
-						   "name": <stream property name>
-						   "value": <stream property value>
-					   }
-				   ]
-			   }
-		   }
-	   ]
-	   "switched cameras": [
-		   {
-			   "name": <virtual camera name>
-			   "key": <network table key used for selection>
-			   // if NT value is a string, it's treated as a name
-			   // if NT value is a double, it's treated as an integer index
-		   }
-	   ]
-   }
+	JSON format:
+	{
+		"team": <team number>,
+		"ntmode": <"client" or "server", "client" if unspecified>
+		"cameras": [
+			{
+				"name": <camera name>
+				"path": <path, e.g. "/dev/video0">
+				"pixel format": <"MJPEG", "YUYV", etc>	// optional
+				"width": <video mode width>			  // optional
+				"height": <video mode height>			// optional
+				"fps": <video mode fps>				  // optional
+				"brightness": <percentage brightness>	// optional
+				"white balance": <"auto", "hold", value> // optional
+				"exposure": <"auto", "hold", value>	  // optional
+				"properties": [						  // optional
+					{
+						"name": <property name>
+						"value": <property value>
+					}
+				],
+				"stream": {							  // optional
+					"properties": [
+						{
+							"name": <stream property name>
+							"value": <stream property value>
+						}
+					]
+				}
+			}
+		]
+		"switched cameras": [
+			{
+				"name": <virtual camera name>
+				"key": <network table key used for selection>
+				// if NT value is a string, it's treated as a name
+				// if NT value is a double, it's treated as an integer index
+			}
+		]
+	}
  */
 
 // Store config file.
@@ -577,7 +577,7 @@ namespace
 			delete m_pFPS;
 
 			// Set object pointers as nullptrs.
-			m_pFPS				 = nullptr;
+			m_pFPS = nullptr;
 		}
 
 		/****************************************************************************
@@ -619,7 +619,7 @@ namespace
 						dilate(mFilterImg, mDilateImg, mKernel);
 
 						// Find countours of image.
-						findContours(mDilateImg, m_pContours, m_pHierarchy, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);		//// Not sure what this method of detection does, but it worked before: CHAIN_APPROX_TC89_KCOS
+						findContours(mDilateImg, m_pContours, m_pHierarchy, RETR_EXTERNAL, CHAIN_APPROX_TC89_KCOS);		//// TRY CHAIN_APPROX_SIMPLE		//// Not sure what this method of detection does, but it worked before: CHAIN_APPROX_TC89_KCOS
 
 						// Driving mode.
 						if (!m_bDrivingMode)
@@ -894,7 +894,22 @@ namespace
 		{
 			// Create instance variables.
 			vector<vector<double>>	vRotationVectors;
-			vector<vector<double>>	vTranslateVectors;
+			vector<vector<double>>	vTranslationVectors;
+
+			// The golden stuff...
+			bool bSuccess = solvePnPRansac(m_pObjectPoints,				// Object reference points in 3D space.			
+										m_pImagePoints,					// Object points from the 2D camera image.
+										m_pCameraMatrix,				// Precalibrated camera matrix. (camera specific)
+										m_pDistanceCoefficients,		// Precalibrated camera config. (camera specific)
+										vRotationVectors,				// Storage vector for rotation values.
+										vTranslationVectors,			// Storage vector for translation values.
+										true,							// Use the provided rvec and tvec values as initial approximations of the rotation and translation vectors, and further optimize them? (useExtrensicGuess)
+										100,							// Number of iterations. (adjust for performance?)
+										8.f,							// Inlier threshold value used by the RANSAC procedure. The parameter value is the maximum allowed distance between the observed and computed point projections to consider it an inlier.
+										0.99,							// Confidence value that the algorithm produces a useful result. 
+										noArray(),						// Output vector that contains indices of inliers in objectPoints and imagePoints.
+										SOLVEPNP_ITERATIVE				// Method used for the PNP problem.
+									);
 
 			// 
 		}
@@ -937,30 +952,30 @@ namespace
 
 	private:
 		// Create objects and variables.
-		Mat						mHSVImg;
-		Mat						mBlurImg;
-		Mat						mFilterImg;
-		Mat						mDilateImg;
-		Mat						mKernel;
-		Mat						m_pCameraMatrix;
-		Mat						m_pDistanceCoefficients;
-		vector<Point3f>			m_pObjectPoints;
-		vector<vector<Point>>	m_pContours;
-		vector<Vec4i>			m_pHierarchy;
-		FPS*					m_pFPS;
+		Mat							mHSVImg;
+		Mat							mBlurImg;
+		Mat							mFilterImg;
+		Mat							mDilateImg;
+		Mat							mKernel;
+		Mat							m_pCameraMatrix;
+		Mat							m_pDistanceCoefficients;
+		vector<Point3f>				m_pObjectPoints;
+		vector<vector<Point>>		m_pContours;
+		vector<Vec4i>				m_pHierarchy;
+		FPS*						m_pFPS;
 
-		int						m_nFPS;
-		int						m_nScreenHeight;
-		int						m_nScreenWidth;
-		int						m_nGreenBlurRadius;
-		int						m_nOrangeBlurRadius;
-		int						m_nHorizontalAspect;
-		int						m_nVerticalAspect;
-		double					m_dCameraFOV;
-		double					m_dFocalLength;
-		const double			PI = 3.14159265358979323846;
-		bool					m_bIsStopping;
-		bool					m_bIsStopped;
+		int							m_nFPS;
+		int							m_nScreenHeight;
+		int							m_nScreenWidth;
+		int							m_nGreenBlurRadius;
+		int							m_nOrangeBlurRadius;
+		int							m_nHorizontalAspect;
+		int							m_nVerticalAspect;
+		double						m_dCameraFOV;
+		double						m_dFocalLength;
+		const double				PI = 3.14159265358979323846;
+		bool						m_bIsStopping;
+		bool						m_bIsStopped;
 	};
 
 	/****************************************************************************
@@ -1005,7 +1020,7 @@ namespace
 			delete m_pFPS;
 
 			// Set object pointers as nullptrs.
-			m_pFPS				 = nullptr;
+			m_pFPS = nullptr;
 		}
 
 		/****************************************************************************
@@ -1103,11 +1118,11 @@ namespace
 
 	private:
 		// Create objects and variables.
-		FPS*					m_pFPS;
+		FPS*						m_pFPS;
 
-		int						m_nFPS;
-		bool					m_bIsStopping;
-		bool					m_bIsStopped;
+		int							m_nFPS;
+		bool						m_bIsStopping;
+		bool						m_bIsStopped;
 	};
 }  // End of namespace.
 
