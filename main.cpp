@@ -895,6 +895,18 @@ namespace
 			// Create instance variables.
 			vector<vector<double>>	vRotationVectors;
 			vector<vector<double>>	vTranslationVectors;
+			vector<vector<double>>	vRotationMatrix;
+			vector<vector<double>>	vTranslationMatrix;
+			vector<vector<double>>	vMTXR;
+			vector<vector<double>>	vMTXQ;
+
+			vector<vector<double>>	vUselessPlaceholderVector;
+			vUselessPlaceHolderVector.emplace_back(1);
+			vUselessPlaceHolderVector.emplace_back(2);
+			vUselessPlaceHolderVector.emplace_back(3);
+			vUselessPlaceHolderVector.emplace_back(4);
+			vUselessPlaceHolderVector.emplace_back(5);
+			vUselessPlaceHolderVector.emplace_back(6);
 
 			// The golden stuff...
 			bool bSuccess = solvePnPRansac(m_pObjectPoints,				// Object reference points in 3D space.			
@@ -911,7 +923,17 @@ namespace
 										SOLVEPNP_ITERATIVE				// Method used for the PNP problem.
 									);
 
-			// 
+			// Convert the rotation matrix from the solvePNP function to a rotation vector, or vise versa.
+			Rodrigues(vRotationVectors, vRotationMatrix);
+
+			// Calculate the pitch, roll, yaw angles of the object.
+			RQDecomp3x3(vRotationMatrix, vMTXR, vMTXQ);
+
+			// Calculate the camera x, y, z translation.
+			vTranslationMatrix = -transpose(vRotationMatrix) * vTranslationVectors;
+
+			// Return useless stuff for now.
+			return vUselessPlaceholderVector;
 		}
 
 		/****************************************************************************
