@@ -761,8 +761,9 @@ namespace
 									// If SolvePNP toggle is enabled, then estimate the object pose using the raw contour points.
 									if (m_bSolvePNPEnabled)
 									{
+										////The Try caught a runtime error
 										// Go SolvePNP!
-										m_vSolvePNPValues = SolveObjectPose();
+										m_vSolvePNPValues = SolveObjectPose(vImagePoints);
 									}
 
 									// Push position of tracked target.
@@ -890,7 +891,7 @@ namespace
 	
 				Returns: 		OUTPUT VECTOR (6 values)
 		****************************************************************************/
-		vector<double> SolveObjectPose(vector<Point> m_pImagePoints);
+		vector<double> SolveObjectPose(vector<Point> m_pImagePoints)
 		{
 			// Create instance variables.
 			vector<vector<double>>	vRotationVectors;
@@ -899,14 +900,15 @@ namespace
 			vector<vector<double>>	vTranslationMatrix;
 			vector<vector<double>>	vMTXR;
 			vector<vector<double>>	vMTXQ;
+			vector<vector<double>>	vTRNSP;
 
-			vector<vector<double>>	vUselessPlaceholderVector;
-			vUselessPlaceHolderVector.emplace_back(1);
-			vUselessPlaceHolderVector.emplace_back(2);
-			vUselessPlaceHolderVector.emplace_back(3);
-			vUselessPlaceHolderVector.emplace_back(4);
-			vUselessPlaceHolderVector.emplace_back(5);
-			vUselessPlaceHolderVector.emplace_back(6);
+			vector<double>	vUselessPlaceholderVector;
+			vUselessPlaceholderVector.emplace_back(1);
+			vUselessPlaceholderVector.emplace_back(2);
+			vUselessPlaceholderVector.emplace_back(3);
+			vUselessPlaceholderVector.emplace_back(4);
+			vUselessPlaceholderVector.emplace_back(5);
+			vUselessPlaceholderVector.emplace_back(6);
 
 			// The golden stuff...
 			bool bSuccess = solvePnPRansac(m_pObjectPoints,				// Object reference points in 3D space.			
@@ -930,7 +932,8 @@ namespace
 			RQDecomp3x3(vRotationMatrix, vMTXR, vMTXQ);
 
 			// Calculate the camera x, y, z translation.
-			vTranslationMatrix = -transpose(vRotationMatrix) * vTranslationVectors;
+			//transpose(vRotationMatrix, vTRNSP);
+			//vTranslationMatrix = -vTRNSP * vTranslationVectors;
 
 			// Return useless stuff for now.
 			return vUselessPlaceholderVector;

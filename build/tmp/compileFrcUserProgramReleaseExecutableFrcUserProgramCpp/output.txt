@@ -1,0 +1,30 @@
+See file:///D:/Workspace/2020-Infinite-Recharge/2020-Robot-Code/build/tmp/compileFrcUserProgramReleaseExecutableFrcUserProgramCpp/output.txt for all output for compileFrcUserProgramReleaseExecutableFrcUserProgramCpp.
+compiling Blinkin.cpp successful.
+
+compiling ColorWheel.cpp successful.
+D:\Workspace\2020-Infinite-Recharge\2020-Robot-Code\src\main\cpp\ColorWheel.cpp: In member function 'bool CColorWheel::IsAtSetpoint()':
+D:\Workspace\2020-Infinite-Recharge\2020-Robot-Code\src\main\cpp\ColorWheel.cpp:114:1: warning: no return statement in function returning non-void [-Wreturn-type]
+ }
+ ^
+
+compiling Hood.cpp successful.
+
+compiling FalconMotion.cpp successful.
+
+compiling Intake.cpp successful.
+
+compiling Lift.cpp successful.
+
+compiling Hopper.cpp successful.
+
+compiling Shooter.cpp successful.
+
+compiling Turret.cpp successful.
+
+compiling SparkMotion.cpp successful.
+
+compiling RobotMain.cpp successful.
+
+compiling Drive.cpp successful.
+
+Finished compileFrcUserProgramReleaseExecutableFrcUserProgramCpp, see full log file:///D:/Workspace/2020-Infinite-Recharge/2020-Robot-Code/build/tmp/compileFrcUserProgramReleaseExecutableFrcUserProgramCpp/output.txt.
