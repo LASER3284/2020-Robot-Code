@@ -31,7 +31,6 @@ CDrive::CDrive(Joystick* pDriveController)
     m_dProportional			= m_dDefaultProportional;
     m_dIntegral				= m_dDefaultIntegral;
     m_dDerivative			= m_dDefaultDerivative;
-    m_dDriveBaseWidth		= m_dDefaultDrivebaseWidth;
 
     // Create object pointers.
     m_pDriveController 		= pDriveController;
@@ -141,8 +140,10 @@ void CDrive::Tick()
     m_pOdometry->Update(Rotation2d(degree_t(-m_pGyro->GetYaw())), inch_t(m_pLeftMotor1->GetActual(true)), inch_t(m_pRightMotor1->GetActual(true)));
 
     // Update Smartdashboard values.
-    SmartDashboard::PutNumber("Left Actual Velocity", (m_pLeftMotor1->GetActual(false)));
-    SmartDashboard::PutNumber("Right Actual Velocity", (m_pRightMotor1->GetActual(false)));
+    SmartDashboard::PutNumber("LeftMotorPower", m_pLeftMotor1->GetMotorVoltage());
+    SmartDashboard::PutNumber("RightMotorPower", m_pRightMotor1->GetMotorVoltage());
+    SmartDashboard::PutNumber("Left Actual Velocity", (m_pLeftMotor1->GetActual(false) / 39.3701));
+    SmartDashboard::PutNumber("Right Actual Velocity", (m_pRightMotor1->GetActual(false) / 39.3701));
     SmartDashboard::PutNumber("Left Actual Position", m_pLeftMotor1->GetActual(true));
     SmartDashboard::PutNumber("Right Actual Position", m_pRightMotor1->GetActual(true));
     SmartDashboard::PutNumber("Odometry Field Position X", double(inch_t(m_pOdometry->GetPose().Translation().X())));
@@ -170,8 +171,15 @@ void CDrive::SetJoystickControl(bool bJoystickControl)
 ****************************************************************************/
 void CDrive::GenerateTrajectory(vector<Pose2d> pWaypoints, meters_per_second_t MaxSpeed, meters_per_second_squared_t MaxAcceleration)
 {
+    // Create voltage constraint to make sure we don't accelerate too fast.
+    auto m_VoltageConstraint = DifferentialDriveVoltageConstraint(SimpleMotorFeedforward<units::meters>(m_kS, m_kV, m_kA), m_kDriveKinematics, 10_V);
+
     // Create the trajectory config.
     auto m_Config = TrajectoryConfig(MaxSpeed, MaxAcceleration);
+    // Add kinematics to ensure max speed is actually obeyed.
+    m_Config.SetKinematics(m_kDriveKinematics);
+    // Apply the voltage constraint.
+    m_Config.AddConstraint(m_VoltageConstraint);
 
     // Set trajectory parameters.
     if (m_pTrajectoryConstants.GetIsTrajectoryReversed())
@@ -191,8 +199,8 @@ void CDrive::GenerateTrajectory(vector<Pose2d> pWaypoints, meters_per_second_t M
         m_Trajectory, 
         [this]() { return m_pOdometry->GetPose(); }, 
         RamseteController(m_dBeta, m_dZeta), 
-        SimpleMotorFeedforward<units::meters>(m_dDefaultkS, m_dDefaultkV, m_dDefaultkA), 
-        DifferentialDriveKinematics(inch_t(m_dDriveBaseWidth)), 
+        SimpleMotorFeedforward<units::meters>(m_kS, m_kV, m_kA), 
+        m_kDriveKinematics, 
         [this]() { return GetWheelSpeeds(); }, 
         frc2::PIDController(m_dProportional, m_dIntegral, m_dDerivative), 
         frc2::PIDController(m_dProportional, m_dIntegral, m_dDerivative), 
@@ -230,10 +238,6 @@ void CDrive::SetDrivePowers(volt_t dLeftVoltage, volt_t dRightVoltage)
     // Set drivetrain powers.
     m_pLeftMotor1->SetMotorVoltage(double(dLeftVoltage));
     m_pRightMotor1->SetMotorVoltage(double(dRightVoltage));
-
-    // Put drive powers on SmartDashboard.
-    SmartDashboard::PutNumber("LeftMotorPower", m_pLeftMotor1->GetMotorVoltage());
-    SmartDashboard::PutNumber("RightMotorPower", m_pRightMotor1->GetMotorVoltage());
 }
 
 /****************************************************************************
@@ -244,10 +248,6 @@ void CDrive::SetDrivePowers(volt_t dLeftVoltage, volt_t dRightVoltage)
 ****************************************************************************/
 DifferentialDriveWheelSpeeds CDrive::GetWheelSpeeds()
 {
-    // Put wheel speeds on SmartDashboard.
-    SmartDashboard::PutNumber("LeftWheelSpeed", m_pLeftMotor1->GetActual(false) / 39.3701);
-    SmartDashboard::PutNumber("RightWheelSpeed", m_pRightMotor1->GetActual(false) / 39.3701);
-    
     // Return wheel speeds.
     return {meters_per_second_t(m_pLeftMotor1->GetActual(false) / 39.3701), meters_per_second_t(m_pRightMotor1->GetActual(false) / 39.3701)};
 }

@@ -23,6 +23,7 @@
 #include <frc/trajectory/TrajectoryConfig.h>
 #include <frc/trajectory/Trajectory.h>
 #include <frc/geometry/Pose2d.h>
+#include <frc/trajectory/constraint/DifferentialDriveVoltageConstraint.h>
 #include <AHRS.h>
 #include "FalconMotion.h"
 #include "TrajectoryConstants.h"
@@ -33,15 +34,16 @@ using namespace std;
 using namespace units;
 
 // Default constants for the CDrive class.
-const auto 		m_dDefaultkS 							= 0.39_V;											//	|
-const auto 		m_dDefaultkV 							= 0.0544 * 1_V * 1_s / 1_in;						//	|	Drive characterization constants.
-const auto 		m_dDefaultkA 							= 0.00583 * 1_V * 1_s * 1_s / 1_in;					//	|
-const double    m_dDefaultBeta                         	= 1.100;	// 1.800
-const double    m_dDefaultZeta                         	= 0.500;	// 0.9
-const double	m_dDefaultProportional					= 0.265;	// Left drive proportional value. // 0.000179
-const double	m_dDefaultIntegral						= 0.000;	// Left drive integral value.
-const double 	m_dDefaultDerivative					= 0.000;	// Left drive derivative value.
-const auto    	m_dDefaultDrivebaseWidth               	= 27.019388;
+const auto    	                    m_dDrivebaseWidth               	    = 27.019388;
+const auto 		                    m_kS 							        = 0.39_V;											        //	|	Drive characterization constants.
+const auto 		                    m_kV 							        = 0.0544 * 1_V * 1_s / 1_in;						        //	|	Drive characterization constants.
+const auto 		                    m_kA 							        = 0.00583 * 1_V * 1_s * 1_s / 1_in;					        //	|	Drive characterization constants.
+const DifferentialDriveKinematics   m_kDriveKinematics                      = DifferentialDriveKinematics(inch_t(m_dDrivebaseWidth));   //  |	Drive characterization constants.
+const double                        m_dDefaultBeta                         	= 1.100;	// 1.800
+const double                        m_dDefaultZeta                         	= 0.500;	// 0.9
+const double	                    m_dDefaultProportional					= 0.265;	// Left drive proportional value. // 0.000179
+const double	                    m_dDefaultIntegral						= 0.000;	// Left drive integral value.
+const double 	                    m_dDefaultDerivative					= 0.000;	// Left drive derivative value.
 /////////////////////////////////////////////////////////////////////////////
 
 
@@ -94,7 +96,6 @@ private:
     double					m_dProportional;
     double					m_dIntegral;
     double					m_dDerivative;
-    double					m_dDriveBaseWidth;
 };
 /////////////////////////////////////////////////////////////////////////////
 #endif

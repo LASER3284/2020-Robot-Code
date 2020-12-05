@@ -317,6 +317,7 @@ void CFalconMotion::SetSetpoint(double dSetpoint, bool bUsePosition)
 void CFalconMotion::SetMotorVoltage(double dVoltage)
 {
     m_pMotor->SetVoltage(volt_t(dVoltage));
+    m_pMotor->Feed();
 }
 
 /******************************************************************************
