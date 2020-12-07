@@ -678,7 +678,64 @@ void CRobotMain::TeleopPeriodic()
     // Other states related to this button will set state back to Idle.
 
     /********************************************************************
-        Drive Controller - Manual Move Turret Left (Left Bumper)
+        Drive Controller - Manual Move Hood Up (Up POV)
+    ********************************************************************/
+    if (m_pDriveController->GetPOV() == 0)
+    {
+        // Manual move up.
+        m_pHood->SetState(eHoodManualFwd);
+        bHoodMoving = true;
+    }
+    else
+    {
+    /********************************************************************
+        Drive Controller - Manual Move Hood Down (Down POV)
+    ********************************************************************/
+        if (m_pDriveController->GetPOV() == 180)
+        {
+            // Manual move down.
+            m_pHood->SetState(eHoodManualRev);
+            bHoodMoving = true;
+        }
+        else
+        {
+            if (bHoodMoving)
+            {
+                // No longer moving, set to idle.
+                m_pHood->Stop();
+                bHoodMoving = false;
+            }
+        }
+    }
+    
+    /********************************************************************
+        Drive Controller - Move Hood to Preset Far Position (Button A)
+    ********************************************************************/
+    if (m_pDriveController->GetRawButtonPressed(eButtonA))
+    {
+        m_pHood->SetSetpoint(SmartDashboard::GetNumber("Hood Position Far", 0.0));
+        m_pHood->SetState(eHoodFinding);
+    }
+
+    /********************************************************************
+        Drive Controller -  Move Hood to Preset Near Position (Button Y)
+    ********************************************************************/
+    if (m_pDriveController->GetRawButtonPressed(eButtonY))
+    {
+        m_pHood->SetSetpoint(SmartDashboard::GetNumber("Hood Position Near", 0.0));
+        m_pHood->SetState(eHoodFinding);
+    }
+
+    /********************************************************************
+        Drive Controller - Zero Hood Encoder (Button X)
+    ********************************************************************/
+    if (m_pDriveController->GetRawButtonPressed(eButtonX))
+    {
+        m_pHood->Rezero();
+    }
+
+    /********************************************************************
+        Aux Controller - Manual Move Turret Left (Left Bumper)
     ********************************************************************/
     if (m_pAuxController->GetRawButton(eButtonLB))
     {
@@ -689,7 +746,7 @@ void CRobotMain::TeleopPeriodic()
     else
     {
     /********************************************************************
-        Drive Controller - Manual Move Turret Right (Right Bumper)
+        Aux Controller - Manual Move Turret Right (Right Bumper)
     ********************************************************************/
         if (m_pAuxController->GetRawButton(eButtonRB))
         {
@@ -704,37 +761,6 @@ void CRobotMain::TeleopPeriodic()
                 // No longer pressing any buttons, move to Idle.
                 m_pTurret->SetState(eTurretIdle);
                 bTurretMoving = false;
-            }
-        }
-    }
-
-    /********************************************************************
-        Drive Controller - Manual Move Hood Up (Up POV)
-    ********************************************************************/
-    if (m_pAuxController->GetPOV() == 0)
-    {
-        // Manual move up.
-        m_pHood->SetState(eHoodManualFwd);
-        bHoodMoving = true;
-    }
-    else
-    {
-    /********************************************************************
-        Drive Controller - Manual Move Hood Down (Down POV)
-    ********************************************************************/
-        if (m_pAuxController->GetPOV() == 180)
-        {
-            // Manual move down.
-            m_pHood->SetState(eHoodManualRev);
-            bHoodMoving = true;
-        }
-        else
-        {
-            if (bHoodMoving)
-            {
-                // No longer moving, set to idle.
-                m_pHood->Stop();
-                bHoodMoving = false;
             }
         }
     }
@@ -794,14 +820,6 @@ void CRobotMain::TeleopPeriodic()
     {
         // Stop the Unjamming sequence.
         m_pIntake->Unjam(false);
-    }
-
-    /********************************************************************
-        Aux Controller - Zero Hood Encoder (Button X)
-    ********************************************************************/
-    if (m_pAuxController->GetRawButtonPressed(eButtonX))
-    {
-        m_pHood->Rezero();
     }
 
     /********************************************************************

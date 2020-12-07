@@ -26,12 +26,15 @@ const double dHoodOpenLoopRamp			=     0.250;
 const double dHoodClosedLoopRamp		=     0.250;
 const int	 dHoodPulsesPerRev			=        42;
 const double dHoodRevsPerUnit			= 	1.0/360;
-const double dHoodProportional          =  0.002378;
-const double dHoodIntegral              =  0.000475;
-const double dHoodDerivative            =       0.0;
-const double dHoodFeedForward           =       0.0;
+const double dHoodProportional          =  0.003700;
+const double dHoodIntegral              =  0.000600;
+const double dHoodDerivative            = 0.0000001;
+const double dHoodFeedForward           =      0.01;
 const double dHoodTolerance             =      0.25;
 const double dHoodFindingTime           =       0.0;
+const double dHoodPresetPositionFar     =     250.0;
+const double dHoodPresetPositionNear    =     100.0;
+
 
 // Hood enum.
 enum HoodState 		{eHoodIdle, eHoodStopped, eHoodReset, eHoodTracking, eHoodFinding, eHoodManualFwd, eHoodManualRev};

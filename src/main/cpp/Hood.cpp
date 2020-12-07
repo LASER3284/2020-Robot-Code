@@ -69,9 +69,11 @@ void CHood::Init()
     SmartDashboard::PutNumber("Proportional", dHoodProportional);
     SmartDashboard::PutNumber("Integral", dHoodIntegral);
     SmartDashboard::PutNumber("Derivative", dHoodDerivative);
+    SmartDashboard::PutNumber("Hood Position Far", dHoodPresetPositionFar);
+    SmartDashboard::PutNumber("Hood Position Near", dHoodPresetPositionNear);
 
     // Set the state back to Idle.
-    m_nState = eHoodIdle;
+    m_nState = eHoodStopped;
     // Set the Tolerance of the PID controller.
     SetTolerance(m_dTolerance);
     // Set the PID of the controller.
@@ -140,7 +142,7 @@ void CHood::Tick()
             if (fabs(m_pHoodPID->GetPositionError()) < m_dTolerance)
             {
                 // At our setpoint, return to idle.
-                SetState(eHoodIdle);
+                SetState(eHoodStopped);
             }
             else
             {
