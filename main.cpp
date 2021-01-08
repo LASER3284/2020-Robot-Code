@@ -533,8 +533,9 @@ namespace
 			m_pFPS									= new FPS();
 			
 			// Initialize member variables.
-			mKernel									= getStructuringElement(MORPH_RECT, Size(3, 3));
+			m_pKernel								= getStructuringElement(MORPH_RECT, Size(3, 3));
 			m_nFPS									= 0;
+			m_nNumberOfPolyCorners					= 4;
 			m_nGreenBlurRadius						= 3;
 			m_nOrangeBlurRadius						= 3;
 			m_nHorizontalAspect						= 4;
@@ -551,7 +552,14 @@ namespace
 			////
 
 			// Reference object points.
-			m_pObjectPoints.emplace_back(Point3f());
+			m_pObjectPoints.emplace_back(Point3f(0.0, 18.0, 0.0));
+			m_pObjectPoints.emplace_back(Point3f(2.0, 18.0, 0.0));
+			m_pObjectPoints.emplace_back(Point3f(0.0, 2.0, 0.0));
+			m_pObjectPoints.emplace_back(Point3f(0.0, 2.0, 0.0));
+			m_pObjectPoints.emplace_back(Point3f(37.25, 18.0, 0.0));
+			m_pObjectPoints.emplace_back(Point3f(39.25, 18.0, 0.0));
+			m_pObjectPoints.emplace_back(Point3f(0.0, 0.0, 0.0));
+			m_pObjectPoints.emplace_back(Point3f(0.0, 0.0, 0.0));
 
 			// Precalibrated camera matrix values.
 			double mtx[3][3] = {{700.4178771192215, 0.0, 323.3391386812556},
@@ -606,20 +614,20 @@ namespace
 					if (!m_pFrame.empty())
 					{
 						// Convert image from RGB to HSV.
-						//cvtColor(m_pFrame, mHSVImg, COLOR_BGR2HSV);
+						//cvtColor(m_pFrame, m_pHSVImg, COLOR_BGR2HSV);
 						// Acquire resource lock for show thread only after m_pFrame has been used.
 						unique_lock<shared_timed_mutex> guard(m_pMutexShow);
 						// Copy frame to a new mat.
 						m_pFinalImg = m_pFrame.clone();
 						// Blur the image.
-						blur(m_pFrame, mBlurImg, Size(m_nGreenBlurRadius, m_nGreenBlurRadius));
+						blur(m_pFrame, m_pBlurImg, Size(m_nGreenBlurRadius, m_nGreenBlurRadius));
 						// Filter out specific color in image.
-						inRange(mBlurImg, Scalar(m_vTrackbarValues[0], m_vTrackbarValues[2], m_vTrackbarValues[4]), Scalar(m_vTrackbarValues[1], m_vTrackbarValues[3], m_vTrackbarValues[5]), mFilterImg);
+						inRange(m_pBlurImg, Scalar(m_vTrackbarValues[0], m_vTrackbarValues[2], m_vTrackbarValues[4]), Scalar(m_vTrackbarValues[1], m_vTrackbarValues[3], m_vTrackbarValues[5]), m_pFilterImg);
 						// Apply blur to image.
-						dilate(mFilterImg, mDilateImg, mKernel);
+						dilate(m_pFilterImg, m_pDilateImg, m_pKernel);
 
 						// Find countours of image.
-						findContours(mDilateImg, m_pContours, m_pHierarchy, RETR_EXTERNAL, CHAIN_APPROX_TC89_KCOS);		//// TRY CHAIN_APPROX_SIMPLE		//// Not sure what this method of detection does, but it worked before: CHAIN_APPROX_TC89_KCOS
+						findContours(m_pDilateImg, m_pContours, m_pHierarchy, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);		//// TRY CHAIN_APPROX_SIMPLE		//// Not sure what this method of detection does, but it worked before: CHAIN_APPROX_TC89_KCOS
 
 						// Driving mode.
 						if (!m_bDrivingMode)
@@ -631,10 +639,12 @@ namespace
 								int nCX = 0;
 								int nCY = 0;
 								vector<vector<double>> vTapeTargets;
+								vector<vector<Point>> vTapeTargets2;
 								vector<vector<double>> vBiggestContours;
-								vector<vector<Point>> vContourStorageArray;
-								vector<vector<Point>> vFilteredContourStorageArray;
-								vector<Point> vImagePoints;
+								vector<vector<Point>> vBiggestContours2;
+								vector<Point2f> vImagePoints;
+								vector<vector<Point>> vFilteredContours;
+								vector<vector<Point>> vFinalContours;
 
 								// Draw all contours in white.
 								drawContours(m_pFinalImg, m_pContours, -1, Scalar(255, 255, 210), 1, LINE_4, m_pHierarchy);
@@ -645,7 +655,7 @@ namespace
 									sort(m_pContours.begin(), m_pContours.end(), [](const vector<Point>& c1, const vector<Point>& c2) {	return fabs(contourArea(c1, false)) < fabs(contourArea(c2, false)); });
 
 									// Loop through detected contours.
-									for (vector<Point> m_pContour: m_pContours)
+									for (vector<Point> pContour : m_pContours)
 									{
 										// Limit number of objects to do calculations for.
 										if (vBiggestContours.size() < 50)
@@ -653,16 +663,16 @@ namespace
 											// Gets the (x, y) and radius of the enclosing circle of contour.
 											Point2f pCenter;
 											float dRadius = 0;
-											minEnclosingCircle(m_pContour, pCenter, dRadius);
+											minEnclosingCircle(pContour, pCenter, dRadius);
 											// Makes bounding rectangle of contour.
-											Rect rCoordinates = boundingRect(m_pContour);
+											Rect rCoordinates = boundingRect(pContour);
 											// Draws contour of bounding rectangle and enclosing circle in green.
 											rectangle(m_pFinalImg, rCoordinates, Scalar(23, 184, 80), 1, LINE_4, 0);
 											circle(m_pFinalImg, pCenter, dRadius, Scalar(23, 184, 80), 1, LINE_4, 0);
 
 											// Find convex hull. (Bounding polygon on contour.)
 											vector<Point> m_pHull;
-											convexHull(m_pContour, m_pHull, false);
+											convexHull(pContour, m_pHull, false);
 											// Calculate hull area.
 											double dHullArea = fabs(contourArea(m_pHull));
 
@@ -672,7 +682,11 @@ namespace
 
 											// Approximate contour with accuracy proportional to contour perimeter.
 											vector<Point> vApprox;
-											approxPolyDP(Mat(m_pContour), vApprox, arcLength(Mat(m_pContour), true) * 0.02, true);
+											approxPolyDP(Mat(pContour), vApprox, arcLength(Mat(pContour), true) * 0.02, true);
+
+											// Approximate the contours corners.
+											vector<Point> vPolyCorners;
+											approxPolyDP(Mat(pContour), vPolyCorners, m_nNumberOfPolyCorners, true);
 
 											// Appends contour data to arrays after checking for duplicates.
 											vector<double> points;
@@ -685,8 +699,9 @@ namespace
 	
 											vBiggestContours.emplace_back(points);
 
-											// Store the raw contour data for each object detected.
-											vContourStorageArray.emplace_back(m_pContour); 									//// Use CHAIN_SPPROX_SIMPLE and pass through m_pContour with only corner points? Need to test CHAIN_APPROX_SIMPLE on RPI to find out!
+											// Appends special contour data to a secondary array.
+											vBiggestContours2.emplace_back(vPolyCorners);
+											vBiggestContours2.emplace_back(vApprox);
 										}
 									}
 
@@ -706,8 +721,11 @@ namespace
 										double dAngle = vBiggestContours[i][3];
 										// Radius of contour.
 										double dArea = vBiggestContours[i][5];
+										// Bounding polygon of contour;
+										vector<Point> vPolyCorners = vBiggestContours2[0];
+										vector<Point> vApprox = vBiggestContours2[1];
 
-										// Skip small or non convex contours that don't have more than 4 vertices.
+										// Skip small or non convex contours that don't have more than 6 vertices.
 										if (int(vBiggestContours[i][4]) >= 6)
 										{
 											// Appends contour data to arrays after checking for duplicates.
@@ -720,8 +738,9 @@ namespace
 
 											vTapeTargets.emplace_back(points);
 
-											// Store the raw contour data of the filtered object. 
-											vFilteredContourStorageArray.emplace_back(vContourStorageArray[i]);
+											// Appends special contour data to a secondary array.
+											vTapeTargets2.emplace_back(vPolyCorners);
+											vTapeTargets2.emplace_back(vApprox);
 										}
 									}
 
@@ -733,11 +752,12 @@ namespace
 								if (int(vTapeTargets.size()) > 0)
 								{
 									// Track the biggest target closest to center.
-									int nTargetPositionX = 0;
-									int nTargetPositionY = 0;
-									double dHoodPosition = 0.0;
-									double dAngle = 0.0;
+									int nTargetPositionX;
+									int nTargetPositionY;
+									double dHoodPosition;
+									double dAngle;
 									double dBiggestContour = 0;
+									vector<Point> vPolyCorners;
 
 									for (int i = 0; i < int(vTapeTargets.size()); i++)
 									{
@@ -750,8 +770,8 @@ namespace
 											dHoodPosition = vTapeTargets[i][2];
 											dAngle = vTapeTargets[i][3];
 
-											// Store this objects raw contour points for SolvePNP calculation.
-											vImagePoints = vFilteredContourStorageArray[i];
+											// Store the object corners.
+											vPolyCorners = vTapeTargets2[0];
 
 											// Store new biggest contour.
 											dBiggestContour = vTapeTargets[i][4];
@@ -761,10 +781,39 @@ namespace
 									// If SolvePNP toggle is enabled, then estimate the object pose using the raw contour points.
 									if (m_bSolvePNPEnabled)
 									{
-										////The Try caught a runtime error
-										// Go SolvePNP!
-										m_vSolvePNPValues = SolveObjectPose(vImagePoints);
-									}
+										cout << vPolyCorners << "\n";
+
+										m_pFinalImg = m_pDilateImg.clone();
+
+										// Calculate object pose.
+										//m_vSolvePNPValues = SolveObjectPose(vImagePoints, ref(m_pFinalImg));
+
+										// // Find the corners of all contours.
+										// cornerHarris(m_pDilateImg, m_pCorners, 2, 3, 0.04);
+										// // Normalize mat.
+										// normalize(m_pCorners, m_pCornersNormalized, 0, 255, NORM_MINMAX, CV_32FC1, Mat());
+										// // Scales the mat to 8-bit for viewing.
+										// convertScaleAbs(m_pCornersNormalized, m_pCornersScaled);
+
+										// // Extract and draw points from cornerHarris.
+										// for (int i = 0; i < m_pCornersNormalized.rows ; i++)
+										// {
+										// 	for (int j = 0; j < m_pCornersNormalized.cols; j++)
+										// 	{
+										// 		if ((int) m_pCornersNormalized.at<float>(i, j) > 100)
+										// 		{
+										// 			// Draw corner point onto image for viewing.
+										// 			circle(m_pFinalImg, Point(j, i), 0,  Scalar(0, 0, 0), 5, 8, 0);
+
+										// 			// Store the corner points in the ImagePoints array.
+										// 			vImagePoints.emplace_back(Point2f(j, i));
+										// 		}
+										// 	}
+										// }
+
+										// Uncomment this line to see the CornerHarris results more clearly.
+										//m_pFinalImg = m_pCornersScaled.clone();
+									} 
 
 									// Push position of tracked target.
 									m_nTargetCenterX = nTargetPositionX - (m_nScreenWidth / 2);
@@ -795,15 +844,17 @@ namespace
 						putText(m_pFinalImg, ("Processor FPS: " + to_string(m_nFPS)), Point(420, m_pFinalImg.rows - 20), FONT_HERSHEY_DUPLEX, 0.65, Scalar(200, 200, 200), 1);
 
 						// Release garbage mats.
-						mHSVImg.release();
-						mBlurImg.release();
-						mFilterImg.release();
+						m_pHSVImg.release();
+						m_pBlurImg.release();
+						m_pFilterImg.release();
 					}
 				}
 				catch (const exception& e)
 				{
 					//SetIsStopping(true);
-					cout << "WARNING: MAT corrupt. Frame has been dropped." << "\n";
+					// Print error to console and show that an error has occured on the screen.
+					putText(m_pFinalImg, "Image Processing ERROR", Point(280, m_pFinalImg.rows - 440), FONT_HERSHEY_DUPLEX, 0.65, Scalar(0, 0, 250), 1);
+					cout << "\nWARNING: MAT corrupt or a runtime error has occured! Frame has been dropped." << "\n" << e.what();
 				}
 
 				// If the program stops shutdown the thread.
@@ -891,52 +942,112 @@ namespace
 	
 				Returns: 		OUTPUT VECTOR (6 values)
 		****************************************************************************/
-		vector<double> SolveObjectPose(vector<Point> m_pImagePoints)
+		vector<double> SolveObjectPose(vector<Point2f> m_pImagePoints, Mat &m_pFinalImg)
 		{
 			// Create instance variables.
 			vector<vector<double>>	vRotationVectors;
-			vector<vector<double>>	vTranslationVectors;
 			vector<vector<double>>	vRotationMatrix;
-			vector<vector<double>>	vTranslationMatrix;
+			vector<double>			vEulerAngles;
 			vector<vector<double>>	vMTXR;
 			vector<vector<double>>	vMTXQ;
-			vector<vector<double>>	vTRNSP;
+			Mat						vTranslationVectors;
+			Mat						vTranslationMatrix;
+			Mat						vTRNSP;
+			static int nCount = 0;
 
-			vector<double>	vUselessPlaceholderVector;
-			vUselessPlaceholderVector.emplace_back(1);
-			vUselessPlaceholderVector.emplace_back(2);
-			vUselessPlaceholderVector.emplace_back(3);
-			vUselessPlaceholderVector.emplace_back(4);
-			vUselessPlaceholderVector.emplace_back(5);
-			vUselessPlaceholderVector.emplace_back(6);
+			// Create a vector that stores 0s by default. 
+			vector<double>	vObjectPosition;
+			vObjectPosition.emplace_back(0);
+			vObjectPosition.emplace_back(0);
+			vObjectPosition.emplace_back(0);
+			vObjectPosition.emplace_back(0);
+			vObjectPosition.emplace_back(0);
+			vObjectPosition.emplace_back(0);
 
-			// The golden stuff...
-			bool bSuccess = solvePnPRansac(m_pObjectPoints,				// Object reference points in 3D space.			
-										m_pImagePoints,					// Object points from the 2D camera image.
-										m_pCameraMatrix,				// Precalibrated camera matrix. (camera specific)
-										m_pDistanceCoefficients,		// Precalibrated camera config. (camera specific)
-										vRotationVectors,				// Storage vector for rotation values.
-										vTranslationVectors,			// Storage vector for translation values.
-										true,							// Use the provided rvec and tvec values as initial approximations of the rotation and translation vectors, and further optimize them? (useExtrensicGuess)
-										100,							// Number of iterations. (adjust for performance?)
-										8.f,							// Inlier threshold value used by the RANSAC procedure. The parameter value is the maximum allowed distance between the observed and computed point projections to consider it an inlier.
-										0.99,							// Confidence value that the algorithm produces a useful result. 
-										noArray(),						// Output vector that contains indices of inliers in objectPoints and imagePoints.
-										SOLVEPNP_ITERATIVE				// Method used for the PNP problem.
-									);
+			// Catch any anomalies from SolvePNPRansac. (Like bad input data errors.)
+			try
+			{
+				// The golden stuff...
+				bool bSuccess = solvePnPRansac(m_pObjectPoints,				// Object reference points in 3D space.			
+											m_pImagePoints,					// Object points from the 2D camera image.
+											m_pCameraMatrix,				// Precalibrated camera matrix. (camera specific)
+											m_pDistanceCoefficients,		// Precalibrated camera config. (camera specific)
+											vRotationVectors,				// Storage vector for rotation values.
+											vTranslationVectors,			// Storage vector for translation values.
+											true,							// Use the provided rvec and tvec values as initial approximations of the rotation and translation vectors, and further optimize them? (useExtrensicGuess)
+											100,							// Number of iterations. (adjust for performance?)
+											8.f,							// Inlier threshold value used by the RANSAC procedure. The parameter value is the maximum allowed distance between the observed and computed point projections to consider it an inlier.
+											0.99,							// Confidence value that the algorithm produces a useful result. 
+											noArray(),						// Output vector that contains indices of inliers in objectPoints and imagePoints.
+											SOLVEPNP_ITERATIVE				// Method used for the PNP problem.
+										);
 
-			// Convert the rotation matrix from the solvePNP function to a rotation vector, or vise versa.
-			Rodrigues(vRotationVectors, vRotationMatrix);
+				// If SolvePNP reports a success, then continue with calculations. Else, keep searching. 
+				if (bSuccess)
+				{
+					// Convert the rotation matrix from the solvePNP function to a rotation vector, or vise versa.
+					Rodrigues(vRotationVectors, vRotationMatrix);
 
-			// Calculate the pitch, roll, yaw angles of the object.
-			RQDecomp3x3(vRotationMatrix, vMTXR, vMTXQ);
+					// Calculate the camera x, y, z translation.
+					transpose(vRotationMatrix, vTRNSP);
+					vTranslationMatrix = -vTRNSP * vTranslationVectors;
 
-			// Calculate the camera x, y, z translation.
-			//transpose(vRotationMatrix, vTRNSP);
-			//vTranslationMatrix = -vTRNSP * vTranslationVectors;
+					// Calculate the pitch, roll, yaw angles of the object.
+					//RQDecomp3x3(vRotationMatrix, vMTXR, vMTXQ);
+					vEulerAngles.emplace_back(atan2(-vTRNSP.at<double>(2, 1), vTRNSP.at<double>(2, 2)));
+					vEulerAngles.emplace_back(asin(vTRNSP.at<double>(2, 0)));
+					vEulerAngles.emplace_back(atan2(-vTRNSP.at<double>(1, 0), vTRNSP.at<double>(0, 0)));
+
+					// Store the calculated object values in the vector.
+					vObjectPosition.emplace_back(vTranslationMatrix.at<double>(0));
+					vObjectPosition.emplace_back(vTranslationMatrix.at<double>(0));
+					vObjectPosition.emplace_back(vTranslationMatrix.at<double>(0));
+					vObjectPosition.emplace_back(vEulerAngles[0]);
+					vObjectPosition.emplace_back(vEulerAngles[1]);
+					vObjectPosition.emplace_back(vEulerAngles[2]);
+
+					// Print status onto image.
+					putText(m_pFinalImg, "PNP Status: found match!", Point(50, m_pFinalImg.rows - 440), FONT_HERSHEY_DUPLEX, 0.40, Scalar(0, 0, 250), 1);
+				}
+				else
+				{
+					// If the object is not found, then put 0s in the vector.
+					vObjectPosition.emplace_back(0);
+					vObjectPosition.emplace_back(0);
+					vObjectPosition.emplace_back(0);
+					vObjectPosition.emplace_back(0);
+					vObjectPosition.emplace_back(0);
+					vObjectPosition.emplace_back(0);
+
+					// Print status onto image.
+					putText(m_pFinalImg, "PNP Status: searching...", Point(50, m_pFinalImg.rows - 440), FONT_HERSHEY_DUPLEX, 0.40, Scalar(0, 0, 250), 1);
+				}
+
+				// Print Debug.
+				cout << m_pImagePoints << "\n";
+				cout << "bSuccess: " << bSuccess << "\n";
+
+				// Reset toggle if the code ran successfully.
+				nCount = 0;
+			}
+			catch (const exception& e)
+			{
+				// Print status on screen.
+				putText(m_pFinalImg, "PNP Status: point data unsolvable...", Point(50, m_pFinalImg.rows - 440), FONT_HERSHEY_DUPLEX, 0.40, Scalar(0, 0, 250), 1);
+
+				// Only print the message to the console once per fail.
+				if (nCount <= 100)
+				{
+					// Print message to console.
+					cout << "\nMESSAGE: SolvePNP was unable to process the image data. Moving on...\n" << e.what();
+
+					// Add one error count to toggle.
+					nCount++;
+				}
+			}
 
 			// Return useless stuff for now.
-			return vUselessPlaceholderVector;
+			return vObjectPosition;
 		}
 
 		/****************************************************************************
@@ -977,11 +1088,14 @@ namespace
 
 	private:
 		// Create objects and variables.
-		Mat							mHSVImg;
-		Mat							mBlurImg;
-		Mat							mFilterImg;
-		Mat							mDilateImg;
-		Mat							mKernel;
+		Mat							m_pHSVImg;
+		Mat							m_pBlurImg;
+		Mat							m_pFilterImg;
+		Mat							m_pDilateImg;
+		Mat							m_pCorners;
+		Mat							m_pCornersNormalized;
+		Mat							m_pCornersScaled;
+		Mat							m_pKernel;
 		Mat							m_pCameraMatrix;
 		Mat							m_pDistanceCoefficients;
 		vector<Point3f>				m_pObjectPoints;
@@ -996,6 +1110,7 @@ namespace
 		int							m_nOrangeBlurRadius;
 		int							m_nHorizontalAspect;
 		int							m_nVerticalAspect;
+		int							m_nNumberOfPolyCorners;
 		double						m_dCameraFOV;
 		double						m_dFocalLength;
 		const double				PI = 3.14159265358979323846;
