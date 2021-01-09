@@ -9,6 +9,7 @@
 
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/core/core.hpp>
+#include <opencv2/opencv.hpp>
 #include <opencv/cv.hpp>
 #include <networktables/NetworkTableInstance.h>
 #include <vision/VisionPipeline.h>
@@ -535,7 +536,7 @@ namespace
 			// Initialize member variables.
 			m_pKernel								= getStructuringElement(MORPH_RECT, Size(3, 3));
 			m_nFPS									= 0;
-			m_nNumberOfPolyCorners					= 4;
+			m_nNumberOfPolyCorners					= 10;
 			m_nGreenBlurRadius						= 3;
 			m_nOrangeBlurRadius						= 3;
 			m_nHorizontalAspect						= 4;
@@ -552,14 +553,14 @@ namespace
 			////
 
 			// Reference object points.
-			m_pObjectPoints.emplace_back(Point3f(0.0, 18.0, 0.0));
-			m_pObjectPoints.emplace_back(Point3f(2.0, 18.0, 0.0));
-			m_pObjectPoints.emplace_back(Point3f(0.0, 2.0, 0.0));
-			m_pObjectPoints.emplace_back(Point3f(0.0, 2.0, 0.0));
-			m_pObjectPoints.emplace_back(Point3f(37.25, 18.0, 0.0));
-			m_pObjectPoints.emplace_back(Point3f(39.25, 18.0, 0.0));
 			m_pObjectPoints.emplace_back(Point3f(0.0, 0.0, 0.0));
-			m_pObjectPoints.emplace_back(Point3f(0.0, 0.0, 0.0));
+			m_pObjectPoints.emplace_back(Point3f(2.25, 0.0, 0.0));
+			m_pObjectPoints.emplace_back(Point3f(11.5, 13.25, 0.0));
+			m_pObjectPoints.emplace_back(Point3f(28.5, 13.25, 0.0));
+			m_pObjectPoints.emplace_back(Point3f(37.25, 0.0, 0.0));
+			m_pObjectPoints.emplace_back(Point3f(39.75, 0.0, 0.0));
+			m_pObjectPoints.emplace_back(Point3f(29.25, 15.0, 0.0));
+			m_pObjectPoints.emplace_back(Point3f(10.5, 15.0, 0.0));
 
 			// Precalibrated camera matrix values.
 			double mtx[3][3] = {{700.4178771192215, 0.0, 323.3391386812556},
@@ -639,9 +640,9 @@ namespace
 								int nCX = 0;
 								int nCY = 0;
 								vector<vector<double>> vTapeTargets;
-								vector<vector<Point>> vTapeTargets2;
+								vector<vector<vector<Point>>> vTapeTargets2;
 								vector<vector<double>> vBiggestContours;
-								vector<vector<Point>> vBiggestContours2;
+								vector<vector<vector<Point>>> vBiggestContours2;
 								vector<Point2f> vImagePoints;
 								vector<vector<Point>> vFilteredContours;
 								vector<vector<Point>> vFinalContours;
@@ -700,8 +701,11 @@ namespace
 											vBiggestContours.emplace_back(points);
 
 											// Appends special contour data to a secondary array.
-											vBiggestContours2.emplace_back(vPolyCorners);
-											vBiggestContours2.emplace_back(vApprox);
+											vector<vector<Point>> points2;
+											points2.emplace_back(vPolyCorners);
+											points2.emplace_back(vApprox);
+
+											vBiggestContours2.emplace_back(points2);
 										}
 									}
 
@@ -722,8 +726,8 @@ namespace
 										// Radius of contour.
 										double dArea = vBiggestContours[i][5];
 										// Bounding polygon of contour;
-										vector<Point> vPolyCorners = vBiggestContours2[0];
-										vector<Point> vApprox = vBiggestContours2[1];
+										vector<Point> vPolyCorners = vBiggestContours2[i][0];
+										vector<Point> vApprox = vBiggestContours2[i][1];
 
 										// Skip small or non convex contours that don't have more than 6 vertices.
 										if (int(vBiggestContours[i][4]) >= 6)
@@ -739,8 +743,11 @@ namespace
 											vTapeTargets.emplace_back(points);
 
 											// Appends special contour data to a secondary array.
-											vTapeTargets2.emplace_back(vPolyCorners);
-											vTapeTargets2.emplace_back(vApprox);
+											vector<vector<Point>> points2;
+											points2.emplace_back(vPolyCorners);
+											points2.emplace_back(vApprox);
+
+											vTapeTargets2.emplace_back(points2);
 										}
 									}
 
@@ -771,7 +778,7 @@ namespace
 											dAngle = vTapeTargets[i][3];
 
 											// Store the object corners.
-											vPolyCorners = vTapeTargets2[0];
+											vPolyCorners = vTapeTargets2[i][0];
 
 											// Store new biggest contour.
 											dBiggestContour = vTapeTargets[i][4];
@@ -781,12 +788,15 @@ namespace
 									// If SolvePNP toggle is enabled, then estimate the object pose using the raw contour points.
 									if (m_bSolvePNPEnabled)
 									{
-										cout << vPolyCorners << "\n";
-
-										m_pFinalImg = m_pDilateImg.clone();
+										for (Point pPoint : vPolyCorners)
+										{
+											// Draw corner point onto image for viewing.
+											circle(m_pFinalImg, Point(pPoint.x, pPoint.y), 0,  Scalar(0, 0, 0), 5, 8, 0);
+											vImagePoints.emplace_back(Point2f(pPoint.x, pPoint.y));
+										}
 
 										// Calculate object pose.
-										//m_vSolvePNPValues = SolveObjectPose(vImagePoints, ref(m_pFinalImg));
+										m_vSolvePNPValues = SolveObjectPose(vImagePoints, ref(m_pFinalImg), m_nTargetCenterX, m_nTargetCenterY);
 
 										// // Find the corners of all contours.
 										// cornerHarris(m_pDilateImg, m_pCorners, 2, 3, 0.04);
@@ -825,7 +835,7 @@ namespace
 									putText(m_pFinalImg, ("size:" + to_string(dBiggestContour)), Point(10, m_pFinalImg.rows - 100), FONT_HERSHEY_DUPLEX, 0.65, Scalar(200, 200, 200), 1);
 									line(m_pFinalImg, Point(nTargetPositionX, m_nScreenHeight), Point(nTargetPositionX, 0), Scalar(0, 0, 200), 1, LINE_4, 0);
 									line(m_pFinalImg, Point(0, nTargetPositionY), Point(m_nScreenWidth, nTargetPositionY), Scalar(0, 0, 200), 1, LINE_4, 0);
-									line(m_pFinalImg, Point((m_nScreenWidth / 2), (m_nScreenHeight / 2)), Point(nTargetPositionX, nTargetPositionY), Scalar(200, 0, 0), 2, LINE_4, 0);
+									//line(m_pFinalImg, Point((m_nScreenWidth / 2), (m_nScreenHeight / 2)), Point(nTargetPositionX, nTargetPositionY), Scalar(200, 0, 0), 2, LINE_4, 0);
 								}
 							}
 							else
@@ -942,14 +952,15 @@ namespace
 	
 				Returns: 		OUTPUT VECTOR (6 values)
 		****************************************************************************/
-		vector<double> SolveObjectPose(vector<Point2f> m_pImagePoints, Mat &m_pFinalImg)
+		vector<double> SolveObjectPose(vector<Point2f> m_pImagePoints, Mat &m_pFinalImg, int nTargetCenterX, int nTargetCenterY)
 		{
 			// Create instance variables.
-			vector<vector<double>>	vRotationVectors;
-			vector<vector<double>>	vRotationMatrix;
-			vector<double>			vEulerAngles;
-			vector<vector<double>>	vMTXR;
-			vector<vector<double>>	vMTXQ;
+			Vec3d					vEulerAngles;
+			Mat						vMTXR;
+			Mat						vMTXQ;
+			vector<Point2f>			vPositionVector;
+			Mat						vRotationVectors;
+			Mat						vRotationMatrix;
 			Mat						vTranslationVectors;
 			Mat						vTranslationMatrix;
 			Mat						vTRNSP;
@@ -957,30 +968,37 @@ namespace
 
 			// Create a vector that stores 0s by default. 
 			vector<double>	vObjectPosition;
-			vObjectPosition.emplace_back(0);
-			vObjectPosition.emplace_back(0);
-			vObjectPosition.emplace_back(0);
-			vObjectPosition.emplace_back(0);
-			vObjectPosition.emplace_back(0);
-			vObjectPosition.emplace_back(0);
+			vObjectPosition.emplace_back(1);
+			vObjectPosition.emplace_back(2);
+			vObjectPosition.emplace_back(3);
+			vObjectPosition.emplace_back(4);
+			vObjectPosition.emplace_back(5);
+			vObjectPosition.emplace_back(6);
 
 			// Catch any anomalies from SolvePNPRansac. (Like bad input data errors.)
 			try
 			{
 				// The golden stuff...
-				bool bSuccess = solvePnPRansac(m_pObjectPoints,				// Object reference points in 3D space.			
-											m_pImagePoints,					// Object points from the 2D camera image.
+				bool bSuccess = solvePnP(m_pObjectPoints,					// Object reference points in 3D space.			
+											m_pImagePoints,						// Object points from the 2D camera image.
 											m_pCameraMatrix,				// Precalibrated camera matrix. (camera specific)
 											m_pDistanceCoefficients,		// Precalibrated camera config. (camera specific)
 											vRotationVectors,				// Storage vector for rotation values.
-											vTranslationVectors,			// Storage vector for translation values.
-											true,							// Use the provided rvec and tvec values as initial approximations of the rotation and translation vectors, and further optimize them? (useExtrensicGuess)
-											100,							// Number of iterations. (adjust for performance?)
-											8.f,							// Inlier threshold value used by the RANSAC procedure. The parameter value is the maximum allowed distance between the observed and computed point projections to consider it an inlier.
-											0.99,							// Confidence value that the algorithm produces a useful result. 
-											noArray(),						// Output vector that contains indices of inliers in objectPoints and imagePoints.
-											SOLVEPNP_ITERATIVE				// Method used for the PNP problem.
+											vTranslationVectors				// Storage vector for translation values.
 										);
+				// bool bSuccess = solvePnPRansac(m_pObjectPoints,			// Object reference points in 3D space.			
+				// 							m_pImagePoints,					// Object points from the 2D camera image.
+				// 							m_pCameraMatrix,				// Precalibrated camera matrix. (camera specific)
+				// 							m_pDistanceCoefficients,		// Precalibrated camera config. (camera specific)
+				// 							vRotationVectors,				// Storage vector for rotation values.
+				// 							vTranslationVectors,			// Storage vector for translation values.
+				// 							false,							// Use the provided rvec and tvec values as initial approximations of the rotation and translation vectors, and further optimize them? (useExtrensicGuess)
+				// 							100,							// Number of iterations. (adjust for performance?)
+				// 							8.0,							// Inlier threshold value used by the RANSAC procedure. The parameter value is the maximum allowed distance between the observed and computed point projections to consider it an inlier.
+				// 							0.99,							// Confidence value that the algorithm produces a useful result. 
+				// 							noArray(),						// Output vector that contains indices of inliers in objectPoints and imagePoints.
+				// 							SOLVEPNP_ITERATIVE				// Method used for the PNP problem.
+				// 						);
 
 				// If SolvePNP reports a success, then continue with calculations. Else, keep searching. 
 				if (bSuccess)
@@ -993,18 +1011,22 @@ namespace
 					vTranslationMatrix = -vTRNSP * vTranslationVectors;
 
 					// Calculate the pitch, roll, yaw angles of the object.
-					//RQDecomp3x3(vRotationMatrix, vMTXR, vMTXQ);
-					vEulerAngles.emplace_back(atan2(-vTRNSP.at<double>(2, 1), vTRNSP.at<double>(2, 2)));
-					vEulerAngles.emplace_back(asin(vTRNSP.at<double>(2, 0)));
-					vEulerAngles.emplace_back(atan2(-vTRNSP.at<double>(1, 0), vTRNSP.at<double>(0, 0)));
+					vEulerAngles = RQDecomp3x3(vRotationMatrix, vMTXR, vMTXQ);
+					// vEulerAngles.emplace_back(atan2(-vTRNSP.at<double>(2, 1), vTRNSP.at<double>(2, 2)));
+					// vEulerAngles.emplace_back(asin(vTRNSP.at<double>(2, 0)));
+					// vEulerAngles.emplace_back(atan2(-vTRNSP.at<double>(1, 0), vTRNSP.at<double>(0, 0)));
 
 					// Store the calculated object values in the vector.
-					vObjectPosition.emplace_back(vTranslationMatrix.at<double>(0));
-					vObjectPosition.emplace_back(vTranslationMatrix.at<double>(0));
-					vObjectPosition.emplace_back(vTranslationMatrix.at<double>(0));
-					vObjectPosition.emplace_back(vEulerAngles[0]);
-					vObjectPosition.emplace_back(vEulerAngles[1]);
-					vObjectPosition.emplace_back(vEulerAngles[2]);
+					vObjectPosition.at(0) = vTranslationMatrix.at<double>(0);
+					vObjectPosition.at(1) = vTranslationMatrix.at<double>(1);
+					vObjectPosition.at(2) = vTranslationMatrix.at<double>(2);
+					vObjectPosition.at(3) = vEulerAngles[0];
+					vObjectPosition.at(4) = vEulerAngles[1];
+					vObjectPosition.at(5) = vEulerAngles[2];
+
+					// Project and draw points onto image plane.
+					projectPoints(m_pObjectPoints, vRotationVectors, vTranslationVectors, m_pCameraMatrix, m_pDistanceCoefficients, vPositionVector);
+					line(m_pFinalImg, Point(vPositionVector.at(0).x, vPositionVector.at(0).y), Point(nTargetCenterX, nTargetCenterY), Scalar(200, 0, 0), 1, LINE_4, 0);
 
 					// Print status onto image.
 					putText(m_pFinalImg, "PNP Status: found match!", Point(50, m_pFinalImg.rows - 440), FONT_HERSHEY_DUPLEX, 0.40, Scalar(0, 0, 250), 1);
@@ -1012,20 +1034,16 @@ namespace
 				else
 				{
 					// If the object is not found, then put 0s in the vector.
-					vObjectPosition.emplace_back(0);
-					vObjectPosition.emplace_back(0);
-					vObjectPosition.emplace_back(0);
-					vObjectPosition.emplace_back(0);
-					vObjectPosition.emplace_back(0);
-					vObjectPosition.emplace_back(0);
+					// vObjectPosition.emplace_back(0);
+					// vObjectPosition.emplace_back(0);
+					// vObjectPosition.emplace_back(0);
+					// vObjectPosition.emplace_back(0);
+					// vObjectPosition.emplace_back(0);
+					// vObjectPosition.emplace_back(0);
 
 					// Print status onto image.
 					putText(m_pFinalImg, "PNP Status: searching...", Point(50, m_pFinalImg.rows - 440), FONT_HERSHEY_DUPLEX, 0.40, Scalar(0, 0, 250), 1);
 				}
-
-				// Print Debug.
-				cout << m_pImagePoints << "\n";
-				cout << "bSuccess: " << bSuccess << "\n";
 
 				// Reset toggle if the code ran successfully.
 				nCount = 0;
