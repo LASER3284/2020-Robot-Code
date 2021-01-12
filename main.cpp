@@ -536,7 +536,7 @@ namespace
 			// Initialize member variables.
 			m_pKernel								= getStructuringElement(MORPH_RECT, Size(3, 3));
 			m_nFPS									= 0;
-			m_nNumberOfPolyCorners					= 10;
+			m_nNumberOfPolyCorners					= 8;
 			m_nGreenBlurRadius						= 3;
 			m_nOrangeBlurRadius						= 3;
 			m_nHorizontalAspect						= 4;
@@ -553,24 +553,21 @@ namespace
 			////
 
 			// Reference object points.
-			m_pObjectPoints.emplace_back(Point3f(0.0, 0.0, 0.0));
-			m_pObjectPoints.emplace_back(Point3f(2.25, 0.0, 0.0));
-			m_pObjectPoints.emplace_back(Point3f(11.5, 13.25, 0.0));
-			m_pObjectPoints.emplace_back(Point3f(28.5, 13.25, 0.0));
-			m_pObjectPoints.emplace_back(Point3f(37.25, 0.0, 0.0));
 			m_pObjectPoints.emplace_back(Point3f(39.75, 0.0, 0.0));
-			m_pObjectPoints.emplace_back(Point3f(29.25, 15.0, 0.0));
-			m_pObjectPoints.emplace_back(Point3f(10.5, 15.0, 0.0));
+			m_pObjectPoints.emplace_back(Point3f(29.25, -15.25, 0.0));
+			m_pObjectPoints.emplace_back(Point3f(10.25, -15.25, 0.0));
+			m_pObjectPoints.emplace_back(Point3f(0.0, 0.0, 0.0));
 
 			// Precalibrated camera matrix values.
-			double mtx[3][3] = {{700.4178771192215, 0.0, 323.3391386812556},
-								{0.0, 699.1701795469227, 232.428813933943},
+			double mtx[3][3] = {{659.3851992714341, 0.0, 306.98918779442675},
+								{0.0, 659.212123568372, 232.07157473243464},
 								{0.0, 0.0, 1.0}};
-			m_pCameraMatrix = Mat(3, 3, CV_64FC1, mtx);
+
+			m_pCameraMatrix = Mat(3, 3, CV_64FC1, mtx).clone();
 
 			// Precalibration distance/distortion values.
-			double dist[5] = {0.32376580532500226, -1.852588223166456, -0.0008142808002410602, 0.0018634708027606384, 3.0524527683705562};
-			m_pDistanceCoefficients = Mat(5, 1, CV_64FC1, dist);
+			double dist[5] = {0.1715327237204972, -1.3255106761114646, 7.713495040297368e-07, -0.0035865453000784634, 2.599132082766894};
+			m_pDistanceCoefficients = Mat(1, 5, CV_64FC1, dist).clone();
 		}
 
 		/****************************************************************************
@@ -672,10 +669,10 @@ namespace
 											circle(m_pFinalImg, pCenter, dRadius, Scalar(23, 184, 80), 1, LINE_4, 0);
 
 											// Find convex hull. (Bounding polygon on contour.)
-											vector<Point> m_pHull;
-											convexHull(pContour, m_pHull, false);
+											vector<Point> pHull;
+											convexHull(pContour, pHull, false);
 											// Calculate hull area.
-											double dHullArea = fabs(contourArea(m_pHull));
+											double dHullArea = fabs(contourArea(pHull));
 
 											// Calculate contour's distance from the camera.
 											double dAngle = CalculateXAngle(pCenter.x);
@@ -687,7 +684,7 @@ namespace
 
 											// Approximate the contours corners.
 											vector<Point> vPolyCorners;
-											approxPolyDP(Mat(pContour), vPolyCorners, m_nNumberOfPolyCorners, true);
+											approxPolyDP(Mat(pHull), vPolyCorners, m_nNumberOfPolyCorners, true); // was Mat(pContour)
 
 											// Appends contour data to arrays after checking for duplicates.
 											vector<double> points;
@@ -795,34 +792,10 @@ namespace
 											vImagePoints.emplace_back(Point2f(pPoint.x, pPoint.y));
 										}
 
+										cout << vPolyCorners << "\n\n";
+
 										// Calculate object pose.
-										m_vSolvePNPValues = SolveObjectPose(vImagePoints, ref(m_pFinalImg), m_nTargetCenterX, m_nTargetCenterY);
-
-										// // Find the corners of all contours.
-										// cornerHarris(m_pDilateImg, m_pCorners, 2, 3, 0.04);
-										// // Normalize mat.
-										// normalize(m_pCorners, m_pCornersNormalized, 0, 255, NORM_MINMAX, CV_32FC1, Mat());
-										// // Scales the mat to 8-bit for viewing.
-										// convertScaleAbs(m_pCornersNormalized, m_pCornersScaled);
-
-										// // Extract and draw points from cornerHarris.
-										// for (int i = 0; i < m_pCornersNormalized.rows ; i++)
-										// {
-										// 	for (int j = 0; j < m_pCornersNormalized.cols; j++)
-										// 	{
-										// 		if ((int) m_pCornersNormalized.at<float>(i, j) > 100)
-										// 		{
-										// 			// Draw corner point onto image for viewing.
-										// 			circle(m_pFinalImg, Point(j, i), 0,  Scalar(0, 0, 0), 5, 8, 0);
-
-										// 			// Store the corner points in the ImagePoints array.
-										// 			vImagePoints.emplace_back(Point2f(j, i));
-										// 		}
-										// 	}
-										// }
-
-										// Uncomment this line to see the CornerHarris results more clearly.
-										//m_pFinalImg = m_pCornersScaled.clone();
+										m_vSolvePNPValues = SolveObjectPose(vImagePoints, ref(m_pFinalImg), ref(m_pFrame), nTargetPositionX, nTargetPositionY);
 									} 
 
 									// Push position of tracked target.
@@ -845,6 +818,13 @@ namespace
 								 This section serves as a placeholder for future code used to track the power cells. This may or may not actually be implemented... 
 
 								*/ 
+
+								
+								// vector<Point2f> vImagePoints;
+								// vImagePoints.emplace_back(Point2f(0.0, 0.0));
+								// int nTargetPositionX = 0; 
+								// int nTargetPositionY = 0;
+								// m_vSolvePNPValues = SolveObjectPose(vImagePoints, ref(m_pFinalImg), ref(m_pFrame), nTargetPositionX, nTargetPositionY);
 							}
 						}
 
@@ -952,19 +932,23 @@ namespace
 	
 				Returns: 		OUTPUT VECTOR (6 values)
 		****************************************************************************/
-		vector<double> SolveObjectPose(vector<Point2f> m_pImagePoints, Mat &m_pFinalImg, int nTargetCenterX, int nTargetCenterY)
+		vector<double> SolveObjectPose(vector<Point2f> m_pImagePoints, Mat &m_pFinalImg, Mat &m_pFrame, int nTargetPositionX, int nTargetPositionY)
 		{
 			// Create instance variables.
+			static int nCount = 0;
 			Vec3d					vEulerAngles;
+			vector<Point2f>			vPositionVector;
 			Mat						vMTXR;
 			Mat						vMTXQ;
-			vector<Point2f>			vPositionVector;
 			Mat						vRotationVectors;
 			Mat						vRotationMatrix;
 			Mat						vTranslationVectors;
 			Mat						vTranslationMatrix;
 			Mat						vTRNSP;
-			static int nCount = 0;
+			Mat 					mNewCameraMatrix;
+			Mat						mUndistort;
+			Mat						mGray;
+			TermCriteria mTermCriteria(TermCriteria::COUNT + TermCriteria::EPS, 30, 0.001);
 
 			// Create a vector that stores 0s by default. 
 			vector<double>	vObjectPosition;
@@ -975,30 +959,48 @@ namespace
 			vObjectPosition.emplace_back(5);
 			vObjectPosition.emplace_back(6);
 
-			// Catch any anomalies from SolvePNPRansac. (Like bad input data errors.)
+			// vector<Point3f> chessboards;
+			// for (double i = 0; i < 9; i++)			//// These were switched around.
+			// {
+			// 	for (double j = 0; j < 6; j++)		//// These were switched around.
+			// 	{
+			// 		chessboards.emplace_back(Point3f(i, j, 0.0));
+			// 	}
+			// }
+
+			// Catch any anomalies from SolvePNP process. (Like bad input data errors.)
 			try
 			{
-				// The golden stuff...
+				// Refine the corners from image points.
+				// vector<Point2f> corners;
+				cvtColor(m_pFinalImg, mGray, COLOR_BGR2GRAY);
+				// bool bFound = findChessboardCorners(mGray, Size(6, 9), corners);			// These have a possibility of being switched around.
+				cornerSubPix(mGray, m_pImagePoints, Size(11, 11), Size(-1, -1), mTermCriteria);
+				// drawChessboardCorners(m_pFinalImg, Size(6, 9), corners, bFound);			// These have a possibility of being switched around.
+
+				// Use real world reference points and image points to estimate object pose.
 				bool bSuccess = solvePnP(m_pObjectPoints,					// Object reference points in 3D space.			
-											m_pImagePoints,						// Object points from the 2D camera image.
+											m_pImagePoints,					// Object points from the 2D camera image.
 											m_pCameraMatrix,				// Precalibrated camera matrix. (camera specific)
 											m_pDistanceCoefficients,		// Precalibrated camera config. (camera specific)
 											vRotationVectors,				// Storage vector for rotation values.
-											vTranslationVectors				// Storage vector for translation values.
+											vTranslationVectors,			// Storage vector for translation values.
+											false,							// Use the provided rvec and tvec values as initial approximations of the rotation and translation vectors, and further optimize them? (useExtrensicGuess)
+				 							SOLVEPNP_ITERATIVE				// Method used for the PNP problem.
 										);
-				// bool bSuccess = solvePnPRansac(m_pObjectPoints,			// Object reference points in 3D space.			
-				// 							m_pImagePoints,					// Object points from the 2D camera image.
-				// 							m_pCameraMatrix,				// Precalibrated camera matrix. (camera specific)
-				// 							m_pDistanceCoefficients,		// Precalibrated camera config. (camera specific)
-				// 							vRotationVectors,				// Storage vector for rotation values.
-				// 							vTranslationVectors,			// Storage vector for translation values.
-				// 							false,							// Use the provided rvec and tvec values as initial approximations of the rotation and translation vectors, and further optimize them? (useExtrensicGuess)
-				// 							100,							// Number of iterations. (adjust for performance?)
-				// 							8.0,							// Inlier threshold value used by the RANSAC procedure. The parameter value is the maximum allowed distance between the observed and computed point projections to consider it an inlier.
-				// 							0.99,							// Confidence value that the algorithm produces a useful result. 
-				// 							noArray(),						// Output vector that contains indices of inliers in objectPoints and imagePoints.
-				// 							SOLVEPNP_ITERATIVE				// Method used for the PNP problem.
-				// 						);
+				// bool bSuccess = solvePnPRansac(chessboards,						// Object reference points in 3D space.			
+				// 									corners,						// Object points from the 2D camera image.
+				// 									m_pCameraMatrix,				// Precalibrated camera matrix. (camera specific)
+				// 									m_pDistanceCoefficients,		// Precalibrated camera config. (camera specific)
+				// 									vRotationVectors,				// Storage vector for rotation values.
+				// 									vTranslationVectors,			// Storage vector for translation values.
+				// 									false,							// Use the provided rvec and tvec values as initial approximations of the rotation and translation vectors, and further optimize them? (useExtrensicGuess)
+				//  								100,							// Number of iterations. (adjust for performance?)
+				//  								15.0,							// Inlier threshold value used by the RANSAC procedure. The parameter value is the maximum allowed distance between the observed and computed point projections to consider it an inlier.
+			 	// 									0.99,							// Confidence value that the algorithm produces a useful result. 
+				//  								noArray(),						// Output vector that contains indices of inliers in objectPoints and imagePoints.
+				//  								SOLVEPNP_ITERATIVE				// Method used for the PNP problem.
+				// 								);
 
 				// If SolvePNP reports a success, then continue with calculations. Else, keep searching. 
 				if (bSuccess)
@@ -1010,11 +1012,8 @@ namespace
 					transpose(vRotationMatrix, vTRNSP);
 					vTranslationMatrix = -vTRNSP * vTranslationVectors;
 
-					// Calculate the pitch, roll, yaw angles of the object.
+					// Calculate the pitch, roll, yaw angles of the camera.
 					vEulerAngles = RQDecomp3x3(vRotationMatrix, vMTXR, vMTXQ);
-					// vEulerAngles.emplace_back(atan2(-vTRNSP.at<double>(2, 1), vTRNSP.at<double>(2, 2)));
-					// vEulerAngles.emplace_back(asin(vTRNSP.at<double>(2, 0)));
-					// vEulerAngles.emplace_back(atan2(-vTRNSP.at<double>(1, 0), vTRNSP.at<double>(0, 0)));
 
 					// Store the calculated object values in the vector.
 					vObjectPosition.at(0) = vTranslationMatrix.at<double>(0);
@@ -1024,9 +1023,8 @@ namespace
 					vObjectPosition.at(4) = vEulerAngles[1];
 					vObjectPosition.at(5) = vEulerAngles[2];
 
-					// Project and draw points onto image plane.
-					projectPoints(m_pObjectPoints, vRotationVectors, vTranslationVectors, m_pCameraMatrix, m_pDistanceCoefficients, vPositionVector);
-					line(m_pFinalImg, Point(vPositionVector.at(0).x, vPositionVector.at(0).y), Point(nTargetCenterX, nTargetCenterY), Scalar(200, 0, 0), 1, LINE_4, 0);
+					// Draw axis vectors.
+					drawFrameAxes(m_pFinalImg, m_pCameraMatrix, m_pDistanceCoefficients, vRotationVectors, vTranslationVectors, 20.0);
 
 					// Print status onto image.
 					putText(m_pFinalImg, "PNP Status: found match!", Point(50, m_pFinalImg.rows - 440), FONT_HERSHEY_DUPLEX, 0.40, Scalar(0, 0, 250), 1);
