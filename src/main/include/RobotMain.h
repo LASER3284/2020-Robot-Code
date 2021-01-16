@@ -66,6 +66,7 @@ private:
         eTeleopFiring,
         eTeleopAutoFiring,
         eTeleopClimbing,
+        eTeleopGeneratePath,
         eTeleopFollowing
     };
 

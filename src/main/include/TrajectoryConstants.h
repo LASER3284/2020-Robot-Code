@@ -332,7 +332,7 @@ public:
                 m_StartPoint =
                 {
                     0.0_ft,					// X starting position on field in feet.
-                    1.0_ft,					// Y starting position on field in feet.
+                    0.0_ft,					// Y starting position on field in feet.
                     Rotation2d(0_deg)		// Starting rotation on field in degrees.
                 };
 
@@ -342,13 +342,13 @@ public:
                     Pose2d
                     {
                         2.0_ft,					// X of point 1 on field in feet.
-                        1.0_ft,					// Y of point 1 on field in feet.
+                        0.0_ft,					// Y of point 1 on field in feet.
                         Rotation2d(0_deg)
                     },
                     Pose2d
                     {
                         10.0_ft,				// X of point 2 on field in feet.
-                        1.0_ft,					// Y of point 2 on field in feet.
+                        0.0_ft,					// Y of point 2 on field in feet.
                         Rotation2d(0_deg)
                     },
                 };
@@ -388,6 +388,14 @@ public:
     // Configure trajectory properties.
     const meters_per_second_t kMaxSpeed = 2_mps;
     const meters_per_second_squared_t kMaxAcceleration = 3_mps_sq;
+
+    // Preset Teleop Trajectory.
+    const Pose2d PresetPoint1
+    {
+        5.0_ft,				    // X ending position on field in feet.
+        0.0_ft,					// Y ending position on field in feet.
+        Rotation2d(0_deg)		// Ending rotation on field in degrees.
+    };
 
 private:
     bool m_bIsReversed = false;

@@ -63,7 +63,7 @@ void CLift::Init()
     m_pWinchMotorRight->SetIdleMode(CANSparkMax::IdleMode::kBrake);
 
     // Make sure the solenoid is extended. (When going into Auto or Teleop, will engage)
-    //ExtendArm(false);
+    ExtendArm(false);
 }
 
 /****************************************************************************

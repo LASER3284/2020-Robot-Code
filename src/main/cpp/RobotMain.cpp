@@ -207,8 +207,6 @@ void CRobotMain::AutonomousInit()
     {
         m_pDrive->SetSelectedTrajectory(m_nSelectedTrajectory);
     }
-
-    std::cout << m_nAutoState << std::endl;
 }
 
 /******************************************************************************
@@ -229,6 +227,7 @@ void CRobotMain::AutonomousPeriodic()
             // Do nothing.
             m_pHood->Stop();
             m_pShooter->Stop();
+            m_pDrive->Stop();
             m_pShooter->SetVisionLED(false);
             m_pTurret->Stop();
             m_pHopper->Feed(false);
@@ -600,6 +599,9 @@ void CRobotMain::AutonomousPeriodic()
 ******************************************************************************/
 void CRobotMain::TeleopInit()
 {
+    // Enable motor safety.
+    m_pDrive->SetMotorSafety(true);
+
     // Enable joystick control for Teleop use.
     m_pDrive->SetJoystickControl(true);
 
@@ -624,9 +626,9 @@ void CRobotMain::TeleopInit()
 ******************************************************************************/
 void CRobotMain::TeleopPeriodic()
 {
-    static bool bHasFired       = false;
-    static bool bTurretMoving   = false;
-    static bool bHoodMoving     = false;
+    static bool bHasFired           = false;
+    static bool bTurretMoving       = false;
+    static bool bHoodMoving         = false;
     
     /********************************************************************
         Drive Controller - Toggle Intake (Right Bumper)
@@ -705,6 +707,45 @@ void CRobotMain::TeleopPeriodic()
                 m_pHood->Stop();
                 bHoodMoving = false;
             }
+        }
+    }
+
+    /********************************************************************
+        Drive Controller - Generate path back to a predetermined point 
+                        and then follow it. (Start)
+    ********************************************************************/
+    if (m_pDriveController->GetRawButton(eStart))
+    {
+        if (m_nTeleopState != eTeleopGeneratePath &&
+            m_nTeleopState != eTeleopFollowing)
+        {
+            // Disable joystick controls.
+            m_pDrive->SetJoystickControl(false);
+
+            // Disable motor safety.
+            m_pDrive->SetMotorSafety(false);
+
+            // Move to eTeleopGeneratePath state.
+            m_nTeleopState = eTeleopGeneratePath;
+        }
+    }
+    else
+    {
+        // Stop following the path if the button is released.
+        if (m_nTeleopState == eTeleopGeneratePath ||
+            m_nTeleopState == eTeleopFollowing)
+        {
+            // Move to TeleopIdle
+            m_nTeleopState = eTeleopIdle;
+            
+            // Stop the motors.
+            m_pDrive->Stop();
+
+            // Enable motor safety.
+            m_pDrive->SetMotorSafety(true);
+
+            // Enable joystick controls.
+            m_pDrive->SetJoystickControl(true);
         }
     }
     
@@ -1029,11 +1070,24 @@ void CRobotMain::TeleopPeriodic()
             // // Set robot color.
             // m_pBlinkin->SetState(m_pBlinkin->eOrange);
             break;
+        
+        case eTeleopGeneratePath :
+            /********************************************************************
+                Generating - Robot is preparing to generate a pre-determined path.
+            ********************************************************************/
+            // Generate a path from our current position.
+            m_pDrive->GeneratePathFromCurrentPosition();
+
+            // Move to eTeleopFollowing.
+            m_nTeleopState = eTeleopFollowing;
+            break;
 
         case eTeleopFollowing :
             /********************************************************************
                 Following - Robot is following a pre-determined path.
             ********************************************************************/
+            // Follow Trajectory.
+            m_pDrive->FollowTrajectory();
             break;
 
         default :

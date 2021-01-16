@@ -61,6 +61,7 @@ public:
     void Tick();
     void GenerateTrajectory(vector<Pose2d> pWaypoints, meters_per_second_t MaxSpeed, meters_per_second_squared_t MaxAcceleration);
     void FollowTrajectory();
+    void GeneratePathFromCurrentPosition();
     void SetDrivePowers(volt_t dLeftVoltage, volt_t dRightVoltage);
     DifferentialDriveWheelSpeeds GetWheelSpeeds();
     void ResetOdometry();
@@ -68,6 +69,7 @@ public:
     void Stop();
     bool TrajectoryIsFinished();
     int  GetTotalTrajectoryTime();
+    Pose2d GetRobotPose();
     void SetSelectedTrajectory(int nAutoState);
     void SetJoystickControl(bool bJoystickControl);
     void SetMotorExpiration(double dTimeout);

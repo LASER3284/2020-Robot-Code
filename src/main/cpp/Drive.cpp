@@ -241,6 +241,26 @@ void CDrive::SetDrivePowers(volt_t dLeftVoltage, volt_t dRightVoltage)
 }
 
 /****************************************************************************
+    Description:	DriveToPresetPosition - Drive back to a preset position 
+                                        by creating and following a trajectory 
+                                        based on our current position.
+    Arguments: 		vector<Pose2d> pWaypoints
+    Returns: 	    Nothing
+****************************************************************************/
+void CDrive::GeneratePathFromCurrentPosition()
+{
+    // Create waypoints vector.
+    vector<Pose2d> pWaypoints;
+
+    // Build waypoints.
+    pWaypoints.emplace_back(GetRobotPose());
+    pWaypoints.emplace_back(m_pTrajectoryConstants.PresetPoint1);
+    
+    // Pass built waypoints vector to the drive class for trajectory generation.
+    GenerateTrajectory(pWaypoints, m_pTrajectoryConstants.kMaxSpeed, m_pTrajectoryConstants.kMaxAcceleration);
+}
+
+/****************************************************************************
     Description:	GetWheelSpeeds - Method that gets the wheel velocity 
                     in meters per second.
     Arguments: 		None
@@ -313,6 +333,17 @@ bool CDrive::TrajectoryIsFinished()
 int CDrive::GetTotalTrajectoryTime()
 {   
     return int(m_Trajectory.TotalTime());
+}
+
+/****************************************************************************
+    Description:	GetRobotPose - Return the Pose2d of the robot from the
+                                odometry class.
+    Arguments: 		None
+    Returns: 		POSE2D m_pRobotPose
+****************************************************************************/
+Pose2d CDrive::GetRobotPose()
+{
+    return m_pOdometry->GetPose();
 }
 
 /****************************************************************************
