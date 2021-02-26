@@ -4,6 +4,7 @@
 #include <mutex>
 #include <shared_mutex>
 #include <iostream>
+#include <algorithm>
 #include <vector>
 #include <math.h>
 
@@ -183,6 +184,7 @@ namespace
 
 	vector<CameraConfig> m_vCameraConfigs;
 	vector<SwitchedCameraConfig> m_vSwitchedCameraConfigs;
+	vector<UsbCamera> m_vCameras;
 	vector<CvSink> m_vCameraSinks;
 	vector<CvSource> m_vCameraSources;
 
@@ -364,6 +366,7 @@ namespace
 		// Store the camera video in a vector. (so we can access it later)
 		CvSink m_cvSink = m_Inst->GetVideo();
 		CvSource m_cvSource = m_Inst->PutVideo(fConfig.name + "Processed", 640, 480);
+		m_vCameras.emplace_back(m_Camera);
 		m_vCameraSinks.emplace_back(m_cvSink);
 		m_vCameraSources.emplace_back(m_cvSource);
 	}
@@ -424,7 +427,7 @@ namespace
 	
 				Returns: 		Nothing
 		****************************************************************************/
-		void StartCapture(Mat &m_pFrame, shared_timed_mutex &m_pMutex)
+		void StartCapture(Mat &m_pFrame, bool &bCameraSourceIndex, bool &bDrivingMode, shared_timed_mutex &m_pMutex)
 		{
 			// Continuously grab camera frames.
 			while (1)
@@ -443,13 +446,62 @@ namespace
 						break;
 					}
 
-					// Grab frame from camera.
-					m_vCameraSinks[0].GrabFrame(m_pFrame);
+					// Grab frame from either camera1 or camera2.
+					if (bDrivingMode)
+					{
+						// Set camera properties.
+						m_vCameras[0].SetBrightness(10);
+						m_vCameras[0].SetExposureAuto();
+						m_vCameras[0].SetWhiteBalanceAuto();
+						m_vCameras[1].SetBrightness(10);
+						m_vCameras[1].SetExposureAuto();
+						m_vCameras[1].SetWhiteBalanceAuto();
+						// Get camera frame.
+						m_vCameraSinks[0].GrabFrame(m_pFrame);
+					}
+					else
+					{
+						static bool bToggle = false;
+						if (bCameraSourceIndex)
+						{
+							// Only set properties once.
+							if (bToggle)
+							{
+								// Set camera properties.
+								m_vCameras[0].SetBrightness(10);
+								m_vCameras[0].SetExposureAuto();
+								m_vCameras[0].SetWhiteBalanceAuto();
+								m_vCameras[1].SetBrightness(10);
+								m_vCameras[1].SetExposureAuto();
+								m_vCameras[1].SetWhiteBalanceAuto();
+								// Set toggle var.
+								bToggle = false;
+							}
+
+							// Get camera frame.
+							m_vCameraSinks[0].GrabFrame(m_pFrame);
+						}
+						if (!bCameraSourceIndex)
+						{
+							// Only set properties once.
+							if (!bToggle)
+							{
+								// Set camera properties.
+								m_vCameras[0].SetBrightness(0);
+								m_vCameras[0].SetExposureManual(20);
+								// Set toggle var.
+								bToggle = true;
+							}
+
+							// Get camera frame.
+							m_vCameraSinks[0].GrabFrame(m_pFrame);
+						}
+					}
 				}
 				catch (const exception& e)
 				{
 					//SetIsStopping(true);
-					cout << "WARNING: Video data empty." << "\n";
+					cout << "WARNING: Video data empty or camera not present." << "\n";
 				}
 
 				// Calculate FPS.
@@ -537,6 +589,9 @@ namespace
 			m_pKernel								= getStructuringElement(MORPH_RECT, Size(3, 3));
 			m_nFPS									= 0;
 			m_nNumberOfPolyCorners					= 8;
+			m_nMinimumNumberOfTapeVertices			= 6;
+			m_nMinimumPowerCellRadius				= 1;
+			m_nMaxContours							= 50;
 			m_nGreenBlurRadius						= 3;
 			m_nOrangeBlurRadius						= 3;
 			m_nHorizontalAspect						= 4;
@@ -553,20 +608,23 @@ namespace
 			////
 
 			// Reference object points.
-			m_pObjectPoints.emplace_back(Point3f(39.75, 0.0, 0.0));
-			m_pObjectPoints.emplace_back(Point3f(29.25, -15.25, 0.0));
-			m_pObjectPoints.emplace_back(Point3f(10.25, -15.25, 0.0));
+			m_pObjectPoints.emplace_back(Point3f(39.50, 0.0, 0.0));
+			m_pObjectPoints.emplace_back(Point3f(29.50, -17.0, 0.0));
+			m_pObjectPoints.emplace_back(Point3f(9.75, -17.0, 0.0));
 			m_pObjectPoints.emplace_back(Point3f(0.0, 0.0, 0.0));
 
 			// Precalibrated camera matrix values.
-			double mtx[3][3] = {{659.3851992714341, 0.0, 306.98918779442675},
-								{0.0, 659.212123568372, 232.07157473243464},
+			double mtx[3][3] = {{516.5613698781304, 0.0, 320.38297194779585},		//// PSEye Cam
+								{0.0, 515.9356734667019, 231.73585601568368},
 								{0.0, 0.0, 1.0}};
-
+			// double mtx[3][3] = {{659.3851992714341, 0.0, 306.98918779442675},		//// Lifecam
+			// 					{0.0, 659.212123568372, 232.07157473243464},
+			// 					{0.0, 0.0, 1.0}};
 			m_pCameraMatrix = Mat(3, 3, CV_64FC1, mtx).clone();
 
 			// Precalibration distance/distortion values.
-			double dist[5] = {0.1715327237204972, -1.3255106761114646, 7.713495040297368e-07, -0.0035865453000784634, 2.599132082766894};
+			double dist[5] = {-0.0841024904469607, 0.014864043816324026, -0.00013887041018197853, -0.0014661216967276468, 0.5671907234987197};	//// PSEye Cam
+			// double dist[5] = {0.1715327237204972, -1.3255106761114646, 7.713495040297368e-07, -0.0035865453000784634, 2.599132082766894};	//// Lifecam
 			m_pDistanceCoefficients = Mat(1, 5, CV_64FC1, dist).clone();
 		}
 
@@ -633,6 +691,8 @@ namespace
 							// Tracking mode. (Tape or PowerCells)
 							if (m_bTrackingMode)
 							{
+								// Track tape target.
+
 								// Create variables and arrays.
 								int nCX = 0;
 								int nCY = 0;
@@ -641,8 +701,6 @@ namespace
 								vector<vector<double>> vBiggestContours;
 								vector<vector<vector<Point>>> vBiggestContours2;
 								vector<Point2f> vImagePoints;
-								vector<vector<Point>> vFilteredContours;
-								vector<vector<Point>> vFinalContours;
 
 								// Draw all contours in white.
 								drawContours(m_pFinalImg, m_pContours, -1, Scalar(255, 255, 210), 1, LINE_4, m_pHierarchy);
@@ -656,7 +714,7 @@ namespace
 									for (vector<Point> pContour : m_pContours)
 									{
 										// Limit number of objects to do calculations for.
-										if (vBiggestContours.size() < 50)
+										if (vBiggestContours.size() < m_nMaxContours)
 										{
 											// Gets the (x, y) and radius of the enclosing circle of contour.
 											Point2f pCenter;
@@ -684,7 +742,8 @@ namespace
 
 											// Approximate the contours corners.
 											vector<Point> vPolyCorners;
-											approxPolyDP(Mat(pHull), vPolyCorners, m_nNumberOfPolyCorners, true); // was Mat(pContour)
+											approxPolyDP(Mat(pHull), vPolyCorners, m_nNumberOfPolyCorners, true); // Only 4 corners.
+											// approxPolyDP(Mat(pContour), vPolyCorners, m_nNumberOfPolyCorners, true); // All corners.
 
 											// Appends contour data to arrays after checking for duplicates.
 											vector<double> points;
@@ -727,7 +786,7 @@ namespace
 										vector<Point> vApprox = vBiggestContours2[i][1];
 
 										// Skip small or non convex contours that don't have more than 6 vertices.
-										if (int(vBiggestContours[i][4]) >= 6)
+										if (int(vBiggestContours[i][4]) >= m_nMinimumNumberOfTapeVertices)
 										{
 											// Appends contour data to arrays after checking for duplicates.
 											vector<double> points;
@@ -791,7 +850,11 @@ namespace
 											circle(m_pFinalImg, Point(pPoint.x, pPoint.y), 0,  Scalar(0, 0, 0), 5, 8, 0);
 											vImagePoints.emplace_back(Point2f(pPoint.x, pPoint.y));
 										}
+										
+										// Sort the image points from greatest to least based on X value.
+										sort(vImagePoints.begin(), vImagePoints.end(), [](const Point2f& point1, const Point2f& point2) { return int(point1.x) > int(point2.x); });;
 
+										// DEBUG.
 										cout << vPolyCorners << "\n\n";
 
 										// Calculate object pose.
@@ -813,13 +876,133 @@ namespace
 							}
 							else
 							{
-								/*
-								
-								 This section serves as a placeholder for future code used to track the power cells. This may or may not actually be implemented... 
+								// Track power cells.
 
-								*/ 
+								// Create variables and arrays.
+								int nCX = 0;
+								int nCY = 0;
+								vector<vector<double>> vBallTargets;
+								vector<vector<double>> vBiggestContours;
 
+								// Draw all contours in white.
+								drawContours(m_pFinalImg, m_pContours, -1, Scalar(255, 255, 210), 1, LINE_4, m_pHierarchy);
+
+								if (m_pContours.size() > 0)
+								{
+									// Sort contours from biggest to smallest.
+									sort(m_pContours.begin(), m_pContours.end(), [](const vector<Point>& c1, const vector<Point>& c2) {	return fabs(contourArea(c1, false)) < fabs(contourArea(c2, false)); });
+
+									// Loop through detected contours.
+									for (vector<Point> pContour : m_pContours)
+									{
+										// Limit number of objects to do calculations for.
+										if (vBiggestContours.size() < m_nMaxContours)
+										{
+											// Gets the (x, y) and radius of the enclosing circle of contour.
+											Point2f pCenter;
+											float dRadius = 0;
+											minEnclosingCircle(pContour, pCenter, dRadius);
+											// Draws contour of bounding rectangle and enclosing circle in green.
+											circle(m_pFinalImg, pCenter, dRadius, Scalar(0, 0, 250), 1, LINE_4, 0);
+
+											// Find convex hull. (Bounding polygon on contour.)
+											vector<Point> pHull;
+											convexHull(pContour, pHull, false);
+											// Calculate hull area.
+											double dHullArea = fabs(contourArea(pHull));
+
+											// Calculate contour's distance from the camera.
+											double dAngle = CalculateXAngle(pCenter.x);
+
+											// Appends contour data to arrays after checking for duplicates.
+											vector<double> points;
+											points.emplace_back(double(pCenter.x));
+											points.emplace_back(double(pCenter.y));
+											points.emplace_back(dAngle);
+											points.emplace_back(dHullArea);
+											points.emplace_back(dRadius);
+	
+											vBiggestContours.emplace_back(points);
+										}
+									}
+
+									// Sort array based on coordinates (leftmost to rightmost) to make sure contours are adjacent.
+									sort(vBiggestContours.begin(), vBiggestContours.end(), [](const vector<double>& points1, const vector<double>& points2) { return points1[0] < points2[0]; }); 		// Sorts using nCX location.
+
+									// Target checking.
+									for (int i = 0; i < int(vBiggestContours.size()); i++)
+									{
+										// X and Y coordinates of contours.
+										int nCX1 = vBiggestContours[i][0];
+										int nCY1 = vBiggestContours[i][1];
+										// Angle of contour from camera.
+										double dAngle = vBiggestContours[i][2];
+										// Hull area of contour.
+										double dArea = vBiggestContours[i][3];
+										// Radius of contour.
+										double dRadius = vBiggestContours[i][4];
+
+										// Skip small contours that don't have a radius greater than a number.
+										if (int(vBiggestContours[i][4]) >= m_nMinimumPowerCellRadius)
+										{
+											// Appends contour data to arrays after checking for duplicates.
+											vector<double> points;
+											points.emplace_back(double(nCX1));
+											points.emplace_back(double(nCY1));
+											points.emplace_back(dAngle);
+											points.emplace_back(dArea);
+											points.emplace_back(dRadius);
+
+											vBallTargets.emplace_back(points);
+										}
+									}
+
+									// Draw how many targets are detected on screen.
+									putText(m_pFinalImg, ("Targets Detected: " + to_string(vBallTargets.size())), Point(10, m_pFinalImg.rows - 40), FONT_HERSHEY_DUPLEX, 0.65, Scalar(200, 200, 200), 1);
+								}
 								
+								// Check if there are targets seen.
+								if (int(vBallTargets.size()) > 0)
+								{
+									// Create instance variables.
+									int nTargetPositionX;
+									int nTargetPositionY;
+									double dAngle;
+									double dHullArea;
+									double dBiggestContour = 0;
+
+									// Track the biggest target.
+									for (int i = 0; i < int(vBallTargets.size()); i++)
+									{
+										// Check the object size and distance from center.
+										if (vBallTargets[i][4] > dBiggestContour)
+										{
+											// Store the object location and distance.
+											nTargetPositionX = vBallTargets[i][0];
+											nTargetPositionY = vBallTargets[i][1];
+											dAngle = vBallTargets[i][2];
+											dHullArea = vBallTargets[i][3];
+
+											// Store new biggest contour.
+											dBiggestContour = vBallTargets[i][4];
+										}
+									}
+
+									// Push position of tracked target.
+									m_nTargetCenterX = nTargetPositionX - (m_nScreenWidth / 2);
+									m_nTargetCenterY = -(nTargetPositionY - (m_nScreenHeight / 2));
+									m_dHoodPosition = 0.0;
+									m_dTargetAngle = dAngle;
+
+									// Draw target distance and target crosshairs with error line.
+									putText(m_pFinalImg, ("Radius:" + to_string(dBiggestContour)), Point(10, m_pFinalImg.rows - 80), FONT_HERSHEY_DUPLEX, 0.65, Scalar(200, 200, 200), 1);
+									putText(m_pFinalImg, ("Hull Area:" + to_string(dHullArea)), Point(10, m_pFinalImg.rows - 100), FONT_HERSHEY_DUPLEX, 0.65, Scalar(200, 200, 200), 1);
+									line(m_pFinalImg, Point(nTargetPositionX, m_nScreenHeight), Point(nTargetPositionX, 0), Scalar(0, 0, 200), 1, LINE_4, 0);
+									line(m_pFinalImg, Point(0, nTargetPositionY), Point(m_nScreenWidth, nTargetPositionY), Scalar(0, 0, 200), 1, LINE_4, 0);
+									//line(m_pFinalImg, Point((m_nScreenWidth / 2), (m_nScreenHeight / 2)), Point(nTargetPositionX, nTargetPositionY), Scalar(200, 0, 0), 2, LINE_4, 0);
+								}
+
+								// This is for tracking the chessboard.
 								// vector<Point2f> vImagePoints;
 								// vImagePoints.emplace_back(Point2f(0.0, 0.0));
 								// int nTargetPositionX = 0; 
@@ -959,6 +1142,7 @@ namespace
 			vObjectPosition.emplace_back(5);
 			vObjectPosition.emplace_back(6);
 
+			// This is for tracking the chessboard.
 			// vector<Point3f> chessboards;
 			// for (double i = 0; i < 9; i++)			//// These were switched around.
 			// {
@@ -988,18 +1172,18 @@ namespace
 											false,							// Use the provided rvec and tvec values as initial approximations of the rotation and translation vectors, and further optimize them? (useExtrensicGuess)
 				 							SOLVEPNP_ITERATIVE				// Method used for the PNP problem.
 										);
-				// bool bSuccess = solvePnPRansac(chessboards,						// Object reference points in 3D space.			
-				// 									corners,						// Object points from the 2D camera image.
+				// bool bSuccess = solvePnPRansac(m_pObjectPoints,						// Object reference points in 3D space.			
+				// 									m_pImagePoints,						// Object points from the 2D camera image.
 				// 									m_pCameraMatrix,				// Precalibrated camera matrix. (camera specific)
 				// 									m_pDistanceCoefficients,		// Precalibrated camera config. (camera specific)
 				// 									vRotationVectors,				// Storage vector for rotation values.
 				// 									vTranslationVectors,			// Storage vector for translation values.
 				// 									false,							// Use the provided rvec and tvec values as initial approximations of the rotation and translation vectors, and further optimize them? (useExtrensicGuess)
-				//  								100,							// Number of iterations. (adjust for performance?)
-				//  								15.0,							// Inlier threshold value used by the RANSAC procedure. The parameter value is the maximum allowed distance between the observed and computed point projections to consider it an inlier.
+				//  									100,							// Number of iterations. (adjust for performance?)
+				//  									15.0,							// Inlier threshold value used by the RANSAC procedure. The parameter value is the maximum allowed distance between the observed and computed point projections to consider it an inlier.
 			 	// 									0.99,							// Confidence value that the algorithm produces a useful result. 
-				//  								noArray(),						// Output vector that contains indices of inliers in objectPoints and imagePoints.
-				//  								SOLVEPNP_ITERATIVE				// Method used for the PNP problem.
+				//  									noArray(),						// Output vector that contains indices of inliers in objectPoints and imagePoints.
+				//  									SOLVEPNP_ITERATIVE				// Method used for the PNP problem.
 				// 								);
 
 				// If SolvePNP reports a success, then continue with calculations. Else, keep searching. 
@@ -1032,12 +1216,12 @@ namespace
 				else
 				{
 					// If the object is not found, then put 0s in the vector.
-					// vObjectPosition.emplace_back(0);
-					// vObjectPosition.emplace_back(0);
-					// vObjectPosition.emplace_back(0);
-					// vObjectPosition.emplace_back(0);
-					// vObjectPosition.emplace_back(0);
-					// vObjectPosition.emplace_back(0);
+					vObjectPosition.emplace_back(0);
+					vObjectPosition.emplace_back(0);
+					vObjectPosition.emplace_back(0);
+					vObjectPosition.emplace_back(0);
+					vObjectPosition.emplace_back(0);
+					vObjectPosition.emplace_back(0);
 
 					// Print status onto image.
 					putText(m_pFinalImg, "PNP Status: searching...", Point(50, m_pFinalImg.rows - 440), FONT_HERSHEY_DUPLEX, 0.40, Scalar(0, 0, 250), 1);
@@ -1120,6 +1304,9 @@ namespace
 		FPS*						m_pFPS;
 
 		int							m_nFPS;
+		int							m_nMinimumNumberOfTapeVertices;
+		int							m_nMinimumPowerCellRadius;
+		int							m_nMaxContours;
 		int							m_nScreenHeight;
 		int							m_nScreenWidth;
 		int							m_nGreenBlurRadius;
@@ -1325,6 +1512,7 @@ int main(int argc, char* argv[])
 	}
 
 	// Populate NetworkTables.
+	NetworkTable->PutBoolean("Camera Source", false);
 	NetworkTable->PutBoolean("Driving Mode", false);
 	NetworkTable->PutBoolean("Tape Tracking Mode", true);
 	NetworkTable->PutBoolean("Enable SolvePNP", false);
@@ -1366,6 +1554,7 @@ int main(int argc, char* argv[])
 		int m_nTargetCenterY = 0;
 		double m_dHoodPosition = 0;
 		double m_dTargetAngle = 0;
+		bool m_bCameraSourceIndex = false;
 		bool m_bDrivingMode = false;
 		bool m_bTrackingMode = true;
 		bool m_bEnableSolvePNP = false;
@@ -1373,7 +1562,7 @@ int main(int argc, char* argv[])
 		vector<double> m_vSolvePNPValues {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
 		// Start multi-threading.
-		thread m_pVideoGetThread(&VideoGet::StartCapture, &m_pVideoGetter, ref(m_pFrame), ref(m_pMutexGet));
+		thread m_pVideoGetThread(&VideoGet::StartCapture, &m_pVideoGetter, ref(m_pFrame), ref(m_bCameraSourceIndex), ref(m_bDrivingMode), ref(m_pMutexGet));
 		thread m_pVideoProcessThread(&VideoProcess::Process, &m_pVideoProcessor, ref(m_pFrame), ref(m_pFinalImg), ref(m_nTargetCenterX), ref(m_nTargetCenterY), ref(m_dHoodPosition), ref(m_dTargetAngle), ref(m_bDrivingMode), ref(m_bTrackingMode), ref(m_bEnableSolvePNP), ref(m_vTrackbarValues), ref(m_vSolvePNPValues), ref(m_pVideoGetter), ref(m_pMutexGet), ref(m_pMutexShow));
 		thread m_pVideoShowerThread(&VideoShow::ShowFrame, &m_pVideoShower, ref(m_pFinalImg), ref(m_pMutexShow));
 
@@ -1385,6 +1574,7 @@ int main(int argc, char* argv[])
 				if (!m_pVideoGetter.GetIsStopped() && !m_pVideoProcessor.GetIsStopped() && !m_pVideoShower.GetIsStopped())
 				{
 					// Get NetworkTables data.
+					m_bCameraSourceIndex = NetworkTable->GetBoolean("Camera Source", false);
 					m_bDrivingMode = NetworkTable->GetBoolean("Driving Mode", false);
 					m_bTrackingMode = NetworkTable->GetBoolean("Tape Tracking Mode", true);
 					m_bEnableSolvePNP = NetworkTable->GetBoolean("Enable SolvePNP", false);
@@ -1406,6 +1596,39 @@ int main(int argc, char* argv[])
 					NetworkTable->PutNumber("SPNP Roll", m_vSolvePNPValues[3]);
 					NetworkTable->PutNumber("SPNP Pitch", m_vSolvePNPValues[4]);
 					NetworkTable->PutNumber("SPNP Yaw", m_vSolvePNPValues[5]);
+
+					// Put different trackbar values on smartdashboard depending on camera source.
+					static bool bSetValuesToggle = false;
+					if (!m_bCameraSourceIndex && bSetValuesToggle == false)		// Turret Camera.
+					{
+						// Put trackbar values for tape tracking.
+						NetworkTable->PutNumber("HMN", 157);
+						NetworkTable->PutNumber("HMX", 255);
+						NetworkTable->PutNumber("SMN", 119);
+						NetworkTable->PutNumber("SMX", 255);
+						NetworkTable->PutNumber("VMN", 0);
+						NetworkTable->PutNumber("VMX", 110);
+
+						// Set toggle.
+						bSetValuesToggle = true;
+					}
+					else
+					{
+						if (m_bCameraSourceIndex && bSetValuesToggle == true)	// Bottom Camera.
+						{
+							// Put trackbar values for tape tracking.
+							NetworkTable->PutNumber("HMN", 0);
+							NetworkTable->PutNumber("HMX", 0);
+							NetworkTable->PutNumber("SMN", 0);
+							NetworkTable->PutNumber("SMX", 0);
+							NetworkTable->PutNumber("VMN", 0);
+							NetworkTable->PutNumber("VMX", 0);
+
+							// Set toggle.
+							bSetValuesToggle = false;
+						}
+					}
+					
 
 					// Sleep.
 					this_thread::sleep_for(std::chrono::milliseconds(20));
