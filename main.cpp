@@ -346,7 +346,7 @@ namespace
 	void StartCamera(const CameraConfig& fConfig) 
 	{
 		// Print debug
-		outs() << "Starting camera '" << m_vCameraConfigs[0].name << "' on " << m_vCameraConfigs[0].path << "\n";
+		cout << "Starting camera '" << fConfig.name << "' on " << fConfig.path << "\n";
 
 		// Create new CameraServer instance and start camera.
 		CameraServer* m_Inst = CameraServer::GetInstance();
@@ -360,11 +360,11 @@ namespace
 		// Check for unexpected parameters.
 		if (fConfig.streamConfig.is_object())
 		{
-			m_pServer.SetConfigJson(fConfig.streamConfig);
+			m_pServer.SetConfigJson(fConfig.streamConfig); 
 		}
 
 		// Store the camera video in a vector. (so we can access it later)
-		CvSink m_cvSink = m_Inst->GetVideo();
+		CvSink m_cvSink = m_Inst->GetVideo(fConfig.name);
 		CvSource m_cvSource = m_Inst->PutVideo(fConfig.name + "Processed", 640, 480);
 		m_vCameras.emplace_back(m_Camera);
 		m_vCameraSinks.emplace_back(m_cvSink);
@@ -441,12 +441,13 @@ namespace
 					lock_guard<shared_timed_mutex> guard(m_pMutex);		// unique_lock
 
 					// If the frame is empty, stop the capture.
-					if (m_vCameraSinks.empty() || m_vCameraSources.empty())
+					if (m_vCameraSinks.empty())
 					{
 						break;
 					}
 
 					// Grab frame from either camera1 or camera2.
+					static bool bToggle = false;
 					if (bDrivingMode)
 					{
 						// Set camera properties.
@@ -456,46 +457,36 @@ namespace
 						m_vCameras[1].SetBrightness(10);
 						m_vCameras[1].SetExposureAuto();
 						m_vCameras[1].SetWhiteBalanceAuto();
-						// Get camera frame.
-						m_vCameraSinks[0].GrabFrame(m_pFrame);
+						// Set toggle var.
+						bToggle = false;
 					}
 					else
 					{
-						static bool bToggle = false;
-						if (bCameraSourceIndex)
+						// Only set properties once.
+						if (!bToggle)
 						{
-							// Only set properties once.
-							if (bToggle)
-							{
-								// Set camera properties.
-								m_vCameras[0].SetBrightness(10);
-								m_vCameras[0].SetExposureAuto();
-								m_vCameras[0].SetWhiteBalanceAuto();
-								m_vCameras[1].SetBrightness(10);
-								m_vCameras[1].SetExposureAuto();
-								m_vCameras[1].SetWhiteBalanceAuto();
-								// Set toggle var.
-								bToggle = false;
-							}
-
-							// Get camera frame.
-							m_vCameraSinks[0].GrabFrame(m_pFrame);
+							// Set camera properties.
+							m_vCameras[0].SetBrightness(0);
+							m_vCameras[0].SetExposureManual(20);
+							// Set camera properties.
+							m_vCameras[1].SetBrightness(10);
+							m_vCameras[1].SetExposureAuto();
+							m_vCameras[1].SetWhiteBalanceAuto();
+							// Set toggle var.
+							bToggle = true;
 						}
-						if (!bCameraSourceIndex)
-						{
-							// Only set properties once.
-							if (!bToggle)
-							{
-								// Set camera properties.
-								m_vCameras[0].SetBrightness(0);
-								m_vCameras[0].SetExposureManual(20);
-								// Set toggle var.
-								bToggle = true;
-							}
+					}
 
-							// Get camera frame.
-							m_vCameraSinks[0].GrabFrame(m_pFrame);
-						}
+					// // Get camera frames.
+					if (bCameraSourceIndex)
+					{
+						// Get camera frame.
+						m_vCameraSinks[1].GrabFrame(m_pFrame);
+					}
+					else
+					{
+						// Get camera frame.
+						m_vCameraSinks[0].GrabFrame(m_pFrame);
 					}
 				}
 				catch (const exception& e)
@@ -855,7 +846,7 @@ namespace
 										sort(vImagePoints.begin(), vImagePoints.end(), [](const Point2f& point1, const Point2f& point2) { return int(point1.x) > int(point2.x); });;
 
 										// DEBUG.
-										cout << vPolyCorners << "\n\n";
+										// cout << vPolyCorners << "\n\n";
 
 										// Calculate object pose.
 										m_vSolvePNPValues = SolveObjectPose(vImagePoints, ref(m_pFinalImg), ref(m_pFrame), nTargetPositionX, nTargetPositionY);
@@ -1083,7 +1074,16 @@ namespace
 
 			double nObjectCenter = -(nObjectY - dCameraCenterY);
 
+			// Comp Robot Equation.
 			double dHoodAngle = (1e-11 * pow(nObjectCenter, 6)) - (4e-9 * pow(nObjectCenter, 5)) + (2e-7 * pow(nObjectCenter, 4)) + (7e-5 * pow(nObjectCenter, 3)) - (0.0065 * pow(nObjectCenter, 2)) - (0.7871 * nObjectCenter) + 234.35;
+
+			// At-Home Robot Equation.
+			// double dHoodAngle = (-7e-11 * pow(nObjectCenter, 6)) + (3e-8 * pow(nObjectCenter, 5)) - (2e-6 * pow(nObjectCenter, 4)) - (7e-5 * pow(nObjectCenter, 3)) + (0.0072 * pow(nObjectCenter, 2)) - (1.4181 * nObjectCenter) + 474.83;
+			// Limits on the hood.
+			//if (nObjectCenter > 130)
+			//{
+			//	dHoodAngle = 0;
+			//}
 
 			return dHoodAngle;
 		}
@@ -1502,12 +1502,12 @@ int main(int argc, char* argv[])
 	// Start Networktables as a client or server.
 	if (m_bServer) 
 	{
-		outs() << "Setting up NetworkTables server" << "\n";
+		cout << "Setting up NetworkTables server" << "\n";
 		NetworkTablesInstance.StartServer();
 	} 
 	else 
 	{
-		outs() << "Setting up NetworkTables client for team " << m_nTeam << "\n";
+		cout << "Setting up NetworkTables client for team " << m_nTeam << "\n";
 		NetworkTablesInstance.StartClientTeam(m_nTeam);
 	}
 
@@ -1516,8 +1516,9 @@ int main(int argc, char* argv[])
 	NetworkTable->PutBoolean("Driving Mode", false);
 	NetworkTable->PutBoolean("Tape Tracking Mode", true);
 	NetworkTable->PutBoolean("Enable SolvePNP", false);
-	NetworkTable->PutNumber("HMN", 157);
-	NetworkTable->PutNumber("HMX", 255);
+	NetworkTable->PutNumber("X Setpoint Offset", 4.66);
+	NetworkTable->PutNumber("HMN", 0);
+	NetworkTable->PutNumber("HMX", 77);
 	NetworkTable->PutNumber("SMN", 119);
 	NetworkTable->PutNumber("SMX", 255);
 	NetworkTable->PutNumber("VMN", 0);
@@ -1589,7 +1590,7 @@ int main(int argc, char* argv[])
 					NetworkTable->PutNumber("Target Center X", m_nTargetCenterX);
 					NetworkTable->PutNumber("Target Center Y", m_nTargetCenterY);
 					NetworkTable->PutNumber("Target Distance", m_dHoodPosition);
-					NetworkTable->PutNumber("Target Angle", m_dTargetAngle);
+					NetworkTable->PutNumber("Target Angle", (m_dTargetAngle + int(NetworkTable->GetNumber("X Setpoint Offset", 0))));
 					NetworkTable->PutNumber("SPNP X Dist", m_vSolvePNPValues[0]);
 					NetworkTable->PutNumber("SPNP Y Dist", m_vSolvePNPValues[1]);
 					NetworkTable->PutNumber("SPNP Z Dist", m_vSolvePNPValues[2]);
@@ -1602,12 +1603,15 @@ int main(int argc, char* argv[])
 					if (!m_bCameraSourceIndex && bSetValuesToggle == false)		// Turret Camera.
 					{
 						// Put trackbar values for tape tracking.
-						NetworkTable->PutNumber("HMN", 157);
-						NetworkTable->PutNumber("HMX", 255);
+						NetworkTable->PutNumber("HMN", 114);
+						NetworkTable->PutNumber("HMX", 228);
 						NetworkTable->PutNumber("SMN", 119);
 						NetworkTable->PutNumber("SMX", 255);
 						NetworkTable->PutNumber("VMN", 0);
 						NetworkTable->PutNumber("VMX", 110);
+
+						// Set tracking mode.
+						NetworkTable->PutBoolean("Tape Tracking Mode", true);
 
 						// Set toggle.
 						bSetValuesToggle = true;
@@ -1623,6 +1627,9 @@ int main(int argc, char* argv[])
 							NetworkTable->PutNumber("SMX", 0);
 							NetworkTable->PutNumber("VMN", 0);
 							NetworkTable->PutNumber("VMX", 0);
+
+							// Set tracking mode.
+							NetworkTable->PutBoolean("Tape Tracking Mode", false);
 
 							// Set toggle.
 							bSetValuesToggle = false;
