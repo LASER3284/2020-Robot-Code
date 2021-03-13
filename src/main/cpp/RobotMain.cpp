@@ -276,7 +276,7 @@ void CRobotMain::AutonomousPeriodic()
             // Set the Turret to tracking mode.
             m_pTurret->Stop();
             // Disable LEDs
-            m_pShooter->SetVisionLED(false);
+            m_pShooter->SetVisionLED(true);
             // Set the Hood to tracking mode.
             m_pHood->SetSetpoint(2524);
             // Start intake, Follow Trajectory.
@@ -972,7 +972,6 @@ void CRobotMain::TeleopPeriodic()
                 m_pIntake->RetentionMotor(true);
             }
             // Stop Shooter, stop Turret, and stop Hood.
-            m_pShooter->Stop();
             m_pTurret->Stop();
             m_pHopper->Feed(false);
             m_pHopper->Preload(false);
@@ -998,6 +997,7 @@ void CRobotMain::TeleopPeriodic()
             // Stop Preloader.
             m_pHopper->Preload(false);
             m_pHopper->Feed(false);
+            m_pIntake->RetentionMotor(false);
             // Set the Hood to tracking mode.
             m_pHood->SetSetpoint(SmartDashboard::GetNumber("Target Distance", 0.0));
             // Set robot color.

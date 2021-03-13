@@ -66,7 +66,7 @@ public:
                     }
                 };
 
-                m_bIsReversed = false;
+                m_bIsReversed = true;
                 break;
 
             case eAllianceTrench2 :
@@ -91,7 +91,7 @@ public:
                     }
                 };
 
-                m_bIsReversed = true;
+                m_bIsReversed = false;
                 break;
 
             case eFrontShieldGenerator1 :

@@ -19,16 +19,16 @@ using namespace rev;
 
 // Hood Constants.
 const double dHoodMaxPosition			=     400.0;
-const double dHoodMinPosition			=     0.000;
+const double dHoodMinPosition			=     10.000;
 const double dHoodManualFwdSpeed 		=     0.150;
 const double dHoodManualRevSpeed		=    -0.150;
 const double dHoodOpenLoopRamp			=     0.250;
 const double dHoodClosedLoopRamp		=     0.250;
 const int	 dHoodPulsesPerRev			=        42;
 const double dHoodRevsPerUnit			= 	1.0/360;
-const double dHoodProportional          =  0.003700;
-const double dHoodIntegral              =  0.000600;
-const double dHoodDerivative            = 0.0000001;
+const double dHoodProportional          =  0.00400;
+const double dHoodIntegral              =  0.001600;
+const double dHoodDerivative            = 0.0000005;
 const double dHoodFeedForward           =      0.01;
 const double dHoodTolerance             =      0.25;
 const double dHoodFindingTime           =       0.0;

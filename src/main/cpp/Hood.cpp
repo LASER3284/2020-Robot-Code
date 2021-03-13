@@ -36,6 +36,7 @@ CHood::CHood()
     m_dFindingStartTime		= 0.0;
     m_nState				= eHoodIdle;
     m_bIsReady              = false;
+    m_bHoodSafety           = true;
 
     // Ensure the Hood doesn't wrap around.
     m_pHoodPID->DisableContinuousInput();
