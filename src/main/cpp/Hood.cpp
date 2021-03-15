@@ -92,6 +92,10 @@ void CHood::Init()
 ****************************************************************************/
 void CHood::Tick()
 {
+    // Create static variables.
+    static bool bToggle = false;
+    static bool bOverCurrent = false;
+
     // Set the PID
     SetPID(SmartDashboard::GetNumber("Proportional", dHoodProportional), SmartDashboard::GetNumber("Integral", dHoodIntegral), SmartDashboard::GetNumber("Derivative", dHoodDerivative));
     // Get the Hood actual position.
@@ -114,7 +118,12 @@ void CHood::Tick()
             SmartDashboard::PutString("Hood State", "Stopped");
             // Stop the servo.
             SetSpeed(0.0);
-            // Move to Idle.
+            // Enable hood safety.
+            SetHoodSafety(true);
+            // Reset toggle.
+            bToggle = false;
+            bOverCurrent = false;
+            // Move to idle.
             SetState(eHoodIdle);
             break;
 
@@ -123,7 +132,50 @@ void CHood::Tick()
             // Put the state on SmartDashboard.
             SmartDashboard::PutString("Hood State", "Reset");
             // Move to zero.
-            SetSetpoint(0.0);
+            SetSetpoint(50.0);
+            break;
+
+        case eHoodHoming :
+            // Put the state on SmartDashboard.
+            SmartDashboard::PutString("Hood State", "Homing");
+            // Home the hood and zero based on motor current.
+            if (!bOverCurrent && (m_pTimer->Get() - m_dHomingStartTime) <= m_dMaxFindingTime && !bToggle)
+            {
+                // Disable hood safety limits.
+                SetHoodSafety(false);
+                // Set Homing speed.
+                SetSpeed(dHoodHomingSpeed);
+
+                // Start monitoring current after a while.
+                if ((m_pHoodMotor->GetOutputCurrent() > dHoodHomingCurrent) && (m_pTimer->Get() - m_dHomingStartTime) >= 0.1)
+                {
+                    bOverCurrent = true;
+                }
+            }
+            else
+            {
+                if (!bToggle)
+                {
+                    // Stop the hood motor.
+                    SetSpeed(0.0);
+                    // Record new start time.
+                    m_dHomingStartTime = m_pTimer->Get();
+                    // Set toggle.
+                    bToggle = true;
+                }
+                if ((m_pTimer->Get() - m_dHomingStartTime) >= 0.5)
+                {
+                    // Enable hood safety limits.
+                    SetHoodSafety(true);
+                    // Zero the motor encoder.
+                    m_pHoodMotor->GetEncoder().SetPosition(0);
+                    // Move states.
+                    SetState(eHoodStopped);
+                    // Set toggle.
+                    bToggle = false;
+                    bOverCurrent = false;
+                }
+            }
             break;
             
         case eHoodTracking :
@@ -172,9 +224,11 @@ void CHood::Tick()
             break;
     }
 
+    // Put values on SmartDashboard.
     SmartDashboard::PutNumber("Hood Setpoint", m_dSetpoint);
     SmartDashboard::PutNumber("Hood Actual", m_dActual);
     SmartDashboard::PutNumber("Hood Output", m_pHoodPID->Calculate(m_dActual));
+    SmartDashboard::PutNumber("Hood Current", m_pHoodMotor->GetOutputCurrent());
 }
 
 /****************************************************************************
@@ -319,6 +373,9 @@ bool CHood::IsAtSetpoint()
 ****************************************************************************/
 void CHood::Rezero()
 {
-    m_pHoodMotor->GetEncoder().SetPosition(0);
+    // Record start time.
+    m_dHomingStartTime = m_pTimer->Get();
+    // Home the hood.
+    SetState(eHoodHoming);
 }
 ///////////////////////////////////////////////////////////////////////////////

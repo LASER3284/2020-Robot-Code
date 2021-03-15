@@ -19,25 +19,27 @@ using namespace rev;
 
 // Hood Constants.
 const double dHoodMaxPosition			=     400.0;
-const double dHoodMinPosition			=     10.000;
+const double dHoodMinPosition			=     0.000;
 const double dHoodManualFwdSpeed 		=     0.150;
 const double dHoodManualRevSpeed		=    -0.150;
 const double dHoodOpenLoopRamp			=     0.250;
 const double dHoodClosedLoopRamp		=     0.250;
 const int	 dHoodPulsesPerRev			=        42;
 const double dHoodRevsPerUnit			= 	1.0/360;
-const double dHoodProportional          =  0.00400;
+const double dHoodProportional          =   0.00400;
 const double dHoodIntegral              =  0.001600;
-const double dHoodDerivative            = 0.0000005;
+const double dHoodDerivative            = 0.0000010;
 const double dHoodFeedForward           =      0.01;
 const double dHoodTolerance             =      0.25;
-const double dHoodFindingTime           =       0.0;
+const double dHoodFindingTime           =       15.0;
 const double dHoodPresetPositionFar     =     250.0;
 const double dHoodPresetPositionNear    =     100.0;
+const double dHoodHomingSpeed           =      -0.2;
+const double dHoodHomingCurrent         =      15.0;
 
 
 // Hood enum.
-enum HoodState 		{eHoodIdle, eHoodStopped, eHoodReset, eHoodTracking, eHoodFinding, eHoodManualFwd, eHoodManualRev};
+enum HoodState 		{eHoodIdle, eHoodStopped, eHoodReset, eHoodHoming, eHoodTracking, eHoodFinding, eHoodManualFwd, eHoodManualRev};
 /////////////////////////////////////////////////////////////////////////////
 
 
@@ -60,7 +62,7 @@ public:
     void 			SetSetpoint(double dSetpoint);
     void			SetSpeed(double dSpeed);
     void 			SetState(HoodState nState)										{	m_nState = nState;								    };
-    void            SetHoodSafety(bool bEnabled = true)                             {   m_bHoodSafety = bEnabled;                           };
+    void            SetHoodSafety(bool bEnabled)                                    {   m_bHoodSafety = bEnabled;                           };
     void 			SetTolerance(double dTolerance);
     bool			IsAtSetpoint();
     double			GetActual()														{	return m_pHoodMotor->GetEncoder().GetPosition() / (20.0 / 310.0) + dHoodMinPosition;	};
@@ -84,6 +86,7 @@ private:
     double			m_dActual;
     double			m_dMaxFindingTime;
     double			m_dFindingStartTime;
+    double          m_dHomingStartTime;
     HoodState		m_nState;
     bool			m_bIsReady;
     bool            m_bHoodSafety;

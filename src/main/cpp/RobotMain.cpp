@@ -768,11 +768,42 @@ void CRobotMain::TeleopPeriodic()
     }
 
     /********************************************************************
-        Drive Controller - Zero Hood Encoder (Button X)
+        Aux Controller - Zero Hood Encoder (Button X)
     ********************************************************************/
-    if (m_pDriveController->GetRawButtonPressed(eButtonX))
+    if (m_pAuxController->GetRawButtonPressed(eButtonX))
     {
         m_pHood->Rezero();
+    }
+
+    /********************************************************************
+        Aux Controller - Manual Move Hood Up (Up POV)
+    ********************************************************************/
+    if (m_pAuxController->GetPOV() == 0)
+    {
+        // Manual move up.
+        m_pHood->SetState(eHoodManualFwd);
+        bHoodMoving = true;
+    }
+    else
+    {
+    /********************************************************************
+        Aux Controller - Manual Move Hood Down (Down POV)
+    ********************************************************************/
+        if (m_pAuxController->GetPOV() == 180)
+        {
+            // Manual move down.
+            m_pHood->SetState(eHoodManualRev);
+            bHoodMoving = true;
+        }
+        else
+        {
+            if (bHoodMoving)
+            {
+                // No longer moving, set to idle.
+                m_pHood->Stop();
+                bHoodMoving = false;
+            }
+        }
     }
 
     /********************************************************************
