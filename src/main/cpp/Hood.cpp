@@ -132,7 +132,7 @@ void CHood::Tick()
             // Put the state on SmartDashboard.
             SmartDashboard::PutString("Hood State", "Reset");
             // Move to zero.
-            SetSetpoint(50.0);
+            SetSetpoint(dHoodIdlePosition);
             break;
 
         case eHoodHoming :
@@ -267,21 +267,21 @@ void CHood::SetSpeed(double dSpeed)
         // Soft limits for the hood.
         if ((m_dActual <= dHoodMaxPosition) && (m_dActual >= dHoodMinPosition))
         {
-            // Set the "Speed" of the continuous rotation servo.
+            // Set the speed of the motor.
             m_pHoodMotor->Set(dSpeed);
         }
         else
         {
             if ((m_dActual >= dHoodMaxPosition) && (dSpeed < 0.0))
             {
-                // Set the "Speed" of the continuous rotation servo.
+                // Set the speed of the motor.
                 m_pHoodMotor->Set(dSpeed);
             }
             else
             {
                 if ((m_dActual <= dHoodMinPosition) && (dSpeed > 0.0))
                 {
-                    // Set the "Speed" of the continuous rotation servo.
+                    // Set the speed of the motor.
                     m_pHoodMotor->Set(dSpeed);
                 }
                 else
@@ -318,8 +318,30 @@ void CHood::SetSpeed(double dSpeed)
 ****************************************************************************/
 void CHood::SetSetpoint(double dSetpoint)
 {
-    // Set the member variable.
+    // Set the member variable and limit it to the hood constants.
     m_dSetpoint = dSetpoint;
+
+    // Limit the upper and lower limits of the setpoint.
+    if (dSetpoint > dHoodMaxPosition)
+    {
+        m_dSetpoint = dHoodMaxPosition;
+    }
+    else
+    {
+        // Don't drive the hood all the way to min pos if we are far away from it.
+        if (dHoodMinPosition + dSetpoint <= 15)
+        {
+            m_dSetpoint = dHoodIdlePosition;
+        }
+        else
+        {
+            // If close to setpoint, then it is safe to go to zero.
+            if (dSetpoint < dHoodMinPosition)
+            {
+                m_dSetpoint = dHoodMinPosition;
+            }
+        }
+    }
 
     // Give the PID controller a setpoint.
     m_pHoodPID->SetSetpoint(m_dSetpoint);
