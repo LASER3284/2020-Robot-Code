@@ -62,6 +62,7 @@ private:
         eTeleopStopped,
         eTeleopIdle,
         eTeleopIntake,
+        eTeleopIntake2,
         eTeleopAiming,
         eTeleopFiring,
         eTeleopAutoFiring,

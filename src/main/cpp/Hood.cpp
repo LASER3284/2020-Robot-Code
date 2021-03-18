@@ -305,9 +305,6 @@ void CHood::SetSpeed(double dSpeed)
         // Set the "Speed" of the continuous rotation servo.
         m_pHoodMotor->Set(dSpeed);
     }
-    
-
-    SmartDashboard::PutNumber("Hood Output", dSpeed);
 }
 
 /****************************************************************************

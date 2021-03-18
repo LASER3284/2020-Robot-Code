@@ -155,7 +155,6 @@ void CRobotMain::AutonomousInit()
 
     // Get the select auto mode from SmartDashboard.
     string m_strAutonomousSelected = m_pAutonomousChooser->GetSelected();
-    std::cout << "STRING : " << m_strAutonomousSelected << std::endl;
     if (m_strAutonomousSelected == "Autonomous Idle")
     {
         m_nAutoState = eAutoIdle;
@@ -996,18 +995,23 @@ void CRobotMain::TeleopPeriodic()
             // m_pLift->ReverseIdle(true);
             // Extend intake.
             m_pIntake->Extend(true);
-            // Start intake on a half second delay.
-            if ((m_pTimer->Get() - m_dStartTime) >= 0.5)
-            {
-                m_pIntake->IntakeMotor(true);
-                m_pIntake->RetentionMotor(true);
-            }
             // Stop Shooter, stop Turret, and stop Hood.
             m_pTurret->Stop();
             m_pHopper->Feed(false);
             m_pHopper->Preload(false);
             // Set robot color.
             m_pBlinkin->SetState(m_pBlinkin->eBeatsPerMin);
+            // Move to next state.
+            m_nTeleopState = eTeleopIntake2;
+            break;
+
+        case eTeleopIntake2 :
+            // Start intake on a half second delay.
+            if ((m_pTimer->Get() - m_dStartTime) >= 0.5)
+            {
+                m_pIntake->IntakeMotor(true);
+                m_pIntake->RetentionMotor(true);
+            }
             break;
 
         case eTeleopAiming :

@@ -75,7 +75,7 @@ void CShooter::Init()
     m_pLeftShooter->SetInverted(false);
     m_pRightShooter->SetInverted(true);
     // Set the peak (maximum) motor output for both controllers.
-    m_pShooterPID->SetOutputRange(-1.0, 1.0);
+    m_pShooterPID->SetOutputRange(0.0, 1.0);
     // Set the tolerances.
     SetTolerance(m_dTolerance);
     // Set the PID and feed forward values.
